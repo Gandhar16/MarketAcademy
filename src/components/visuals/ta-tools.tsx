@@ -218,12 +218,14 @@ const SWING_SYMBOL = 'ICICIBANK.NS';
  */
 export function SwingPointFigure() {
   const [play, setPlay] = useState(0);
-  const { bars: allBars, error } = useRealBars(SWING_SYMBOL, '6mo');
+  const { bars: allBars, error } = useRealBars(SWING_SYMBOL, '1y');
 
   if (error) return <ErrorFigure message={error} />;
-  if (!allBars || allBars.length < 45) return <LoadingFigure />;
+  if (!allBars || allBars.length < 65) return <LoadingFigure />;
 
-  const shown = allBars.slice(-42);
+  // A fuller daily-chart window than a tight crop — real context around
+  // each candidate, the way a learner would actually be looking at a chart.
+  const shown = allBars.slice(-60);
   const pivots = findPivotLows(shown, 1);
   const inRange = (i: number) => i >= 2 && i <= shown.length - 3;
   const confirmed = pivots.filter(inRange).slice(0, 2);
@@ -351,8 +353,12 @@ export function TrendlineFigure() {
   };
   const { p1, p2 } = anchors;
 
-  const startIdx = Math.max(0, p1 - 8);
-  const endIdx = Math.min(allBars.length - 1, p2 + 22);
+  // A fuller daily-chart window, not a tight crop around just the two
+  // anchors — enough real context before the first swing low to see the
+  // move that produced it, and enough after the second to see the line
+  // actually get tested, the way a learner would look at a real chart.
+  const startIdx = Math.max(0, p1 - 18);
+  const endIdx = Math.min(allBars.length - 1, p2 + 35);
   const bars = allBars.slice(startIdx, endIdx + 1);
   const iP1 = p1 - startIdx;
   const iP2 = p2 - startIdx;

@@ -97,6 +97,16 @@ export function CandleChart({
   const totalHeight = height + activePanes.length * 90;
 
   // ── chart lifecycle ───────────────────────────────────────────────────────
+  //
+  // Created ONCE, not on every `totalHeight` change. Toggling a pane
+  // indicator (Volume/RSI/MACD/ATR) changes `activePanes.length`, and this
+  // effect used to depend on `totalHeight` — so ticking a checkbox tore the
+  // whole chart down and rebuilt it. The candle-data effect below only
+  // depends on `[candles]`, so it never re-ran for the brand-new series, and
+  // the new chart came up with no data at all: the price chart itself
+  // "vanished" the moment a lower pane was toggled on. The fix is to build
+  // the chart once and resize the EXISTING one when the pane count changes
+  // — see the effect right after this one.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -152,6 +162,17 @@ export function CandleChart({
       markersRef.current = null;
       overlays.clear();
     };
+    // Deliberately mount-only. `totalHeight` seeds the FIRST render only —
+    // see the resize effect directly below, which keeps it in sync
+    // afterward without tearing the chart down.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Resize the EXISTING chart when the active pane count changes, instead of
+  // recreating it. This is the actual fix: no series gets torn down, so
+  // there is no window where the price series exists but has no data.
+  useEffect(() => {
+    chartRef.current?.applyOptions({ height: totalHeight });
   }, [totalHeight]);
 
   // ── candles ───────────────────────────────────────────────────────────────

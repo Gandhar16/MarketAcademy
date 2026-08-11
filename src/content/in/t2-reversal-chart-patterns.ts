@@ -23,6 +23,7 @@ export const lesson: Lesson = {
     'These are named shapes people spot on a chart and treat as a sign a trend is ending. This shows what actually confirms one, and where the price target it implies comes from.',
   objectives: [
     'Describe the anatomy of a head and shoulders and a double top or bottom',
+    'Explain why a reversal shape needs an established prior trend to mean anything',
     'Explain why the neckline break, not the shape, is the actual confirmation',
     'Compute a measured-move target from the height of a shape',
     'Decide what to do when a shape has formed but the neckline has not broken',
@@ -44,6 +45,20 @@ export const lesson: Lesson = {
       correct: 1,
       reveal:
         'That "if" is the entire lesson. The three peaks are just a shape, and shapes like this appear on real charts all the time without meaning anything. What the pattern actually claims is conditional: a rising trend running out of strength, confirmed only if price then closes back below the neckline, the line drawn under the two troughs. Plenty of "head and shoulders" shapes never get that confirmation and simply keep rising. The shape by itself is not the signal.',
+      askWhy: true,
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'The exact same three-peak shape shows up twice: once at the top of a six-month rally, once in the middle of a flat, directionless month with no trend at all. Which one is actually worth calling a head and shoulders?',
+      options: [
+        'Both — the shape is the shape, wherever it forms',
+        'Only the one after the rally — there is no established trend to reverse in the flat case',
+        'Neither — three peaks never mean anything either way',
+      ],
+      correct: 1,
+      reveal:
+        'Only the one after the rally. The pattern’s entire claim is that a trend is running out of strength — and a trend has to exist first for that claim to mean anything. Three peaks in a flat, aimless month are not a rising trend ending, because there was no rising trend to begin with. The same shape, the same neckline, the same measured-move arithmetic all still work mechanically in the flat case. They just are not answering a real question, because the question — is this trend ending — never had a trend behind it.',
       askWhy: true,
     },
     {

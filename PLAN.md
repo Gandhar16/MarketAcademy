@@ -1028,6 +1028,69 @@ assume the swing-point skill this new figure is what actually teaches.
 **Same visual-verification caveat as §3p–3r**: not eyeballed in an actual
 browser this session.
 
+#### 3t. A real chart-toggle bug, wider real-data windows, and pattern significance — `[x]` COMPLETE
+
+**The bug, reported directly by the user.** Clicking a lower-pane indicator
+(Volume, RSI, MACD, ATR) on the live `chart` DSL block made the price
+candles disappear entirely — not just visually odd, actually broken.
+
+Root cause, in `CandleChart.tsx`: the chart-creation `useEffect` depended
+on `[totalHeight]`, and `totalHeight = height + activePanes.length * 90`.
+Toggling any pane indicator changes `activePanes.length`, which changes
+`totalHeight`, which re-ran that effect — and its cleanup calls
+`chart.remove()` and builds a **brand-new** chart and candlestick series
+from scratch. The effect that feeds the price series its data only depends
+on `[candles]`, so it never re-ran for the new series. Net effect: a fresh,
+empty candlestick series sitting on screen with no data ever pushed into
+it. The fix is architectural, not a patch: the chart is now created ONCE
+(mount-only effect, `eslint-disable` with a comment explaining why), and a
+SEPARATE effect calls `chart.applyOptions({ height: totalHeight })` to
+resize the existing chart whenever the pane count changes — no teardown,
+no empty series, ever.
+
+**Wider real-data windows, on request.** `TrendlineFigure` and
+`SwingPointFigure` both used to crop tightly around just the points being
+demonstrated. Widened both to show a fuller real daily chart — more real
+history before the first anchor, more room after the last one — so the
+trendline and the swing-point checks sit inside actual context instead of
+a narrow strip. `SwingPointFigure`'s fetch range also grew from 6mo to 1y
+to support the wider window reliably.
+
+**Pattern significance — where a reversal shape has to form to mean
+anything.** `in-t2-reversal-chart-patterns` taught the anatomy and the
+neckline confirmation, but never the gate in front of both: a
+head-and-shoulders claims a trend is running out of strength, and a trend
+has to actually exist first for that claim to be meaningful. New predict
+block makes this concrete — the identical three-peak shape, once after a
+six-month rally and once in a flat, directionless month, and only the
+first one is worth calling a head and shoulders. The mechanism (neckline,
+measured-move arithmetic) works identically in both cases; only one of
+them is answering a real question.
+
+- [x] `CandleChart.tsx` — chart lifecycle split into a mount-only creation
+      effect and a separate resize effect; the vanishing-on-toggle bug is
+      structurally impossible now, not just less likely
+- [x] `TrendlineFigure` — window widened (`p1 − 18` to `p2 + 35`, was `p1 − 8` to `p2 + 22`)
+- [x] `SwingPointFigure` — window widened (`slice(-60)`, was `slice(-42)`), fetch range 6mo → 1y, min-bars guard raised to 65
+- [x] `in-t2-reversal-chart-patterns` — new predict block on the prior-trend
+      requirement, new objective, checkpoint untouched (already solid)
+- [x] `pnpm verify` clean — 1,241 tests (unchanged for the chart-toggle fix
+      and window widening, since neither touches tested logic; content
+      tests re-passed for the lesson change), build succeeds, all affected
+      pages return 200 live, `HDFCBANK.NS`/`ICICIBANK.NS` confirmed
+      returning 250 real daily bars for 1y each
+
+**Still open from the original ask, not attempted this pass:** a
+systematic "how to spot it" pass across every indicator lesson (e.g. the
+volume tell — declining volume into the right shoulder of a head and
+shoulders, or into the second peak of a double top, is a real supporting
+signal not yet taught anywhere), and the same prior-trend framing applied
+explicitly to `in-t2-continuation-patterns` (it already implies the
+requirement in every example's setup — "a stock rallies hard, then..." —
+but never states the gate as its own predict the way the reversal lesson
+now does). Both are small, well-scoped additions for a future pass rather
+than done half-heartedly here.
+
 ---
 
 ### M4 · Polish — `[ ]`
