@@ -1250,6 +1250,51 @@ modes are visually distinct at a glance, not just by the caption text.
 
 ---
 
+#### 3w. Pivot points, depth pass — second of the "one by one, in depth" sequence — `[x]` COMPLETE
+
+Picked up the second item from the open list: `in-t2-pivot-points`. No
+new pure functions or figures needed here — this tool is computed
+arithmetic, not eyeballed geometry, so the depth came entirely from
+research-backed content added via `callout`/`example`/`predict` blocks.
+
+**What was added:**
+
+- **Real historical origin, stated explicitly**: the pivot formula
+  predates electronic charting — floor traders on open-outcry exchanges
+  needed a fixed set of numbers they could compute once by hand before
+  the bell and carry mentally through the session. "Floor trader pivots"
+  is still the name. This also explains something practical the lesson
+  did not previously say: unlike a trendline or Fibonacci grid, a pivot
+  grid is never dragged onto a chart by eye. It is computed once,
+  drawn as five flat horizontal rays valid for exactly ONE session, and
+  thrown away and recomputed the next day — never carried forward.
+- **R3/S3 added**, with a worked example comparing two stocks that share
+  almost the same pivot but wildly different prior-day ranges (₹7 vs
+  ₹47), producing R3–S3 grid widths of ₹21 vs ₹141. The width itself is
+  taught as a real signal — a tight prior day's compressed grid makes a
+  clean breakout more meaningful than the same move on an already-wide
+  grid.
+- **New predict on the opening-gap read**: where the day's first trade
+  lands relative to the grid (above R1 / below S1 / inside it) is real
+  floor-trader information about opening order flow, not noise — flagged
+  as a read, not a rule the market obeys.
+- New checkpoint task computing S3 from the lesson's existing worked
+  numbers.
+- Objectives 4 → 5 (R3/S3 + grid-width reading, and the "where does this
+  come from and why does it reset daily" objective); `estimatedMinutes`
+  13 → 16.
+- Fixed 4 R15 (sentence too long) violations along the way, one of which
+  needed a second pass — a 32-word sentence was still rejected, meaning
+  the cap is a strict "under 32," not "at most 32."
+
+- [x] `in-t2-pivot-points` — origin callout, R3/S3 + grid-width example,
+      opening-gap predict, new checkpoint task, objectives 4 → 5
+- [x] `pnpm verify` clean — 1,252 tests (no new pure functions this
+      lesson, so the count is unchanged from §3v), build succeeds
+      (100 static pages), lesson returns 200 live
+
+---
+
 ### M4 · Polish — `[ ]`
 
 - [x] Mobile layout pass across header, pages, leaderboard, widgets — see §3k

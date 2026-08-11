@@ -21,12 +21,13 @@ export const lesson: Lesson = {
     'Before the market opens, traders compute a set of price levels from yesterday’s trading. This shows the formula, what the levels actually mean, and why so many people watch the same ones.',
   objectives: [
     'Compute a pivot, R1, S1, R2 and S2 from a prior day’s OHLC',
+    'Compute R3 and S3, and read what the width of the whole grid implies about today',
     'Explain why S1 always sits at or below the pivot, algebraically',
-    'Explain why the grid is really a formalised version of support and resistance',
+    'Explain where this formula actually comes from, and why it resets every single day',
     'Decide what should determine whether a pivot level is worth trusting on a given day',
   ],
   prerequisites: ['in-t2-vwap-volume-profile'],
-  estimatedMinutes: 13,
+  estimatedMinutes: 16,
   introduces: ['pivot-point'],
   skills: ['pivot-points', 'chart-reading'],
   blocks: [
@@ -66,6 +67,13 @@ export const lesson: Lesson = {
         'Every level came from three numbers already public before the session opened. That is exactly why it matters — many desks are computing the identical five numbers off the identical prior day.',
     },
     {
+      kind: 'callout',
+      tone: 'insight',
+      title: 'Where this actually comes from, and how it is drawn',
+      md:
+        'This exact formula predates screens. Floor traders on open-outcry exchanges had no live charting software between trades. They needed a fixed set of reference numbers they could compute once, by hand, before the bell, and carry in their head all session. "Floor trader pivots" is still the name for this grid.\n\nThat history explains something about HOW it gets used today: a pivot grid is not dragged onto a chart the way a trendline or a Fibonacci grid is. It is computed once, before the session opens, and drawn as five flat horizontal rays across the intraday chart — valid for exactly one session. Tomorrow it is thrown away and recomputed from a new prior day, never carried forward or adjusted by eye.',
+    },
+    {
       kind: 'predict',
       prompt:
         'Today’s high is ₹520 and low is ₹500, closing at ₹515. Without recomputing from scratch, is S1 above or below today’s pivot?',
@@ -77,6 +85,33 @@ export const lesson: Lesson = {
       correct: 0,
       reveal:
         'Always at or below it, and this is true by construction, not by observation. The pivot is the average of high, low and close, so the high can never be smaller than it. Twice the pivot minus the high can therefore never exceed the pivot itself. This is one of the few claims in this stage that is not a judgement call — it follows from the formula, every time.',
+      askWhy: true,
+    },
+    {
+      kind: 'example',
+      title: 'R3, S3, and what the width of the whole grid tells you',
+      setup:
+        'Two different stocks, both closing at ₹500. Stock A had a tight prior day: high ₹504, low ₹497. Stock B had a wide prior day: high ₹525, low ₹478.',
+      steps: [
+        { label: 'Stock A — R3 = high + 2(P − low)', detail: 'P = 500.33, so 504 + 2(3.33)', compute: { fn: 'literal', value: 510.67 } },
+        { label: 'Stock A — S3 = low − 2(high − P)', detail: '497 − 2(3.67)', compute: { fn: 'literal', value: 489.67 } },
+        { label: 'Stock B — R3 = high + 2(P − low)', detail: 'P = 501, so 525 + 2(23)', compute: { fn: 'literal', value: 571 } },
+        { label: 'Stock B — S3 = low − 2(high − P)', detail: '478 − 2(24)', compute: { fn: 'literal', value: 430 } },
+      ],
+      conclusion:
+        'Both stocks share nearly the same pivot, but Stock A\'s entire R3–S3 grid spans ₹21 and Stock B\'s spans ₹141. The width comes straight from yesterday\'s range, and it is read as a real signal. A tight prior day gives a compressed grid. A session breaking cleanly out of it can mean more than the same move would on Stock B\'s already-wide grid.',
+    },
+    {
+      kind: 'predict',
+      prompt: 'A stock gaps up at the open and prints its first trade of the day ABOVE R1. What does that most commonly signal to a desk watching the pivot grid?',
+      options: [
+        'A data error — price cannot open above a resistance level',
+        'Strong opening demand, often read as a bullish session, with the pivot itself as possible support on a pullback',
+        'Nothing — where a stock opens relative to the grid carries no information',
+      ],
+      correct: 1,
+      reveal:
+        'Strong opening demand. Floor-trader convention reads where the FIRST trade lands relative to the grid as information in itself, not just where price wanders later. Opening above R1 is a strong bullish tell, opening below S1 a strong bearish one, and opening between S1 and R1 an ordinary, unremarkable start. None of this is a rule the market obeys — it is a read on what today\'s order flow already showed before the first candle even finished forming.',
       askWhy: true,
     },
     {
@@ -100,6 +135,13 @@ export const lesson: Lesson = {
           spec: { metric: 'literal', value: 341.33, tolerance: 1, unit: '₹' },
           explanation:
             'P = (340 + 320 + 332) ÷ 3 = 330.67. R1 = (2 × 330.67) − 320 = 341.33. Two steps, both fixed arithmetic — the same two steps every single day, on every stock.',
+        },
+        {
+          prompt: 'Same day as above (high ₹340, low ₹320, close ₹332, P = 330.67). What is S3?',
+          type: 'compute',
+          spec: { metric: 'literal', value: 301.33, tolerance: 1, unit: '₹' },
+          explanation:
+            'S3 = low − 2(high − P) = 320 − 2(340 − 330.67) = 320 − 18.67 = 301.33. The formula is fixed arithmetic every time — the only real work is reading off the right three prior-day numbers.',
         },
         {
           prompt: 'Classify each statement about pivot points.',
