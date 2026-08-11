@@ -23,12 +23,13 @@ export const lesson: Lesson = {
     'Some traders label price swings with numbers, claiming a repeating five-and-three pattern. This shows the real rules behind that labelling, and why two people can follow the same rules and disagree.',
   objectives: [
     'Describe the five-wave impulse and three-wave correction structure',
-    'State the wave-2 and wave-4 rules that actually constrain a count',
+    'State all three hard rules that actually constrain a count',
     'Check whether a proposed wave count is legal under those rules',
+    'Explain the real, historical link between Elliott wave and Fibonacci ratios',
     'Explain why a completed count is not evidence that the method predicted anything',
   ],
   prerequisites: ['in-t2-continuation-patterns'],
-  estimatedMinutes: 15,
+  estimatedMinutes: 18,
   introduces: ['elliott-wave'],
   skills: ['elliott-wave', 'chart-reading'],
   blocks: [
@@ -109,6 +110,27 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'callout',
+      tone: 'insight',
+      title: 'Where this comes from, and the real link to Fibonacci',
+      md:
+        'Ralph Nelson Elliott, a retired accountant, studied decades of price data and published *The Wave Principle* in 1938, arguing markets move in repeating patterns tied to crowd psychology. It stayed a niche idea until Robert Prechter and A. J. Frost revived it in *Elliott Wave Principle* (1978), which is largely why it is still discussed today.\n\nElliott himself later connected the wave proportions to Fibonacci ratios. Wave 3 is commonly expected to run about 1.618× the length of wave 1. Wave 2 often retraces 50%–61.8% of wave 1, and wave 4 often retraces around 38.2% of wave 3. These are real, commonly cited expectations, not hard rules — unlike the no-overlap check, a wave that misses these ratios is not automatically an illegal count.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'A count has wave 1 at ₹60, wave 3 at ₹45, and wave 5 at ₹90 — all measured in rupees of move. A third rule, beyond the wave-2 and wave-4 checks already covered, says something about this set of numbers. What does it say?',
+      options: [
+        'Nothing — there is no rule about the relative size of the waves',
+        'It is illegal: wave 3 must never be the shortest of waves 1, 3 and 5, and here it is',
+        'It is illegal because wave 5 is larger than wave 1',
+      ],
+      correct: 1,
+      reveal:
+        'Illegal, and this is the third hard rule Elliott wave actually enforces: wave 3 can never be the shortest of the three impulse waves. Here wave 3 (₹45) is smaller than both wave 1 (₹60) and wave 5 (₹90), which breaks the rule outright regardless of how the swings otherwise look. Like the other two hard rules, this one narrows the field of legal counts without ever narrowing it to just one.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'INFY.NS', interval: '1d', range: '1y' },
       mode: 'view',
@@ -131,6 +153,20 @@ export const lesson: Lesson = {
           spec: { metric: 'literal', value: 300, tolerance: 1, unit: '₹' },
           explanation:
             'Wave 2 must not trade below the start of wave 1, which is ₹300. Anything at or below that price breaks the rule and the count has to be redrawn from scratch.',
+        },
+        {
+          prompt: 'A count has wave 1 = ₹40, wave 3 = ₹70, wave 5 = ₹65. Is this a legal count under the third hard rule?',
+          type: 'decision',
+          spec: {
+            options: [
+              'Legal — wave 3 (₹70) is the largest of the three, so it is not the shortest',
+              'Illegal — wave 5 must always be the largest wave',
+              'Illegal — wave 1 and wave 5 must always be equal',
+            ],
+            correct: 'Legal — wave 3 (₹70) is the largest of the three, so it is not the shortest',
+          },
+          explanation:
+            'Legal. The only hard requirement on relative wave size is that wave 3 is never the SHORTEST of the three. It does not have to be the longest, and there is no rule at all requiring wave 1 and wave 5 to match. Here wave 1 (₹40) is the shortest, which the rule permits.',
         },
         {
           prompt: 'Classify each statement about Elliott wave.',

@@ -1462,6 +1462,46 @@ and the neckline break themselves.
 
 ---
 
+#### 3bb. Elliott wave, depth pass — seventh of the "one by one, in depth" sequence — `[x]` COMPLETE
+
+Picked up the seventh item: `in-t2-elliott-wave`. This lesson's whole
+thesis is that the rules are real but do not pin down a single count, so
+the depth added had to add a genuine THIRD hard rule and real history
+without pretending the framework is more decisive than it is.
+
+**What was added:**
+
+- **Real origin**: Ralph Nelson Elliott, a retired accountant, published
+  *The Wave Principle* in 1938 after studying decades of price data. It
+  stayed a niche idea until Robert Prechter and A. J. Frost revived it in
+  *Elliott Wave Principle* (1978) — largely why it is still discussed
+  today.
+- **The real, historical Fibonacci connection, stated as a connective
+  fact rather than asserted from nowhere**: Elliott himself later tied
+  wave proportions to Fibonacci ratios — wave 3 commonly ≈1.618× wave 1,
+  wave 2 often retraces 50%–61.8% of wave 1, wave 4 often retraces
+  ≈38.2% of wave 3. Explicitly flagged as commonly-cited EXPECTATIONS,
+  not hard rules like the no-overlap check — a wave missing these ratios
+  is not automatically an illegal count.
+- **A genuine third hard rule, previously missing from this lesson**:
+  wave 3 can never be the shortest of waves 1, 3 and 5. The lesson
+  previously only covered the wave-2 and wave-4 rules; this was a real
+  gap, not just missing depth. New worked predict and a new checkpoint
+  decision task both exercise it.
+- Objectives 4 → 5 (all three rules, the Fibonacci link); `estimatedMinutes`
+  15 → 18.
+- Fixed 2 R15 violations along the way.
+
+- [x] `in-t2-elliott-wave` — origin + Fibonacci-link callout, wave-3-rule
+      predict, new checkpoint task, objectives 4 → 5
+- [x] `pnpm verify` clean — 1,252 tests (unchanged, no new pure
+      functions; one flaky timeout under full-suite load on
+      `curriculum.test.ts` that passed cleanly in isolation and on
+      re-run — not a real failure), build succeeds (100 static pages),
+      lesson returns 200 live
+
+---
+
 ### M4 · Polish — `[ ]`
 
 - [x] Mobile layout pass across header, pages, leaderboard, widgets — see §3k
