@@ -24,6 +24,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
+import { ThemeToggle } from './ThemeToggle';
 
 export interface NavItem {
   href: string;
@@ -81,6 +82,7 @@ export function HeaderNav({ items, displayName }: { items: NavItem[]; displayNam
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-3 text-sm">
+          <ThemeToggle />
           <AccountLinks displayName={displayName} />
 
           <button

@@ -47,7 +47,7 @@ export function WorkedExample({ block }: { block: ExampleBlock }) {
                     className="num flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px]"
                     style={{
                       background: isLast ? 'var(--color-accent)' : 'var(--color-surface-2)',
-                      color: isLast ? 'var(--color-ground)' : 'var(--color-ink-faint)',
+                      color: isLast ? 'var(--color-on-emphasis)' : 'var(--color-ink-faint)',
                     }}
                   >
                     {i + 1}

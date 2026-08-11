@@ -122,7 +122,7 @@ export function Checkpoint({
         <button
           onClick={() => void submit()}
           disabled={submitting}
-          className="mt-6 rounded-lg bg-accent px-5 py-2.5 font-medium text-ground disabled:opacity-40"
+          className="mt-6 rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis disabled:opacity-40"
         >
           {submitting ? 'Grading…' : 'Submit checkpoint'}
         </button>
@@ -212,7 +212,7 @@ function TaskInput({
                 className="rounded-md px-2.5 py-1 text-[13px] transition-colors"
                 style={{
                   background: current[item.label] === c ? 'var(--color-accent)' : 'var(--color-surface-2)',
-                  color: current[item.label] === c ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+                  color: current[item.label] === c ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
                 }}
               >
                 {c}
@@ -271,7 +271,7 @@ function Toggle({
       className="num rounded-md px-2.5 py-1 text-[13px] uppercase transition-colors"
       style={{
         background: active ? 'var(--color-accent)' : 'var(--color-surface-2)',
-        color: active ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+        color: active ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
       }}
     >
       {label}

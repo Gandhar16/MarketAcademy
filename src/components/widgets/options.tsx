@@ -62,7 +62,7 @@ export function GreeksExplorer({
             className="num rounded-md px-3 py-1.5 text-[12px] uppercase transition-colors"
             style={{
               background: type === t ? 'var(--color-accent)' : 'var(--color-surface-2)',
-              color: type === t ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+              color: type === t ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
             }}
           >
             {t}

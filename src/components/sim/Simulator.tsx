@@ -269,7 +269,7 @@ export function Simulator() {
 
           <button
             onClick={place}
-            className="w-full rounded-lg bg-accent px-4 py-2.5 font-medium text-ground transition-opacity hover:opacity-90"
+            className="w-full rounded-lg bg-accent px-4 py-2.5 font-medium text-on-emphasis transition-opacity hover:opacity-90"
           >
             Place order
           </button>
@@ -404,7 +404,7 @@ function Segmented({
           className="num flex-1 rounded-md px-2 py-1.5 text-[12px] uppercase transition-colors"
           style={{
             background: value === o.id ? 'var(--color-accent)' : 'var(--color-surface-2)',
-            color: value === o.id ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+            color: value === o.id ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
           }}
         >
           {o.label}

@@ -308,7 +308,7 @@ export function SwingPointFigure() {
                     );
                   })}
 
-                  <motion.text
+                  <motion.text className="svg-label-halo"
                     x={cx} y={cy + (p.isSwing ? 22 : -14)} textAnchor="middle" fontSize={10.5}
                     fill={p.isSwing ? 'var(--color-up)' : 'var(--color-down)'}
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: d + 1.3 }}
@@ -416,7 +416,7 @@ export function TrendlineFigure() {
             className="num rounded-md px-2.5 py-1 text-[11px] transition-colors"
             style={{
               background: direction === d ? 'var(--color-accent)' : 'var(--color-surface-2)',
-              color: direction === d ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+              color: direction === d ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
             }}
           >
             {d === 'up' ? 'Uptrend — rising support' : 'Downtrend — falling resistance'}
@@ -444,12 +444,12 @@ export function TrendlineFigure() {
                 transition={{ delay: i === 0 ? 0.55 : 1.45, duration: 0.3 }}
               />
             ))}
-            <motion.text
+            <motion.text className="svg-label-halo"
               x={xAt(iP1)} y={y(priceAt(iP1)) + (isUp ? 18 : -12)} fill="var(--color-accent)" fontSize={9.5} textAnchor="middle"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
               {isUp ? 'click — swing low 1' : 'click — swing high 1'}
             </motion.text>
-            <motion.text
+            <motion.text className="svg-label-halo"
               x={xAt(iP2)} y={y(priceAt(iP2)) + (isUp ? 18 : -12)} fill="var(--color-accent)" fontSize={9.5} textAnchor="middle"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>
               {isUp ? 'release — swing low 2' : 'release — swing high 2'}
@@ -468,7 +468,7 @@ export function TrendlineFigure() {
                   cx={xAt(touchIdx)} cy={y(priceAt(touchIdx))} r={6} fill="none" stroke={lineColour} strokeWidth={2}
                   initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 3.2, duration: 0.3 }}
                 />
-                <motion.text
+                <motion.text className="svg-label-halo"
                   x={xAt(touchIdx)} y={y(priceAt(touchIdx)) + (isUp ? -12 : 18)} fill={lineColour} fontSize={9.5} textAnchor="middle"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.5 }}>
                   a real third touch
@@ -549,13 +549,20 @@ export function FibonacciFigure() {
   // Downtrend: 0% is the LOW (retracement bounces back up toward the high).
   const anchorFrom = isUp ? hiPrice : loPrice;
   const anchorTo = isUp ? loPrice : hiPrice;
-  const ext261 = retracementLevel(anchorFrom, anchorTo, 261.8);
 
+  // The y-domain is sized from the real bars and the two swing anchors ONLY —
+  // deliberately NOT stretched to also fit the 261.8% extension level. That
+  // extension is often 1.6x the whole swing range away, and forcing the
+  // domain to include it used to compress the 0-100% retracement labels into
+  // a small sliver of the chart height, making adjacent percentage labels
+  // (61.8/78.6, especially) overlap. Extensions still draw at their true
+  // price — they simply run off the visible canvas when far away, which SVG
+  // clips naturally, instead of squeezing every other label to make room.
   const W = 560;
   const H = 280;
-  const domainLo = Math.min(loPrice, ext261, ...bars.map((b) => b.low));
-  const domainHi = Math.max(hiPrice, ext261, ...bars.map((b) => b.high));
-  const y = makeYScale(domainLo, domainHi, H - 24, 0.03);
+  const domainLo = Math.min(loPrice, ...bars.map((b) => b.low));
+  const domainHi = Math.max(hiPrice, ...bars.map((b) => b.high));
+  const y = makeYScale(domainLo, domainHi, H - 24, 0.1);
   const slot = W / bars.length;
   const xAt = (i: number) => i * slot + slot / 2;
 
@@ -578,7 +585,7 @@ export function FibonacciFigure() {
             className="num rounded-md px-2.5 py-1 text-[11px] transition-colors"
             style={{
               background: direction === d ? 'var(--color-accent)' : 'var(--color-surface-2)',
-              color: direction === d ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+              color: direction === d ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
             }}
           >
             {d === 'up' ? 'Uptrend — pullback' : 'Downtrend — bounce'}
@@ -598,11 +605,11 @@ export function FibonacciFigure() {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: isUp ? 0.55 : 1.45 }} />
             <motion.circle cx={xAt(iHigh)} cy={y(hiPrice)} r={5} fill="var(--color-up)"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: isUp ? 1.45 : 0.55 }} />
-            <motion.text x={xAt(iLow)} y={y(loPrice) + 18} fill="var(--color-down)" fontSize={9.5} textAnchor="middle"
+            <motion.text className="svg-label-halo" x={xAt(iLow)} y={y(loPrice) + 18} fill="var(--color-down)" fontSize={9.5} textAnchor="middle"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: isUp ? 0.6 : 1.5 }}>
               {isUp ? 'click here — swing low' : 'release here — swing low'}
             </motion.text>
-            <motion.text x={xAt(iHigh)} y={y(hiPrice) - 10} fill="var(--color-up)" fontSize={9.5} textAnchor="middle"
+            <motion.text className="svg-label-halo" x={xAt(iHigh)} y={y(hiPrice) - 10} fill="var(--color-up)" fontSize={9.5} textAnchor="middle"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: isUp ? 1.5 : 0.6 }}>
               {isUp ? 'drag up, release here — swing high' : 'click here — swing high'}
             </motion.text>
@@ -619,7 +626,7 @@ export function FibonacciFigure() {
                     initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.85 }}
                     transition={{ delay: 2 + i * 0.22, duration: 0.4 }}
                   />
-                  <motion.text x={W - 4} y={y(level) - 3} textAnchor="end" fill="var(--color-ink-faint)" fontSize={9}
+                  <motion.text className="svg-label-halo" x={W - 4} y={y(level) - 3} textAnchor="end" fill="var(--color-ink-faint)" fontSize={9}
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.1 + i * 0.22 }}>
                     {pct}%
                   </motion.text>
@@ -637,7 +644,7 @@ export function FibonacciFigure() {
                     initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.6 }}
                     transition={{ delay: 3.8 + i * 0.3, duration: 0.4 }}
                   />
-                  <motion.text x={W - 4} y={y(level) - 3} textAnchor="end" fill={isUp ? 'var(--color-up)' : 'var(--color-down)'} fontSize={9}
+                  <motion.text className="svg-label-halo" x={W - 4} y={y(level) - 3} textAnchor="end" fill={isUp ? 'var(--color-up)' : 'var(--color-down)'} fontSize={9}
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.9 + i * 0.3 }}>
                     {pct}%
                   </motion.text>
@@ -741,7 +748,7 @@ export function ChartPatternFigure({ pattern }: { pattern: ChartPatternId }) {
                   initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
                   transition={{ delay: 2.15, duration: 0.6 }}
                 />
-                <motion.text
+                <motion.text className="svg-label-halo"
                   x={26} y={def.neckY - 6} fill="var(--color-accent)" fontSize={10}
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.35 }}
                 >
@@ -751,7 +758,7 @@ export function ChartPatternFigure({ pattern }: { pattern: ChartPatternId }) {
             )}
 
             {isTriangle ? (
-              <motion.text
+              <motion.text className="svg-label-halo"
                 x={W / 2} y={H - 16} textAnchor="middle" fill="var(--color-ink-muted)" fontSize={11}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}
               >
@@ -766,7 +773,7 @@ export function ChartPatternFigure({ pattern }: { pattern: ChartPatternId }) {
                   initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
                   transition={{ delay: 2.85, duration: 0.6 }}
                 />
-                <motion.text
+                <motion.text className="svg-label-halo"
                   x={lastX + 8} y={(lastY + targetY) / 2}
                   fill={isBearish ? 'var(--color-down)' : 'var(--color-up)'} fontSize={10}
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.25 }}
@@ -850,7 +857,7 @@ export function ElliottWaveFigure() {
                   transition={{ delay: 0.3 + i * 0.18, duration: 0.25 }}
                 />
                 {labels[i + 1] && (
-                  <motion.text
+                  <motion.text className="svg-label-halo"
                     x={x} y={y - 12} textAnchor="middle" fill="var(--color-accent)" fontSize={11}
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 + i * 0.18 }}
                   >
@@ -979,7 +986,7 @@ export function CandlestickTrioFigure({ pattern }: { pattern: 'morning-star' | '
         <AnimatePresence mode="wait">
           <g key={play}>
             <line x1={0} y1={y(midpoint)} x2={W} y2={y(midpoint)} stroke="var(--color-line)" strokeDasharray="3 4" />
-            <text x={W - 4} y={y(midpoint) - 6} textAnchor="end" fill="var(--color-ink-faint)" fontSize={9}>
+            <text className="svg-label-halo" x={W - 4} y={y(midpoint) - 6} textAnchor="end" fill="var(--color-ink-faint)" fontSize={9}>
               midpoint of candle 1&apos;s body
             </text>
 
@@ -1076,14 +1083,14 @@ export function VolumeProfileFigure() {
               );
             })}
 
-            <motion.text
+            <motion.text className="svg-label-halo"
               x={axisX + (levels[pocIndex] / maxVol) * maxBarW + 8} y={yFor(pocIndex) + 3}
               fill="var(--color-accent)" fontSize={10}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
             >
               point of control — the single busiest price
             </motion.text>
-            <motion.text
+            <motion.text className="svg-label-halo"
               x={axisX + 4} y={yFor(valueAreaRange[0]) + rowH}
               fill="var(--color-up)" fontSize={9.5}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}
@@ -1158,7 +1165,7 @@ export function ChartTypeFigure() {
             className="num rounded-md px-2.5 py-1 text-[11px] transition-colors"
             style={{
               background: mode === m.id ? 'var(--color-accent)' : 'var(--color-surface-2)',
-              color: mode === m.id ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+              color: mode === m.id ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
             }}
           >
             {m.label}

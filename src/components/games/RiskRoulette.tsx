@@ -68,7 +68,7 @@ export function RiskRoulette() {
                   className="num rounded-md px-2.5 py-1 text-sm transition-colors"
                   style={{
                     background: riskFraction === r ? 'var(--color-accent)' : 'var(--color-surface-2)',
-                    color: riskFraction === r ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+                    color: riskFraction === r ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
                   }}
                 >
                   {(r * 100).toFixed(r < 0.01 ? 1 : 0)}%

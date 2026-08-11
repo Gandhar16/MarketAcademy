@@ -159,7 +159,7 @@ function Chips({
           className="rounded-md px-3 py-1.5 text-sm transition-colors"
           style={{
             background: value === o.id ? 'var(--color-accent)' : 'var(--color-surface-2)',
-            color: value === o.id ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+            color: value === o.id ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
           }}
         >
           {o.label}

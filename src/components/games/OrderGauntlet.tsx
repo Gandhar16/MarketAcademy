@@ -112,7 +112,7 @@ export function OrderGauntlet() {
           ))}
         </ul>
 
-        <button onClick={restart} className="rounded-lg bg-accent px-5 py-2.5 font-medium text-ground">
+        <button onClick={restart} className="rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis">
           Run it again
         </button>
       </div>
@@ -191,7 +191,7 @@ export function OrderGauntlet() {
               </p>
             )}
 
-            <button onClick={next} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground">
+            <button onClick={next} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis">
               {index === GAUNTLET_SCENARIOS.length - 1 ? 'See results' : 'Next scenario'}
             </button>
           </div>

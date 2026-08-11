@@ -98,7 +98,7 @@ export function OrderBookLadder({
               className="rounded-full px-3 py-1.5 text-sm transition-colors"
               style={{
                 background: presetId === p.id ? 'var(--color-accent)' : 'var(--color-surface-2)',
-                color: presetId === p.id ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+                color: presetId === p.id ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
               }}
             >
               {p.label}
@@ -167,7 +167,7 @@ export function OrderBookLadder({
               className="num rounded-md px-3 py-1.5 text-[12px] uppercase transition-colors"
               style={{
                 background: side === s ? (s === 'buy' ? 'var(--color-up)' : 'var(--color-down)') : 'var(--color-surface-2)',
-                color: side === s ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+                color: side === s ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
               }}
             >
               {s}
@@ -195,7 +195,7 @@ export function OrderBookLadder({
             setSent(true);
             setRevealed(0);
           }}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis"
         >
           {sent ? 'Send again' : 'Send market order'}
         </button>

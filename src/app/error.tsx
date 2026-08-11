@@ -25,7 +25,7 @@ export default function RouteError({ error, reset }: { error: Error & { digest?:
       </p>
       {error.digest && <p className="num mt-2 text-[11px] text-ink-faint">Reference {error.digest}</p>}
       <div className="mt-8 flex flex-wrap gap-3">
-        <button onClick={reset} className="rounded-lg bg-accent px-5 py-2.5 font-medium text-ground">
+        <button onClick={reset} className="rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis">
           Try again
         </button>
         <Link href="/" className="rounded-lg border border-line-strong px-5 py-2.5 text-ink-muted">

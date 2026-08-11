@@ -50,7 +50,7 @@ export function CostRealityCheck() {
             onClick={() => setProduct(p.id)}
             className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
               product === p.id
-                ? 'bg-accent text-ground font-medium'
+                ? 'bg-accent text-on-emphasis font-medium'
                 : 'border border-line-strong text-ink-muted hover:text-ink'
             }`}
           >

@@ -170,7 +170,7 @@ export function CandleSprint() {
             setAnswers([]);
             setStartedAt(performance.now());
           }}
-          className="rounded-lg bg-accent px-5 py-2.5 font-medium text-ground"
+          className="rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis"
         >
           Sprint again
         </button>
@@ -219,7 +219,7 @@ export function CandleSprint() {
         </div>
 
         {picked !== null && (
-          <button onClick={next} className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground">
+          <button onClick={next} className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis">
             {index === rounds.length - 1 ? 'See the statistics' : 'Next chart'}
           </button>
         )}

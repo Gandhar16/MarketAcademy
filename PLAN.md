@@ -1554,6 +1554,101 @@ attempted).
 
 ---
 
+#### 3dd. Fibonacci label overlap fix, a global SVG-label halo, and a 3-way theme system — `[x]` COMPLETE
+
+**The overlap bug, found and fixed.** `FibonacciFigure`'s y-domain was
+sized to also fit the 261.8% extension level, which sits roughly 1.6x
+the whole swing range away from the 0-100% grid. That stretched the
+visible domain enough to compress the 0-100% retracement labels
+(especially 61.8%/78.6%, ~12% of the range apart) into a few pixels of
+vertical space, overlapping. Fix: the domain is now sized from the real
+bars and the two swing anchors ONLY; extensions still draw at their true
+price and simply run off-canvas (SVG clips naturally) when far away,
+instead of squeezing every other label to make room.
+
+**A broader fix for the same class of bug.** Every animated TA figure
+draws floating text directly over candle wicks, trendlines and shape
+outlines with no backing shape — wherever a chart element passes behind
+a label, the two visually blend. Added a `.svg-label-halo` CSS class
+(paint-order stroke, 3px stroke in `--color-surface`, i.e. a background-
+coloured outline behind the fill) and applied it to all 15 `<text>`/
+`<motion.text>` elements in `ta-tools.tsx`. `diagrams.tsx` was
+deliberately left untouched — a first attempt via `sed` there corrupted
+existing `className="num"` attributes and touched non-SVG `<span>`
+elements in lesson prose; reverted rather than risk shipping a sloppy
+fix, and no comparable overlap was found in that file's mostly-static
+illustrative diagrams.
+
+**The 3-way theme system.** `globals.css` had exactly one hardcoded dark
+palette and no theme infrastructure at all before this turn. Added:
+
+- `light` and `market` palettes, overriding only the surface/ink tokens
+  (`ground`/`surface`/`surface-2`/`line`/`line-strong`/`ink`/`ink-muted`/
+  `ink-faint`) beneath `:root[data-theme='light']` and
+  `:root[data-theme='market']`. Accent/up/down/danger/info stay
+  IDENTICAL across all three themes on purpose — same brand, same
+  colour-blind-safe up/down pair, and every existing button/semantic
+  colour keeps working with zero further overrides.
+- A new `--color-on-emphasis` token (fixed, not theme-relative) for text
+  painted directly on an accent/up/down surface — a selected toggle, a
+  primary button. This was necessary because ~24 files across the
+  codebase used `var(--color-ground)` (or the `text-ground` Tailwind
+  utility) as that text colour, correct only because `ground` happened
+  to be near-black in the dark-only app. Making `ground` theme-relative
+  would have made every one of those buttons render near-white text on
+  an amber/teal/coral background in the light and market themes — found
+  by grepping every `color-ground` usage, confirming each was a text-
+  on-colour case (not an actual background), and swapping all of them
+  (`'var(--color-ground)'` in inline styles, `text-ground` in
+  classNames) to the new token in one sweep across 14 + files.
+- `ThemeToggle.tsx` — a 3-way cycling button (dark → light → market →
+  dark), persisted to `localStorage['ma-theme']`, added to `HeaderNav`
+  next to the account links. Reads its initial state via a `useEffect`
+  with an explicit, justified `eslint-disable-next-line
+  react-hooks/set-state-in-effect` — starting from `null` on both the
+  server render and the client's first (hydration) render is required to
+  avoid a hydration mismatch, so the real value genuinely cannot be read
+  any earlier than "after mount", which is the legitimate case that
+  lint rule exists to allow.
+- A blocking inline script in `layout.tsx`'s `<head>`, reading the same
+  `localStorage` key and setting `data-theme` on `<html>` before first
+  paint — without it, a stored light/market preference would flash dark
+  first and then snap, the classic flash-of-wrong-theme bug.
+- `MarketThemeBackground.tsx` — per the request ("keep it light so
+  reading stays easy"), the market theme uses the SAME light palette;
+  what makes it "market" is this always-in-the-DOM, CSS-gated animated
+  backdrop (`display: none` unless `[data-theme='market']`), so there is
+  nothing to hydrate and no flash when switching. Two looping SVG layers
+  — a faint ticker polyline and a row of small candle glyphs — each
+  built from one tile rendered twice back-to-back so a CSS `translateX`
+  from 0 to -50% loops seamlessly at any rendered width. Kept faint on
+  purpose: ticker opacity 0.09, candles 0.06, `pointer-events: none`,
+  `z-index: -1`, and the existing global `prefers-reduced-motion` rule
+  freezes both automatically, same as every other animation in this app.
+
+- [x] `FibonacciFigure` y-domain fix (no longer stretched to fit the
+      261.8% extension)
+- [x] `.svg-label-halo` added to `globals.css` and applied to all 15
+      text elements in `ta-tools.tsx`
+- [x] `--color-on-emphasis` token added; ~24 files swept for the
+      `color-ground`-as-text-colour bug this theme system would
+      otherwise have introduced
+- [x] `light`/`market` palettes, `ThemeToggle`, blocking init script,
+      `MarketThemeBackground` — all wired into `layout.tsx`/`HeaderNav`
+- [x] `pnpm verify` clean — 1,252 tests (one flaky timeout under
+      full-suite load on `curriculum.test.ts` that passed cleanly in
+      isolation — not a real failure), tsc/eslint clean, build succeeds
+      (100 static pages)
+- [ ] **Not verified in an actual browser** — no browser-automation tool
+      is available this session. The theme toggle, the animated
+      background, and the Fibonacci label spacing have all been checked
+      via tsc/eslint/build/SSR-HTML-contains-the-right-markup only, never
+      actually watched rendering. Flagged transparently, same as every
+      other visual feature built this session — open this in a real
+      browser before trusting the visual result further.
+
+---
+
 ### M4 · Polish — `[ ]`
 
 - [x] Mobile layout pass across header, pages, leaderboard, widgets — see §3k

@@ -197,7 +197,7 @@ function ContinueGate({
       <button
         onClick={onAdvance}
         disabled={blocked}
-        className="rounded-lg bg-accent px-5 py-2.5 font-medium text-ground transition-opacity disabled:cursor-not-allowed disabled:opacity-30"
+        className="rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis transition-opacity disabled:cursor-not-allowed disabled:opacity-30"
       >
         Continue
       </button>
@@ -416,7 +416,7 @@ function Predict({
         <button
           disabled={selected == null || disabled}
           onClick={() => selected != null && onCommit(selected, why || undefined)}
-          className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground disabled:opacity-30"
+          className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis disabled:opacity-30"
         >
           Lock in my answer
         </button>

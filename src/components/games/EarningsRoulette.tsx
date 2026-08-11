@@ -126,7 +126,7 @@ export function EarningsRoulette() {
                 className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                 style={{
                   background: call === 'up' ? 'var(--color-up)' : 'var(--color-surface-2)',
-                  color: call === 'up' ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+                  color: call === 'up' ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
                 }}
               >
                 I think it goes up
@@ -136,7 +136,7 @@ export function EarningsRoulette() {
                 className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                 style={{
                   background: call === 'down' ? 'var(--color-down)' : 'var(--color-surface-2)',
-                  color: call === 'down' ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+                  color: call === 'down' ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
                 }}
               >
                 I think it goes down
@@ -144,7 +144,7 @@ export function EarningsRoulette() {
               <button
                 onClick={reveal}
                 disabled={call === null}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground disabled:opacity-30"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis disabled:opacity-30"
               >
                 Announce the results
               </button>
@@ -194,7 +194,7 @@ export function EarningsRoulette() {
             </p>
           </div>
 
-          <button onClick={nextRound} className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground">
+          <button onClick={nextRound} className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis">
             Another earnings season
           </button>
         </div>

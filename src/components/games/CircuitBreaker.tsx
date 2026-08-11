@@ -171,7 +171,7 @@ export function CircuitBreaker() {
           <button
             onClick={sell}
             className="rounded-lg px-4 py-2 text-sm font-medium"
-            style={{ background: 'var(--color-down)', color: 'var(--color-ground)' }}
+            style={{ background: 'var(--color-down)', color: 'var(--color-on-emphasis)' }}
           >
             Sell everything
           </button>
@@ -213,7 +213,7 @@ export function CircuitBreaker() {
           <p className="mt-3 text-[13px] text-ink-faint">
             The bounce at 11:15 was the decision point. It felt like relief; it was the last liquid exit of the day.
           </p>
-          <button onClick={reset} className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground">
+          <button onClick={reset} className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis">
             Play it again
           </button>
         </div>

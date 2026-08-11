@@ -101,7 +101,7 @@ export function SettlementChain() {
                   className="num flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px]"
                   style={{
                     background: active ? 'var(--color-accent)' : 'var(--color-surface-2)',
-                    color: active ? 'var(--color-ground)' : 'var(--color-ink-faint)',
+                    color: active ? 'var(--color-on-emphasis)' : 'var(--color-ink-faint)',
                   }}
                 >
                   {i + 1}

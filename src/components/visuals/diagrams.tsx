@@ -198,7 +198,7 @@ export function LongShortDiagram() {
             className="num rounded-md px-3 py-1.5 text-[12px] uppercase transition-colors"
             style={{
               background: side === s ? 'var(--color-accent)' : 'var(--color-surface-2)',
-              color: side === s ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+              color: side === s ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)',
             }}
           >
             {s}

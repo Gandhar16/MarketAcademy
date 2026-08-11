@@ -43,7 +43,7 @@ export function ProgressDashboard({
     return (
       <div className="rounded-xl border border-dashed border-line p-8 text-center">
         <p className="text-ink-muted">Nothing recorded yet.</p>
-        <Link href="/learn" className="mt-4 inline-block rounded-lg bg-accent px-5 py-2.5 font-medium text-ground">
+        <Link href="/learn" className="mt-4 inline-block rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis">
           Start the first lesson
         </Link>
       </div>

@@ -9,7 +9,7 @@ export default function NotFound() {
         It may have been a lesson that has not been written yet. The curriculum plan lists everything that is coming.
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/learn" className="rounded-lg bg-accent px-5 py-2.5 font-medium text-ground">
+        <Link href="/learn" className="rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis">
           Go to the curriculum
         </Link>
         <Link href="/" className="rounded-lg border border-line-strong px-5 py-2.5 text-ink-muted">

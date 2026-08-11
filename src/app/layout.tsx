@@ -4,6 +4,7 @@ import './globals.css';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SessionProvider } from '@/components/auth/SessionProvider';
 import { currentUser } from '@/lib/auth/session';
+import { MarketThemeBackground } from '@/components/MarketThemeBackground';
 
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'], display: 'swap' });
 const mono = JetBrains_Mono({ variable: '--font-jetbrains', subsets: ['latin'], display: 'swap' });
@@ -30,6 +31,24 @@ export const viewport: Viewport = {
   themeColor: '#0a0d12',
 };
 
+/**
+ * Sets `data-theme` on <html> before the browser paints anything, reading
+ * the same `localStorage` key `ThemeToggle` writes to. Without this, the
+ * page would render in the default dark theme first and then visibly snap
+ * to a stored light/market preference a moment later — the classic
+ * flash-of-wrong-theme bug. A blocking inline script in <head> is the only
+ * point in the page lifecycle early enough to prevent that; anything in
+ * <body>, including a client component's first effect, runs after paint.
+ */
+const THEME_INIT_SCRIPT = `
+(function () {
+  try {
+    var t = localStorage.getItem('ma-theme');
+    if (t === 'light' || t === 'market') document.documentElement.dataset.theme = t;
+  } catch (e) {}
+})();
+`;
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Resolved here so the header renders signed-in on the very first paint,
   // instead of flashing "Sign in" and correcting itself a moment later.
@@ -37,10 +56,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable} h-full`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
+        <MarketThemeBackground />
         <a
           href="#content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-ground"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-on-emphasis"
         >
           Skip to content
         </a>

@@ -134,7 +134,7 @@ export function PayoffBuilder() {
             setChecked(false);
             setSolved([]);
           }}
-          className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground"
+          className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis"
         >
           Start again
         </button>
@@ -224,7 +224,7 @@ export function PayoffBuilder() {
           <button
             onClick={() => setChecked(true)}
             disabled={legs.length === 0}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground disabled:opacity-30"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis disabled:opacity-30"
           >
             Check my shape
           </button>
@@ -245,7 +245,7 @@ export function PayoffBuilder() {
                   <span className="num">{built.maxProfit == null ? 'unlimited' : built.maxProfit.toFixed(0)}</span>, max
                   loss <span className="num">{built.maxLoss == null ? 'unlimited' : built.maxLoss.toFixed(0)}</span>.
                 </p>
-                <button onClick={nextLevel} className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground">
+                <button onClick={nextLevel} className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis">
                   {level === CHALLENGES.length - 1 ? 'Finish' : 'Next structure'}
                 </button>
               </>

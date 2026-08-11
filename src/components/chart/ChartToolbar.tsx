@@ -136,7 +136,7 @@ function IndicatorGroup({
               className="num rounded-md px-2.5 py-1 text-[11px] transition-colors"
               style={{
                 background: on ? 'var(--color-accent)' : 'var(--color-surface-2)',
-                color: on ? 'var(--color-ground)' : warming ? 'var(--color-ink-faint)' : 'var(--color-ink-muted)',
+                color: on ? 'var(--color-on-emphasis)' : warming ? 'var(--color-ink-faint)' : 'var(--color-ink-muted)',
                 opacity: warming && !on ? 0.55 : 1,
               }}
             >

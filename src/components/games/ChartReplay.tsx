@@ -386,7 +386,7 @@ export function ChartReplay() {
                   disabled={thesis.trim().length === 0 || stepping}
                   onClick={() => takePosition('long')}
                   className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-30"
-                  style={{ background: 'var(--color-up)', color: 'var(--color-ground)' }}
+                  style={{ background: 'var(--color-up)', color: 'var(--color-on-emphasis)' }}
                 >
                   Go long
                 </button>
@@ -394,7 +394,7 @@ export function ChartReplay() {
                   disabled={thesis.trim().length === 0 || stepping}
                   onClick={() => takePosition('short')}
                   className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-30"
-                  style={{ background: 'var(--color-down)', color: 'var(--color-ground)' }}
+                  style={{ background: 'var(--color-down)', color: 'var(--color-on-emphasis)' }}
                 >
                   Go short
                 </button>
@@ -440,7 +440,7 @@ export function ChartReplay() {
                 <button
                   onClick={() => void advance()}
                   disabled={stepping}
-                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground disabled:opacity-40"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis disabled:opacity-40"
                 >
                   {stepping ? 'Revealing…' : 'Hold, next bar →'}
                 </button>
@@ -503,7 +503,7 @@ export function ChartReplay() {
               be said for most of the alternatives.
             </p>
           )}
-          <button onClick={restart} className="mt-5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-ground">
+          <button onClick={restart} className="mt-5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis">
             New replay
           </button>
         </div>
