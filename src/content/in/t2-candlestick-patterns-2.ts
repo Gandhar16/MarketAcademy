@@ -58,7 +58,7 @@ export const lesson: Lesson = {
       figure: 'CandlestickTrioFigure',
       props: { pattern: 'morning-star' },
       caption:
-        'A big down day, a small indecisive day, then a big up day closing back above the midpoint of the first candle’s body.',
+        'A real occurrence, found by scanning real history for the same rule the scanner below tests at scale — not a hand-drawn shape. A big down day, a small indecisive day, then a big up day closing back above the midpoint of the first candle’s body.',
     },
     {
       kind: 'example',

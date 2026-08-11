@@ -55,7 +55,7 @@ export const lesson: Lesson = {
       figure: 'TrendlineFigure',
       props: {},
       caption:
-        'Two swing lows, a line drawn through them, and the touch that actually confirms it. Press replay and watch how little the first two points alone tell you.',
+        'Drawn on a real chart — two real swing lows found by scanning, a line through them, and a real third touch when one exists. Press replay and watch how little the first two points alone tell you.',
     },
     {
       kind: 'example',

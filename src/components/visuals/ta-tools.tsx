@@ -10,12 +10,33 @@
  * unused until this stage. Each figure autoplays once on mount and offers a
  * Replay button, which is the closest a static page gets to "watch it again".
  *
- * As with diagrams.tsx, none of these depict real market data. They depict
- * MECHANISMS — how a tool is drawn, not a claim about what any real chart
- * did — which is why they can be authored from first principles.
+ * TWO KINDS OF FIGURE LIVE HERE, and the split is deliberate:
+ *
+ *  - `TrendlineFigure`, `FibonacciFigure` and `CandlestickTrioFigure` draw on
+ *    REAL bars, fetched live and searched algorithmically (`chart-drawing.ts`
+ *    finds the swing, the pivots, the pattern occurrence — nothing is chosen
+ *    by eye). A learner watching one of these is watching the tool actually
+ *    get marked up on a real chart, which is the whole point of a "how do I
+ *    mark this" figure.
+ *  - `ChartPatternFigure`, `ElliottWaveFigure` and `VolumeProfileFigure`
+ *    remain illustrative, same as diagrams.tsx — they depict MECHANISMS, not
+ *    a specific real occurrence, because reliably finding a real
+ *    head-and-shoulders or a real Elliott count in a small fetched window
+ *    is a shape-detection problem this course does not attempt to solve.
+ *    Each of those three is honest about this in its own lesson.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { Candle } from '@/lib/market/types';
+import { PATTERNS_BY_ID, type PatternId } from '@/lib/analysis/patterns';
+import { INDIA_EQUITIES } from '@/lib/market/symbols';
+import {
+  findLargestSwing,
+  findLineTouch,
+  findPivotLows,
+  findTrendlineAnchors,
+  retracementLevel,
+} from '@/lib/analysis/chart-drawing';
 
 function ReplayButton({ onReplay }: { onReplay: () => void }) {
   return (
@@ -28,99 +49,181 @@ function ReplayButton({ onReplay }: { onReplay: () => void }) {
   );
 }
 
-// ── TrendlineFigure ─────────────────────────────────────────────────────────
+function LoadingFigure() {
+  return <div className="h-64 animate-pulse rounded-xl border border-line bg-surface" />;
+}
+
+function ErrorFigure({ message }: { message: string }) {
+  return <div className="rounded-xl border border-danger/50 bg-danger/10 p-4 text-sm text-danger">{message}</div>;
+}
 
 /**
- * How a trendline is actually drawn: two swing points first, a third touch
- * that confirms it, and a close beyond it that invalidates it. The point
- * being made in the lesson is that steps 1–2 are a HYPOTHESIS and step 3 is
- * the only thing that turns it into something worth paying attention to.
+ * Real daily bars for one symbol. The only path these figures reach real
+ * data through. Loading is DERIVED — the held data's own key against the
+ * current inputs — rather than a flag reset synchronously in the effect,
+ * the same pattern `usePatternStats` already uses in widgets/patterns.tsx.
+ */
+function useRealBars(symbol: string, range: string) {
+  const key = `${symbol}|${range}`;
+  const [data, setData] = useState<{ key: string; bars: Candle[] } | null>(null);
+  const [errorState, setErrorState] = useState<{ key: string; message: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/history?symbol=${encodeURIComponent(symbol)}&interval=1d&range=${range}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        if (!json.candles) {
+          setErrorState({ key, message: json.message ?? 'Could not load history.' });
+          return;
+        }
+        setData({ key, bars: json.candles });
+      })
+      .catch((e) => {
+        if (!cancelled) setErrorState({ key, message: e instanceof Error ? e.message : 'Something went wrong.' });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [symbol, range, key]);
+
+  const bars = data?.key === key ? data.bars : null;
+  const error = errorState?.key === key ? errorState.message : null;
+
+  return { bars, error };
+}
+
+/** Vertical price → pixel scale with padding, shared by every real-data figure. */
+function makeYScale(minVal: number, maxVal: number, height: number, padFrac = 0.08) {
+  const pad = (maxVal - minVal) * padFrac || 1;
+  const lo = minVal - pad;
+  const hi = maxVal + pad;
+  return (v: number) => height - ((v - lo) / (hi - lo)) * height;
+}
+
+/** Plain (non-animated) real candles — callers wrap the whole group in one fade-in. */
+function realCandleElements(bars: Candle[], width: number, y: (v: number) => number) {
+  const slot = width / bars.length;
+  const bodyW = Math.max(1.5, slot * 0.55);
+  return bars.map((b, i) => {
+    const cx = i * slot + slot / 2;
+    const up = b.close >= b.open;
+    const colour = up ? 'var(--color-up)' : 'var(--color-down)';
+    const top = y(Math.max(b.open, b.close));
+    const bottom = y(Math.min(b.open, b.close));
+    return (
+      <g key={i}>
+        <line x1={cx} y1={y(b.high)} x2={cx} y2={y(b.low)} stroke={colour} strokeWidth={1.2} opacity={0.9} />
+        <rect x={cx - bodyW / 2} y={top} width={bodyW} height={Math.max(1, bottom - top)} fill={colour} opacity={0.9} />
+      </g>
+    );
+  });
+}
+
+// ── TrendlineFigure ─────────────────────────────────────────────────────────
+
+const TRENDLINE_SYMBOL = 'HDFCBANK.NS';
+
+/**
+ * A trendline drawn on REAL daily bars. `findTrendlineAnchors` finds two
+ * real swing lows algorithmically; `findLineTouch` checks whether the line
+ * has genuinely been tested again since. Both outcomes are shown honestly —
+ * a confirmed touch when one exists in the window, and the equally common
+ * "still waiting" case when one does not, rather than only ever showing the
+ * flattering version.
  */
 export function TrendlineFigure() {
   const [play, setPlay] = useState(0);
+  const { bars: allBars, error } = useRealBars(TRENDLINE_SYMBOL, '1y');
+
+  if (error) return <ErrorFigure message={error} />;
+  if (!allBars || allBars.length < 30) return <LoadingFigure />;
+
+  const swing = findLargestSwing(allBars);
+  const anchors = findTrendlineAnchors(allBars) ?? {
+    p1: swing.lowIdx,
+    p2: findPivotLows(allBars, 1).find((i) => i > swing.lowIdx) ?? Math.min(swing.lowIdx + 12, allBars.length - 1),
+  };
+  const { p1, p2 } = anchors;
+
+  const startIdx = Math.max(0, p1 - 8);
+  const endIdx = Math.min(allBars.length - 1, p2 + 22);
+  const bars = allBars.slice(startIdx, endIdx + 1);
+  const iP1 = p1 - startIdx;
+  const iP2 = p2 - startIdx;
+  const lineEndIdx = bars.length - 1;
+
+  const slope = (bars[iP2].low - bars[iP1].low) / (iP2 - iP1);
+  const lineAt = (i: number) => bars[iP1].low + slope * (i - iP1);
+  const realTouch = findLineTouch(allBars, p1, p2, p2 + 1);
+  const touchIdx = realTouch != null && realTouch <= endIdx ? realTouch - startIdx : null;
+
   const W = 560;
-  const H = 220;
-
-  // A hand-authored illustrative uptrend with two higher lows and a touch.
-  const series: [number, number][] = [
-    [40, 170], [90, 140], [140, 158], [190, 108], [230, 128], [280, 90],
-    [330, 112], [380, 68], [420, 86], [470, 46],
-  ];
-  const path = series.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ');
-
-  // The trendline passes through the two swing lows: index 2 and index 6.
-  const p1 = series[2];
-  const p2 = series[6];
-  const slope = (p2[1] - p1[1]) / (p2[0] - p1[0]);
-  const lineAt = (x: number) => p1[1] + slope * (x - p1[0]);
-  const lineStart: [number, number] = [30, lineAt(30)];
-  const lineEnd: [number, number] = [520, lineAt(520)];
-
-  // Touch 3: the same swing-low rule, further along the same line.
-  const touch3: [number, number] = [420, lineAt(420) - 4];
+  const H = 240;
+  const domainLo = Math.min(...bars.map((b) => b.low), lineAt(iP1), lineAt(lineEndIdx));
+  const domainHi = Math.max(...bars.map((b) => b.high));
+  const y = makeYScale(domainLo, domainHi, H - 24, 0.1);
+  const slot = W / bars.length;
+  const xAt = (i: number) => i * slot + slot / 2;
 
   return (
     <div className="rounded-xl border border-line bg-surface p-5">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] uppercase tracking-wider text-ink-faint">Drawing a trendline</span>
+        <span className="text-[11px] uppercase tracking-wider text-ink-faint">
+          Drawing a trendline on {TRENDLINE_SYMBOL.replace('.NS', '')}, real daily bars
+        </span>
         <ReplayButton onReplay={() => setPlay((n) => n + 1)} />
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="How a trendline is drawn">
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="A trendline drawn on a real chart">
         <AnimatePresence mode="wait">
           <g key={play}>
-            <path d={path} stroke="var(--color-ink-faint)" strokeWidth={2} fill="none" />
+            <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+              {realCandleElements(bars, W, y)}
+            </motion.g>
 
-            {[series[2], series[6]].map(([x, y], i) => (
+            {[iP1, iP2].map((idx, i) => (
               <motion.circle
-                key={i}
-                cx={x}
-                cy={y}
-                r={5}
-                fill="var(--color-accent)"
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 + i * 0.5, duration: 0.3 }}
+                key={i} cx={xAt(idx)} cy={y(bars[idx].low)} r={4.5} fill="var(--color-accent)"
+                initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1 + i * 0.5, duration: 0.3 }}
               />
             ))}
-            <motion.text
-              x={p1[0]} y={p1[1] + 20} fill="var(--color-accent)" fontSize={10} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-            >
+            <motion.text x={xAt(iP1)} y={y(bars[iP1].low) + 18} fill="var(--color-accent)" fontSize={9.5} textAnchor="middle"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }}>
               swing low 1
             </motion.text>
-            <motion.text
-              x={p2[0]} y={p2[1] + 20} fill="var(--color-accent)" fontSize={10} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}
-            >
-              swing low 2 — now you can draw it
+            <motion.text x={xAt(iP2)} y={y(bars[iP2].low) + 18} fill="var(--color-accent)" fontSize={9.5} textAnchor="middle"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}>
+              swing low 2 — now draw it
             </motion.text>
 
             <motion.line
-              x1={lineStart[0]} y1={lineStart[1]} x2={lineEnd[0]} y2={lineEnd[1]}
+              x1={xAt(iP1)} y1={y(bars[iP1].low)} x2={xAt(lineEndIdx)} y2={y(lineAt(lineEndIdx))}
               stroke="var(--color-up)" strokeWidth={2}
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ delay: 1.5, duration: 0.8 }}
+              initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ delay: 2.2, duration: 0.8 }}
             />
 
-            <motion.circle
-              cx={touch3[0]} cy={touch3[1]} r={6} fill="none" stroke="var(--color-up)" strokeWidth={2}
-              initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 2.6, duration: 0.3 }}
-            />
-            <motion.text
-              x={touch3[0]} y={touch3[1] - 14} fill="var(--color-up)" fontSize={10} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.9 }}
-            >
-              touch 3 — this is the confirmation
-            </motion.text>
+            {touchIdx != null && (
+              <>
+                <motion.circle
+                  cx={xAt(touchIdx)} cy={y(bars[touchIdx].low)} r={6} fill="none" stroke="var(--color-up)" strokeWidth={2}
+                  initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 3.3, duration: 0.3 }}
+                />
+                <motion.text x={xAt(touchIdx)} y={y(bars[touchIdx].low) - 12} fill="var(--color-up)" fontSize={9.5} textAnchor="middle"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.6 }}>
+                  a real third touch
+                </motion.text>
+              </>
+            )}
           </g>
         </AnimatePresence>
       </svg>
       <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
-        Two points make a line. A THIRD point that respects it is what makes that line worth anything — with only
-        two, you have drawn a hypothesis, not a level. A close on the other side of it is the line failing, not the
-        market being wrong.
+        {touchIdx != null
+          ? 'Real daily bars, real swing lows, found by scanning rather than by eye. Price came back to this exact line and respected it — that real touch is what turns two points into something worth watching.'
+          : 'Real daily bars, real swing lows, found by scanning rather than by eye. The line is drawn and projected forward — price has not tested it again in this window yet, which is the ordinary case: most trendlines are waiting, not confirmed.'}
       </p>
     </div>
   );
@@ -128,91 +231,113 @@ export function TrendlineFigure() {
 
 // ── FibonacciFigure ─────────────────────────────────────────────────────────
 
+const FIB_SYMBOL = 'RELIANCE.NS';
 const FIB_RETRACEMENTS = [0, 23.6, 38.2, 50, 61.8, 78.6, 100];
 const FIB_EXTENSIONS = [161.8, 261.8];
 
-/** Anchoring a swing low and swing high, then drawing the grid level by level. */
+/**
+ * Anchoring a Fibonacci grid on REAL bars. The swing is the single largest
+ * real rally found in a year of daily history — `findLargestSwing`, not a
+ * hand-picked pair of points — so the anchors are exactly where a learner
+ * would find them by scanning the same real chart themselves.
+ */
 export function FibonacciFigure() {
   const [play, setPlay] = useState(0);
-  const W = 560;
-  const H = 260;
+  const { bars: allBars, error } = useRealBars(FIB_SYMBOL, '1y');
 
-  const loY = 220; // swing low, at the bottom
-  const hiY = 60; // swing high, at the top
-  const yFor = (pct: number) => loY - ((loY - hiY) * pct) / 100;
+  if (error) return <ErrorFigure message={error} />;
+  if (!allBars || allBars.length < 30) return <LoadingFigure />;
+
+  const swing = findLargestSwing(allBars);
+  const startIdx = Math.max(0, swing.lowIdx - 6);
+  const endIdx = Math.min(allBars.length - 1, swing.highIdx + 14);
+  const bars = allBars.slice(startIdx, endIdx + 1);
+  const iLow = swing.lowIdx - startIdx;
+  const iHigh = swing.highIdx - startIdx;
+  const loPrice = allBars[swing.lowIdx].low;
+  const hiPrice = allBars[swing.highIdx].high;
+
+  const W = 560;
+  const H = 280;
+  const topLevel = retracementLevel(hiPrice, loPrice, 261.8);
+  const domainLo = Math.min(loPrice, ...bars.map((b) => b.low));
+  const domainHi = Math.max(topLevel, ...bars.map((b) => b.high));
+  const y = makeYScale(domainLo, domainHi, H - 24, 0.03);
+  const slot = W / bars.length;
+  const xAt = (i: number) => i * slot + slot / 2;
 
   return (
     <div className="rounded-xl border border-line bg-surface p-5">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] uppercase tracking-wider text-ink-faint">Anchoring a Fibonacci grid</span>
+        <span className="text-[11px] uppercase tracking-wider text-ink-faint">
+          Anchoring a grid on {FIB_SYMBOL.replace('.NS', '')}, real daily bars
+        </span>
         <ReplayButton onReplay={() => setPlay((n) => n + 1)} />
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="Fibonacci retracement and extension levels">
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="Fibonacci retracement drawn on a real chart">
         <AnimatePresence mode="wait">
           <g key={play}>
-            {/* the move itself: swing low to swing high */}
-            <motion.line
-              x1={100} y1={loY} x2={100} y2={hiY} stroke="var(--color-ink-faint)" strokeWidth={2}
-              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.6 }}
-            />
-            <motion.circle cx={100} cy={loY} r={5} fill="var(--color-down)"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} />
-            <motion.circle cx={100} cy={hiY} r={5} fill="var(--color-up)"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} />
-            <motion.text x={100} y={loY + 18} fill="var(--color-down)" fontSize={10} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
+            <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+              {realCandleElements(bars, W, y)}
+            </motion.g>
+
+            <motion.circle cx={xAt(iLow)} cy={y(loPrice)} r={5} fill="var(--color-down)"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} />
+            <motion.circle cx={xAt(iHigh)} cy={y(hiPrice)} r={5} fill="var(--color-up)"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }} />
+            <motion.text x={xAt(iLow)} y={y(loPrice) + 18} fill="var(--color-down)" fontSize={9.5} textAnchor="middle"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }}>
               anchor 1 — swing low
             </motion.text>
-            <motion.text x={100} y={hiY - 12} fill="var(--color-up)" fontSize={10} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}>
+            <motion.text x={xAt(iHigh)} y={y(hiPrice) - 10} fill="var(--color-up)" fontSize={9.5} textAnchor="middle"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.15 }}>
               anchor 2 — swing high
             </motion.text>
 
-            {FIB_RETRACEMENTS.map((pct, i) => (
-              <g key={pct}>
-                <motion.line
-                  x1={100} y1={yFor(pct)} x2={W - 20} y2={yFor(pct)}
-                  stroke={pct === 50 ? 'var(--color-accent)' : 'var(--color-line-strong)'}
-                  strokeDasharray={pct === 0 || pct === 100 ? undefined : '4 4'}
-                  strokeWidth={pct === 50 ? 1.5 : 1}
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ delay: 1 + i * 0.25, duration: 0.4 }}
-                />
-                <motion.text
-                  x={W - 16} y={yFor(pct) + 3} fill="var(--color-ink-faint)" fontSize={9.5}
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 + i * 0.25 }}
-                >
-                  {pct}%
-                </motion.text>
-              </g>
-            ))}
+            {FIB_RETRACEMENTS.map((pct, i) => {
+              const level = retracementLevel(hiPrice, loPrice, pct);
+              return (
+                <g key={pct}>
+                  <motion.line
+                    x1={0} y1={y(level)} x2={W} y2={y(level)}
+                    stroke={pct === 50 ? 'var(--color-accent)' : 'var(--color-line-strong)'}
+                    strokeDasharray={pct === 0 || pct === 100 ? undefined : '4 4'}
+                    strokeWidth={pct === 50 ? 1.5 : 1} opacity={0.85}
+                    initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.85 }}
+                    transition={{ delay: 1.6 + i * 0.22, duration: 0.4 }}
+                  />
+                  <motion.text x={W - 4} y={y(level) - 3} textAnchor="end" fill="var(--color-ink-faint)" fontSize={9}
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.7 + i * 0.22 }}>
+                    {pct}%
+                  </motion.text>
+                </g>
+              );
+            })}
 
-            {FIB_EXTENSIONS.map((pct, i) => (
-              <g key={pct}>
-                <motion.line
-                  x1={100} y1={yFor(pct)} x2={W - 20} y2={yFor(pct)}
-                  stroke="var(--color-up)" strokeDasharray="2 5" strokeWidth={1} opacity={0.7}
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 0.7 }}
-                  transition={{ delay: 2.9 + i * 0.3, duration: 0.4 }}
-                />
-                <motion.text
-                  x={W - 16} y={yFor(pct) + 3} fill="var(--color-up)" fontSize={9.5}
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3 + i * 0.3 }}
-                >
-                  {pct}%
-                </motion.text>
-              </g>
-            ))}
+            {FIB_EXTENSIONS.map((pct, i) => {
+              const level = retracementLevel(hiPrice, loPrice, pct);
+              return (
+                <g key={pct}>
+                  <motion.line
+                    x1={0} y1={y(level)} x2={W} y2={y(level)}
+                    stroke="var(--color-up)" strokeDasharray="2 5" strokeWidth={1} opacity={0.6}
+                    initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.6 }}
+                    transition={{ delay: 3.4 + i * 0.3, duration: 0.4 }}
+                  />
+                  <motion.text x={W - 4} y={y(level) - 3} textAnchor="end" fill="var(--color-up)" fontSize={9}
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.5 + i * 0.3 }}>
+                    {pct}%
+                  </motion.text>
+                </g>
+              );
+            })}
           </g>
         </AnimatePresence>
       </svg>
       <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
-        The grid is anchored on exactly two points and nothing else — move either anchor a little and every line
-        moves with it. 50% is on this chart because traders watch it, not because it belongs to the Fibonacci
-        sequence at all. The dashed lines above 100% are extensions, read as possible targets if the move continues
-        past the swing high rather than pausing there.
+        The largest real rally in a year of {FIB_SYMBOL.replace('.NS', '')}, found by scanning for it rather than
+        chosen by eye. Anchor at the low, anchor at the high, and the grid draws itself — move either anchor and
+        every level moves with it.
       </p>
     </div>
   );
@@ -430,63 +555,131 @@ export function ElliottWaveFigure() {
 
 // ── CandlestickTrioFigure ────────────────────────────────────────────────────
 
-/** Three candles, appearing in sequence: the morning-star / evening-star family. */
+/** A handful of liquid symbols to search — a real occurrence in one of these is common. */
+const TRIO_SYMBOL_POOL = INDIA_EQUITIES.slice(0, 10).map((s) => s.symbol);
+
+type TrioResult =
+  | { status: 'none' }
+  | { status: 'error'; message: string }
+  | { status: 'found'; bars: Candle[]; index: number; symbol: string };
+type TrioSearch = TrioResult | { status: 'searching' };
+
+/**
+ * Scans real history, symbol by symbol, for a genuine occurrence of
+ * `patternId`. As with `useRealBars`, "searching" is DERIVED from whether
+ * the held result matches the current key, rather than reset synchronously.
+ */
+function useRealPatternExample(patternId: PatternId, symbols: string[], range: string): TrioSearch {
+  const key = `${patternId}|${symbols.join(',')}|${range}`;
+  const [result, setResult] = useState<{ key: string; value: TrioResult } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const def = PATTERNS_BY_ID.get(patternId);
+      if (!def) {
+        setResult({ key, value: { status: 'none' } });
+        return;
+      }
+      for (const symbol of symbols) {
+        try {
+          const res = await fetch(`/api/history?symbol=${encodeURIComponent(symbol)}&interval=1d&range=${range}`);
+          const json = await res.json();
+          if (cancelled) return;
+          const bars: Candle[] | undefined = json.candles;
+          if (!bars) continue;
+          for (let i = bars.length - 1; i >= def.lookback; i--) {
+            if (def.detect(bars, i)) {
+              setResult({ key, value: { status: 'found', bars, index: i, symbol } });
+              return;
+            }
+          }
+        } catch {
+          // Try the next symbol rather than failing the whole search.
+        }
+      }
+      if (!cancelled) setResult({ key, value: { status: 'none' } });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [patternId, symbols, range, key]);
+
+  if (result?.key !== key) return { status: 'searching' };
+  return result.value;
+}
+
+/**
+ * Three REAL candles: a genuine occurrence of morning-star or evening-star,
+ * found by running the exact same detector from `patterns.ts` against real
+ * history — the same rule the scanner widget below tests at scale, applied
+ * once here to one real, specific example instead of a hand-drawn shape.
+ */
 export function CandlestickTrioFigure({ pattern }: { pattern: 'morning-star' | 'evening-star' }) {
   const [play, setPlay] = useState(0);
-  const W = 380;
-  const H = 200;
+  const result = useRealPatternExample(pattern, TRIO_SYMBOL_POOL, '2y');
   const bullish = pattern === 'morning-star';
 
-  // [openY, closeY, highY, lowY] per candle, in SVG y-coordinates (smaller = higher price).
-  const candles = bullish
-    ? [
-        { x: 70, o: 60, c: 150, h: 55, l: 155 }, // big down day
-        { x: 190, o: 158, c: 168, h: 150, l: 172 }, // small indecisive day, gapped down
-        { x: 310, o: 165, c: 75, h: 70, l: 170 }, // big up day, closing back into candle 1
-      ]
-    : [
-        { x: 70, o: 150, c: 60, h: 55, l: 155 }, // big up day
-        { x: 190, o: 50, c: 40, h: 35, l: 55 }, // small indecisive day, gapped up
-        { x: 310, o: 45, c: 140, h: 40, l: 145 }, // big down day, closing back into candle 1
-      ];
+  if (result.status === 'searching') return <LoadingFigure />;
+  if (result.status === 'error') return <ErrorFigure message={result.message} />;
+  if (result.status === 'none') {
+    return (
+      <ErrorFigure message={`No real ${pattern.replace('-', ' ')} turned up across the symbols checked just now. Reload the lesson to search again.`} />
+    );
+  }
 
-  const midpoint = bullish ? (candles[0].o + candles[0].c) / 2 : (candles[0].c + candles[0].o) / 2;
+  const { bars: allBars, index, symbol } = result;
+  const startIdx = Math.max(0, index - 9);
+  const endIdx = Math.min(allBars.length - 1, index + 2);
+  const bars = allBars.slice(startIdx, endIdx + 1);
+  const iC1 = index - 2 - startIdx;
+  const iC2 = index - 1 - startIdx;
+  const iC3 = index - startIdx;
+
+  const c1 = allBars[index - 2];
+  const midpoint = (c1.open + c1.close) / 2;
+
+  const W = 560;
+  const H = 220;
+  const y = makeYScale(Math.min(...bars.map((b) => b.low)), Math.max(...bars.map((b) => b.high)), H - 30, 0.15);
+  const slot = W / bars.length;
+  const bodyW = Math.max(2, slot * 0.55);
+  const xAt = (i: number) => i * slot + slot / 2;
 
   return (
     <div className="rounded-xl border border-line bg-surface p-5">
       <div className="flex items-center justify-between">
         <span className="text-[11px] uppercase tracking-wider text-ink-faint">
-          {bullish ? 'Morning star' : 'Evening star'}
+          A real {bullish ? 'morning star' : 'evening star'} on {symbol.replace('.NS', '')}
         </span>
         <ReplayButton onReplay={() => setPlay((n) => n + 1)} />
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label={`Anatomy of a ${pattern}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label={`A real ${pattern} found on ${symbol}`}>
         <AnimatePresence mode="wait">
           <g key={play}>
-            <line x1={20} y1={midpoint} x2={W - 20} y2={midpoint} stroke="var(--color-line)" strokeDasharray="3 4" />
-            <text x={W - 20} y={midpoint - 6} textAnchor="end" fill="var(--color-ink-faint)" fontSize={9.5}>
+            <line x1={0} y1={y(midpoint)} x2={W} y2={y(midpoint)} stroke="var(--color-line)" strokeDasharray="3 4" />
+            <text x={W - 4} y={y(midpoint) - 6} textAnchor="end" fill="var(--color-ink-faint)" fontSize={9}>
               midpoint of candle 1&apos;s body
             </text>
 
-            {candles.map((c, i) => {
-              const up = c.c < c.o; // smaller y = higher price = close above open
-              const bodyTop = Math.min(c.o, c.c);
-              const bodyBottom = Math.max(c.o, c.c);
+            {bars.map((b, i) => {
+              const up = b.close >= b.open;
+              const colour = up ? 'var(--color-up)' : 'var(--color-down)';
+              const top = y(Math.max(b.open, b.close));
+              const bottom = y(Math.min(b.open, b.close));
+              const isPattern = i === iC1 || i === iC2 || i === iC3;
+              const cx = xAt(i);
               return (
                 <motion.g
                   key={i}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.7, duration: 0.4 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: isPattern ? 1 : 0.3 }}
+                  transition={{ delay: isPattern ? 0.3 + (i - iC1) * 0.7 : 0, duration: 0.4 }}
                 >
-                  <line x1={c.x} y1={c.h} x2={c.x} y2={c.l} stroke={up ? 'var(--color-up)' : 'var(--color-down)'} strokeWidth={1.5} />
-                  <rect
-                    x={c.x - 16} y={bodyTop} width={32} height={Math.max(2, bodyBottom - bodyTop)}
-                    fill={up ? 'var(--color-up)' : 'var(--color-down)'} opacity={0.85} rx={2}
-                  />
-                  <text x={c.x} y={H - 14} textAnchor="middle" fill="var(--color-ink-faint)" fontSize={10}>
-                    candle {i + 1}
-                  </text>
+                  <line x1={cx} y1={y(b.high)} x2={cx} y2={y(b.low)} stroke={colour} strokeWidth={1.2} />
+                  <rect x={cx - bodyW / 2} y={top} width={bodyW} height={Math.max(1, bottom - top)} fill={colour} />
                 </motion.g>
               );
             })}
@@ -494,9 +687,8 @@ export function CandlestickTrioFigure({ pattern }: { pattern: 'morning-star' | '
         </AnimatePresence>
       </svg>
       <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
-        {bullish
-          ? 'A large down day, a small day that barely moves, then a large up day closing back above the midpoint of the first candle’s body. Unlike the chart-shape patterns above, this one is a few-bar rule — testable on real bars, which the scanner below does.'
-          : 'A large up day, a small day that barely moves, then a large down day closing back below the midpoint of the first candle’s body. Unlike the chart-shape patterns above, this one is a few-bar rule — testable on real bars, which the scanner below does.'}
+        A real occurrence on {symbol.replace('.NS', '')}, found by scanning its actual history for the same rule the
+        scanner below tests at scale. The three highlighted candles are the pattern; the dimmed ones are context.
       </p>
     </div>
   );

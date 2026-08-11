@@ -789,6 +789,81 @@ Syllabus is still **12 stages**, now **84 steps, 79 built, 5 gaps** (the
 same five from §3n — this lesson didn't touch them, it only added one more
 built topic to `stage-5b`).
 
+#### 3p. Real data instead of illustrative diagrams, for the tools that support it — `[x]` COMPLETE for 3 of 6
+
+**The ask.** Every figure in `ta-tools.tsx` up to this point was an
+illustrative MECHANISM diagram — a hand-authored zigzag standing in for a
+chart, same convention as `diagrams.tsx`. Explicit feedback: show how to
+mark these tools up on an actual small real chart, the way a learner would
+do it themselves, not an abstract line drawing.
+
+**What was actually feasible to do for real, honestly.** Three of the six
+figures reduce to an algorithm a computer can run against real bars —
+finding the largest real swing, finding real pivot lows, or running an
+existing `patterns.ts` detector against real history until it fires. Those
+three were rebuilt on real, live-fetched data:
+
+- **`TrendlineFigure`** — `findTrendlineAnchors` finds two real swing lows
+  (a pivot-low scan, widening the window on failure rather than inventing a
+  point); `findLineTouch` checks whether a real third touch exists in the
+  window. Both outcomes are shown honestly: a confirmed touch when one is
+  found, and the equally common "still waiting" case when it is not — the
+  lesson never only shows the flattering version.
+- **`FibonacciFigure`** — `findLargestSwing` is a max-profit-style single
+  pass that finds the single largest real low-to-high rally in a year of
+  daily bars. Not chosen by eye; found by scanning, which is exactly how a
+  learner would find one themselves.
+- **`CandlestickTrioFigure`** — reuses the EXACT `PATTERNS_BY_ID` detector
+  from `patterns.ts` (the same rule `PatternScanner` tests at scale),
+  scanning a pool of ten liquid symbols until a genuine occurrence of
+  morning-star or evening-star turns up. If none turns up across the pool,
+  the figure says so honestly rather than falling back to a drawn shape.
+
+**What was deliberately left illustrative, and why.** `ChartPatternFigure`
+(head-and-shoulders, double-top/bottom, triangle), `ElliottWaveFigure` and
+`VolumeProfileFigure` remain hand-authored MECHANISM diagrams. Reliably
+finding a real occurrence of a multi-week geometric shape in a small fetched
+window is a shape-detection problem, not a swing-scan or an existing
+detector — a materially larger job than the other three, and each of those
+lessons already says explicitly that these shapes are drawn by eye and not
+base-rate-tested for the same reason. Worth doing later if wanted; not
+attempted this pass rather than faked.
+
+**New pure module, tested independently of React**, matching the
+`patterns.ts` / `patterns.tsx` split: `src/lib/analysis/chart-drawing.ts`
+holds `findLargestSwing`, `findPivotLows`, `findTrendlineAnchors`,
+`findLineTouch` and `retracementLevel`, all pure functions over `Candle[]`.
+`chart-drawing.test.ts` — 11 tests, including a case that checks the
+algorithm returns `null` rather than inventing a trendline anchor when none
+exists.
+
+- [x] `chart-drawing.ts` + 11 passing tests
+- [x] `TrendlineFigure`, `FibonacciFigure`, `CandlestickTrioFigure` rebuilt on real data
+- [x] `useRealBars` / `useRealPatternExample` — loading is DERIVED from
+      whether held data matches the current key, same pattern
+      `usePatternStats` already used in `widgets/patterns.tsx`; this is
+      what made `eslint-plugin-react-hooks`'s `set-state-in-effect` pass
+      cleanly on the first correct attempt (the naive "reset state
+      synchronously at the top of the effect" version failed it)
+- [x] Lesson captions in `in-t2-trendlines`, `in-t2-fibonacci`,
+      `in-t2-candlestick-patterns-2` updated to say so
+- [x] `pnpm verify` clean — 1,231 tests (up from 1,220), build succeeds
+      (99 static pages), all real symbols used
+      (RELIANCE/HDFCBANK/TCS/INFY/ICICIBANK/ITC/SBIN/TATAMOTORS/MARUTI/SUNPHARMA)
+      confirmed live via `/api/history` with 250 real daily bars each
+
+**Not verified visually in a browser.** No browser-automation tool was
+available this session — verification is `tsc` + `eslint` +
+`chart-drawing.test.ts` + confirming the real API returns sufficient real
+data for every hardcoded symbol + SSR not crashing on the affected lesson
+pages. The client-side fetch-and-draw logic itself (what actually runs
+after hydration) has not been eyeballed in an actual browser. Worth a manual
+check before calling this fully done.
+
+**Still open:** `ChartPatternFigure`, `ElliottWaveFigure`,
+`VolumeProfileFigure` on real data — genuinely harder (shape detection, not
+a swing scan), scoped above, not started.
+
 ---
 
 ### M4 · Polish — `[ ]`

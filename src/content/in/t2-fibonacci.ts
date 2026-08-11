@@ -57,7 +57,7 @@ export const lesson: Lesson = {
       figure: 'FibonacciFigure',
       props: {},
       caption:
-        'Anchor a swing low and a swing high, and the grid draws itself. The arithmetic is fixed. The two anchors are a judgement call — press replay and watch how much of the figure depends on just those two points.',
+        'Drawn on a real chart — a real swing low and swing high, found by scanning a year of bars for the largest one. The arithmetic is fixed. The two anchors are a judgement call, and this is exactly how you would find them yourself.',
     },
     {
       kind: 'example',
