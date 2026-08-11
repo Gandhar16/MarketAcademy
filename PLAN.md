@@ -1091,6 +1091,90 @@ but never states the gate as its own predict the way the reversal lesson
 now does). Both are small, well-scoped additions for a future pass rather
 than done half-heartedly here.
 
+#### 3u. Fibonacci in both directions, and a real bug caught before shipping — `[x]` COMPLETE for Fibonacci; still open for the rest
+
+**The ask, with a concrete example given.** Every tool in this stage so far
+only demonstrated the uptrend case — drag from a swing low up to a swing
+high. The explicit request: show the downtrend case too (drag from the
+high down to the low, so the retracement measures how far a BOUNCE might
+climb before the decline resumes, not how far a pullback might fall) — and
+do the same depth pass, with real research, across every indicator and
+chart pattern: what it shows, why it matters, when and where to use it,
+not just quizzes.
+
+**Scope decision, stated plainly.** A full research-and-rewrite pass across
+every indicator and pattern lesson already built (roughly fifteen of them)
+is a large body of work. This pass did ONE of them — Fibonacci — all the
+way through, rather than a thin pass across all fifteen. The rest are
+listed below as the next boxes to pick up, each already scoped.
+
+**`retracementLevel` turned out to already be direction-agnostic.** Rather
+than writing a second formula, the existing function works correctly for a
+downtrend if the two arguments are simply swapped — `from` is wherever the
+retracement STARTS (0%), `to` is wherever it ENDS (100%), and extensions
+continue past `from` away from `to`. Proven with new tests calling it with
+the arguments swapped and checking the mirrored outputs, rather than
+asserted. New `findLargestDecline` in `chart-drawing.ts` is the mirror of
+`findLargestSwing` — a max-drawdown-style scan for the largest real
+high-to-low decline, tested the same way.
+
+**A real bug caught before it shipped.** The first version of
+`FibonacciFigure`'s direction toggle had `anchorFrom`/`anchorTo` backward
+for the uptrend case — it would have silently swapped which price landed
+on the 38.2% line and which landed on 61.8%. Caught by manually tracing
+the arithmetic against the lesson's own worked numbers before running
+anything, not by a test catching it after the fact (the pure-function
+tests for `retracementLevel` pass either way, since they call it directly
+with explicit arguments — the bug was only in which arguments the
+COMPONENT passed). Worth remembering: a correct, tested pure function does
+not guarantee the component wiring it up is correct.
+
+**`in-t2-fibonacci` substantially expanded**, leaning on `example` blocks
+(informational walkthroughs, not more quizzes) to add depth without
+breaking the interaction ratio — `example` and `figure` blocks are
+"supporting" content, excluded from the R1 interactive/text ratio
+entirely, which is what made room for real research-backed depth:
+
+- **Where 61.8% and 38.2% actually come from** — the Fibonacci sequence's
+  consecutive-ratio convergence to ≈0.618, stated as real, checkable
+  mathematics.
+- **Where 50% comes from instead** — Dow Theory, decades before Fibonacci
+  retracement existed, on the observation that markets often give back
+  roughly half a move. Not folklore invented for this course; a real,
+  separate historical origin, now stated rather than only implied.
+- **When and where to use it at all** — during a pullback or bounce inside
+  an existing trend; a flat, directionless market has no clean swing to
+  anchor a grid to in the first place.
+- **The downtrend worked example**, mirroring the uptrend one with
+  different real numbers, plus a downtrend transfer-test predict showing
+  the identical ₹6.18-per-₹10 anchor sensitivity the uptrend case already
+  demonstrated — same fragility, proven in both directions rather than
+  asserted once.
+
+- [x] `findLargestDecline` in `chart-drawing.ts` + 3 tests
+- [x] `retracementLevel` JSDoc rewritten to state the direction-agnostic
+      contract explicitly + 2 new tests calling it swapped
+- [x] `FibonacciFigure` — direction toggle (Uptrend/Downtrend), real data
+      both ways, anchor-order bug caught and fixed before shipping
+- [x] `in-t2-fibonacci` — new callout (ratio origins + when/where), new
+      downtrend example, new downtrend predict, new checkpoint task,
+      objectives rewritten, `estimatedMinutes` 14 → 18
+- [x] `pnpm verify` clean — 1,246 tests (up from 1,241), build succeeds,
+      lesson returns 200 live
+
+**Still open, explicitly, for whoever continues this** — the same
+"what/why/when/where, in both directions where applicable, with real
+research" treatment, not yet applied to: `in-t2-trendlines` (a trendline
+in a downtrend is drawn through LOWER HIGHS, the mirror of the higher-lows
+case already taught — not yet shown), `in-t2-pivot-points`,
+`in-t2-bollinger-bands`, `in-t2-vwap-volume-profile`, `in-t2-indicators`
+(RSI/MACD/moving averages/ATR), `in-t2-reversal-chart-patterns` and
+`in-t2-continuation-patterns` (the volume tell from §3t), `in-t2-elliott-wave`,
+`in-t2-candlestick-patterns-2`. Each is a well-defined, bounded addition in
+the same shape as this one — pick a lesson, research the real mechanism
+and its real historical/practical context, add depth through `example`
+blocks rather than more predicts, verify the block ratios still pass.
+
 ---
 
 ### M4 · Polish — `[ ]`

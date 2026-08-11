@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findLargestSwing, findLineTouch, findPivotLows, findTrendlineAnchors, retracementLevel, toHeikinAshi } from './chart-drawing';
+import { findLargestDecline, findLargestSwing, findLineTouch, findPivotLows, findTrendlineAnchors, retracementLevel, toHeikinAshi } from './chart-drawing';
 import type { Candle } from '../market/types';
 
 function bar(low: number, high: number, open = low, close = high): Candle {
@@ -30,6 +30,33 @@ describe('findLargestSwing', () => {
 
   it('handles a single bar without throwing', () => {
     expect(findLargestSwing([bar(10, 12)])).toEqual({ lowIdx: 0, highIdx: 0 });
+  });
+});
+
+describe('findLargestDecline', () => {
+  it('finds the single largest high-to-low decline — the mirror of findLargestSwing', () => {
+    const bars = [bar(190, 195), bar(85, 200), bar(80, 90), bar(88, 92), bar(3, 8)];
+    // Global high is at index 1 (200), and the biggest drop from any running
+    // high is high=200 (index 1) to low=3 (index 4): a range of 197.
+    const decline = findLargestDecline(bars);
+    expect(decline.highIdx).toBe(1);
+    expect(decline.lowIdx).toBe(4);
+  });
+
+  it('picks the larger of two separate declines', () => {
+    const bars = [
+      bar(90, 100), // small decline coming: 100 -> ...
+      bar(85, 96), // small decline: 15
+      bar(250, 260), // high
+      bar(5, 252), // big decline from the high: 255
+    ];
+    const decline = findLargestDecline(bars);
+    expect(decline.highIdx).toBe(2);
+    expect(decline.lowIdx).toBe(3);
+  });
+
+  it('handles a single bar without throwing', () => {
+    expect(findLargestDecline([bar(10, 12)])).toEqual({ highIdx: 0, lowIdx: 0 });
   });
 });
 
@@ -92,6 +119,19 @@ describe('retracementLevel', () => {
 
   it('extends above the high for percentages over 100', () => {
     expect(retracementLevel(1040, 840, 161.8)).toBeCloseTo(1163.6, 1);
+  });
+
+  it('works for a downtrend when called with the arguments swapped — the same function, no special case', () => {
+    // A decline from 1040 to 840. Called as retracementLevel(low, high, pct):
+    // 0% is the low (where the bounce starts), 100% is the high (a full round trip).
+    expect(retracementLevel(840, 1040, 0)).toBeCloseTo(840);
+    expect(retracementLevel(840, 1040, 100)).toBeCloseTo(1040);
+    expect(retracementLevel(840, 1040, 38.2)).toBeCloseTo(916.4, 1);
+    expect(retracementLevel(840, 1040, 61.8)).toBeCloseTo(963.6, 1);
+  });
+
+  it('extends BELOW the low for a downtrend at percentages over 100 — the decline resuming', () => {
+    expect(retracementLevel(840, 1040, 161.8)).toBeCloseTo(716.4, 1);
   });
 });
 

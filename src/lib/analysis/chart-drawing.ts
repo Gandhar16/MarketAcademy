@@ -34,6 +34,31 @@ export function findLargestSwing(bars: Candle[]): { lowIdx: number; highIdx: num
   return { lowIdx: bestLowIdx, highIdx: bestHighIdx };
 }
 
+/**
+ * The single largest high-to-low decline in the series — the mirror of
+ * `findLargestSwing`, a max-drawdown-style scan. This is what a Fibonacci
+ * figure anchors to for a DOWNTREND: the swing high a decline started from,
+ * and the swing low it reached, so a retracement can be measured as a
+ * bounce back UP toward the high rather than a pullback down from one.
+ */
+export function findLargestDecline(bars: Candle[]): { highIdx: number; lowIdx: number } {
+  if (bars.length === 0) return { highIdx: 0, lowIdx: 0 };
+  let bestHighIdx = 0;
+  let bestLowIdx = 0;
+  let bestRange = -Infinity;
+  let runningHighIdx = 0;
+  for (let i = 1; i < bars.length; i++) {
+    if (bars[i].high > bars[runningHighIdx].high) runningHighIdx = i;
+    const range = bars[runningHighIdx].high - bars[i].low;
+    if (range > bestRange) {
+      bestRange = range;
+      bestHighIdx = runningHighIdx;
+      bestLowIdx = i;
+    }
+  }
+  return { highIdx: bestHighIdx, lowIdx: bestLowIdx };
+}
+
 /** Bars whose low is lower than every bar within `window` places on either side. */
 export function findPivotLows(bars: Candle[], window: number): number[] {
   const pivots: number[] = [];
@@ -93,13 +118,24 @@ export function findLineTouch(
 }
 
 /**
- * A Fibonacci retracement/extension price. `pct` in [0, 100] retraces DOWN
- * from `hi` toward `lo`; `pct` above 100 extends UP past `hi` by the same
- * proportion of the range — the standard convention for a rising swing.
+ * A Fibonacci retracement/extension price. Direction-agnostic on purpose:
+ * `from` is wherever the retracement STARTS (0%) and `to` is wherever it
+ * ENDS (100%); `pct` above 100 extends past `from`, away from `to`, by the
+ * same proportion of the range.
+ *
+ * For an UPTREND, call `retracementLevel(swingHigh, swingLow, pct)` — 0% is
+ * the high, 100% is the low (a pullback down), and extensions project
+ * further ABOVE the high (the next leg up, if the rally resumes).
+ *
+ * For a DOWNTREND, call it with the arguments swapped:
+ * `retracementLevel(swingLow, swingHigh, pct)` — 0% is the low, 100% is the
+ * high (a bounce up), and extensions project further BELOW the low (the
+ * next leg down, if the decline resumes). Same formula, same function —
+ * only which real price gets passed first changes.
  */
-export function retracementLevel(hi: number, lo: number, pct: number): number {
-  const range = hi - lo;
-  return pct <= 100 ? hi - (range * pct) / 100 : hi + (range * (pct - 100)) / 100;
+export function retracementLevel(from: number, to: number, pct: number): number {
+  const range = to - from;
+  return pct <= 100 ? from + (range * pct) / 100 : from - (range * (pct - 100)) / 100;
 }
 
 /**

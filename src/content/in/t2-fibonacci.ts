@@ -22,12 +22,13 @@ export const lesson: Lesson = {
     "Traders draw a grid of price levels between a big move's start and end, and treat some of them as likely pause points. This shows where those numbers actually come from, and how little it takes to shift every one of them.",
   objectives: [
     'Compute a retracement level from a swing low, a swing high and a percentage',
-    'Explain why the grid has exactly two inputs and nothing else',
-    'Say why the 50% level is on every chart despite not being a Fibonacci ratio',
-    'Explain why two traders anchoring the same rally usually get different levels',
+    'Draw the grid correctly in BOTH directions — dragging up for a pullback, down for a bounce',
+    'Explain where the ratios actually come from, and why 50% is not one of them',
+    'Say when this tool applies at all, and when there is no clean swing to anchor it to',
+    'Explain why two traders anchoring the same swing usually get different levels',
   ],
   prerequisites: ['in-t2-trendlines'],
-  estimatedMinutes: 14,
+  estimatedMinutes: 18,
   introduces: ['fibonacci-retracement'],
   skills: ['fibonacci', 'chart-reading'],
   blocks: [
@@ -53,11 +54,18 @@ export const lesson: Lesson = {
         'A retracement grid needs a swing low and a swing high, and nothing else. Every level on it is that swing high minus a fixed percentage of the range between the two.\n\nThat means the entire grid lives or dies on two choices a human made by eye. Move either anchor a few rupees and every single level moves with it, by exactly the same percentage each time.',
     },
     {
+      kind: 'callout',
+      tone: 'insight',
+      title: 'Where the ratios actually come from',
+      md:
+        'The Fibonacci sequence — 1, 1, 2, 3, 5, 8, 13, 21, 34, 55… — has a real property. Divide any term by the one after it, and the result settles near 0.618 the further along you go. That is where 61.8% comes from. 38.2% is simply 1 minus it.\n\n50% is not from this sequence at all. It comes from Dow Theory, decades earlier — the plain observation that markets often give back roughly half a move. It stayed on the chart anyway, sitting beside numbers that genuinely come from the sequence and looking exactly as precise as they do.\n\nUse this tool during a PULLBACK or BOUNCE inside a trend that already exists. A flat, directionless market has no clean swing to anchor a grid to in the first place.',
+    },
+    {
       kind: 'figure',
       figure: 'FibonacciFigure',
       props: {},
       caption:
-        'Drawn on a real chart — a real swing low and swing high, found by scanning a year of bars for the largest one. The arithmetic is fixed. The two anchors are a judgement call, and this is exactly how you would find them yourself.',
+        'Drawn on a real chart, in both directions — toggle between them. Uptrend drags from the low up to the high; downtrend drags from the high down to the low. Each is found by scanning a year of bars for the largest real move, not chosen by eye.',
     },
     {
       kind: 'example',
@@ -104,11 +112,55 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'example',
+      title: 'The same arithmetic, running in reverse',
+      setup:
+        'A stock declines from a swing high of ₹1,100 to a swing low of ₹900, a ₹200 drop. Here is where a BOUNCE might stall — anchored the other direction, the same tool drawn from high down to low.',
+      steps: [
+        {
+          label: '38.2% bounce',
+          detail: 'Low plus 38.2% of the ₹200 drop, retracing back UP toward the high',
+          compute: { fn: 'literal', value: 976.4 },
+        },
+        {
+          label: '50% bounce',
+          detail: 'The Dow Theory level, exactly as before',
+          compute: { fn: 'literal', value: 1000 },
+        },
+        {
+          label: '61.8% bounce',
+          detail: 'The ratio most associated with the whole idea',
+          compute: { fn: 'literal', value: 1023.6 },
+        },
+        {
+          label: '161.8% extension, below the low',
+          detail: 'A downside target if the decline resumes instead of bouncing',
+          compute: { fn: 'literal', value: 776.4 },
+        },
+      ],
+      conclusion:
+        'Same formula, opposite direction. A bounce that stalls at 61.8% and rolls back over is read the same way a pullback holding at 61.8% is. The level is what the arithmetic tests, not which way price was originally moving.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'Same decline, but the swing high actually sits at ₹1,110 instead of ₹1,100 — a ten-rupee difference. Work out what happens to the 61.8% bounce level.',
+      options: [
+        'Nothing — ten rupees will not move it noticeably',
+        'It shifts by roughly six rupees, the identical sensitivity the uptrend case showed',
+        'The whole grid becomes invalid and has to be redrawn from scratch',
+      ],
+      correct: 1,
+      reveal:
+        'Roughly six rupees. The range widens from ₹200 to ₹210, so 61.8% of it is ₹129.78 instead of ₹123.60. The level moves from ₹1,023.60 to ₹1,029.78, a ₹6.18 shift from a ten-rupee change in one anchor. Direction changes nothing about how fragile the grid is to the anchor you chose — a bounce level is exactly as sensitive as a pullback level, because it is the same formula.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'TCS.NS', interval: '1d', range: '1y' },
       mode: 'view',
       takeaway:
-        'Find the largest rally on this real chart and imagine anchoring a grid to it. Two people looking at the same chart would likely pick two different swing points, and each would get a full page of confident-looking numbers.',
+        'Find the largest rally AND the largest decline on this real chart, and imagine anchoring a grid to each. Two people looking at the same chart would likely pick two different swing points, and each would get a full page of confident-looking numbers.',
     },
     {
       kind: 'callout',
@@ -126,6 +178,13 @@ export const lesson: Lesson = {
           spec: { metric: 'literal', value: 623.6, tolerance: 1, unit: '₹' },
           explanation:
             '₹700 − (0.382 × ₹200) = ₹623.60. The same formula every time: swing high minus a fixed percentage of the range. Nothing about a specific stock or a specific day changes the arithmetic — only the two anchors do.',
+        },
+        {
+          prompt: 'A stock DECLINES from a swing high of ₹640 to a swing low of ₹560. Where does the 61.8% bounce level sit?',
+          type: 'compute',
+          spec: { metric: 'literal', value: 609.4, tolerance: 1, unit: '₹' },
+          explanation:
+            '₹560 + (0.618 × ₹80) = ₹609.44. The direction flips which anchor is 0%, but not the arithmetic: low plus a fixed percentage of the range, instead of high minus one.',
         },
         {
           prompt: 'Classify each statement about Fibonacci retracement.',

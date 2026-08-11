@@ -31,6 +31,7 @@ import type { Candle } from '@/lib/market/types';
 import { PATTERNS_BY_ID, type PatternId } from '@/lib/analysis/patterns';
 import { INDIA_EQUITIES } from '@/lib/market/symbols';
 import {
+  findLargestDecline,
   findLargestSwing,
   findLineTouch,
   findPivotLows,
@@ -453,73 +454,117 @@ const FIB_RETRACEMENTS = [0, 23.6, 38.2, 50, 61.8, 78.6, 100];
 const FIB_EXTENSIONS = [161.8, 261.8];
 
 /**
- * Anchoring a Fibonacci grid on REAL bars. The swing is the single largest
- * real rally found in a year of daily history — `findLargestSwing`, not a
- * hand-picked pair of points — so the anchors are exactly where a learner
- * would find them by scanning the same real chart themselves.
+ * Anchoring a Fibonacci grid on REAL bars, in both directions. Uptrend uses
+ * `findLargestSwing` (the largest real rally); downtrend uses
+ * `findLargestDecline` (the largest real drop) — neither is hand-picked.
+ *
+ * The two directions use the exact same `retracementLevel` formula, called
+ * with the anchors in the opposite order: uptrend drags low → high (0% at
+ * the low, retracement DOWN toward it, extension UP past the high);
+ * downtrend drags high → low (0% at the low, retracement UP toward the
+ * high — a bounce — extension DOWN past the low, if the decline resumes).
  */
 export function FibonacciFigure() {
   const [play, setPlay] = useState(0);
+  const [direction, setDirection] = useState<'up' | 'down'>('up');
   const { bars: allBars, error } = useRealBars(FIB_SYMBOL, '1y');
 
   if (error) return <ErrorFigure message={error} />;
   if (!allBars || allBars.length < 30) return <LoadingFigure />;
 
-  const swing = findLargestSwing(allBars);
-  const startIdx = Math.max(0, swing.lowIdx - 6);
-  const endIdx = Math.min(allBars.length - 1, swing.highIdx + 14);
+  const isUp = direction === 'up';
+  let startIdx: number;
+  let endIdx: number;
+  let iLow: number;
+  let iHigh: number;
+  let loPrice: number;
+  let hiPrice: number;
+
+  if (isUp) {
+    const swing = findLargestSwing(allBars);
+    startIdx = Math.max(0, swing.lowIdx - 6);
+    endIdx = Math.min(allBars.length - 1, swing.highIdx + 14);
+    iLow = swing.lowIdx - startIdx;
+    iHigh = swing.highIdx - startIdx;
+    loPrice = allBars[swing.lowIdx].low;
+    hiPrice = allBars[swing.highIdx].high;
+  } else {
+    const decline = findLargestDecline(allBars);
+    startIdx = Math.max(0, decline.highIdx - 6);
+    endIdx = Math.min(allBars.length - 1, decline.lowIdx + 14);
+    iLow = decline.lowIdx - startIdx;
+    iHigh = decline.highIdx - startIdx;
+    loPrice = allBars[decline.lowIdx].low;
+    hiPrice = allBars[decline.highIdx].high;
+  }
   const bars = allBars.slice(startIdx, endIdx + 1);
-  const iLow = swing.lowIdx - startIdx;
-  const iHigh = swing.highIdx - startIdx;
-  const loPrice = allBars[swing.lowIdx].low;
-  const hiPrice = allBars[swing.highIdx].high;
+
+  // Where the retracement STARTS (0%) and ENDS (100%) — swapped between
+  // the two directions, which is the entire difference in the arithmetic.
+  // Uptrend: 0% is the HIGH (retracement pulls back down toward the low).
+  // Downtrend: 0% is the LOW (retracement bounces back up toward the high).
+  const anchorFrom = isUp ? hiPrice : loPrice;
+  const anchorTo = isUp ? loPrice : hiPrice;
+  const ext261 = retracementLevel(anchorFrom, anchorTo, 261.8);
 
   const W = 560;
   const H = 280;
-  const topLevel = retracementLevel(hiPrice, loPrice, 261.8);
-  const domainLo = Math.min(loPrice, ...bars.map((b) => b.low));
-  const domainHi = Math.max(topLevel, ...bars.map((b) => b.high));
+  const domainLo = Math.min(loPrice, ext261, ...bars.map((b) => b.low));
+  const domainHi = Math.max(hiPrice, ext261, ...bars.map((b) => b.high));
   const y = makeYScale(domainLo, domainHi, H - 24, 0.03);
   const slot = W / bars.length;
   const xAt = (i: number) => i * slot + slot / 2;
 
+  const dragFrom: [number, number] = isUp ? [xAt(iLow), y(loPrice)] : [xAt(iHigh), y(hiPrice)];
+  const dragTo: [number, number] = isUp ? [xAt(iHigh), y(hiPrice)] : [xAt(iLow), y(loPrice)];
+
   return (
     <div className="rounded-xl border border-line bg-surface p-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-[11px] uppercase tracking-wider text-ink-faint">
           Anchoring a grid on {FIB_SYMBOL.replace('.NS', '')}, real daily bars
         </span>
         <ReplayButton onReplay={() => setPlay((n) => n + 1)} />
       </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {(['up', 'down'] as const).map((d) => (
+          <button
+            key={d}
+            onClick={() => setDirection(d)}
+            className="num rounded-md px-2.5 py-1 text-[11px] transition-colors"
+            style={{
+              background: direction === d ? 'var(--color-accent)' : 'var(--color-surface-2)',
+              color: direction === d ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+            }}
+          >
+            {d === 'up' ? 'Uptrend — pullback' : 'Downtrend — bounce'}
+          </button>
+        ))}
+      </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="Fibonacci retracement drawn on a real chart">
         <AnimatePresence mode="wait">
-          <g key={play}>
+          <g key={`${play}-${direction}`}>
             <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
               {realCandleElements(bars, W, y)}
             </motion.g>
 
-            <MouseDrag
-              from={[xAt(iLow), y(loPrice)]}
-              to={[xAt(iHigh), y(hiPrice)]}
-              startDelay={0.2}
-              moveDuration={0.9}
-            />
+            <MouseDrag from={dragFrom} to={dragTo} startDelay={0.2} moveDuration={0.9} />
 
             <motion.circle cx={xAt(iLow)} cy={y(loPrice)} r={5} fill="var(--color-down)"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }} />
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: isUp ? 0.55 : 1.45 }} />
             <motion.circle cx={xAt(iHigh)} cy={y(hiPrice)} r={5} fill="var(--color-up)"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.45 }} />
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: isUp ? 1.45 : 0.55 }} />
             <motion.text x={xAt(iLow)} y={y(loPrice) + 18} fill="var(--color-down)" fontSize={9.5} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
-              click here — swing low
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: isUp ? 0.6 : 1.5 }}>
+              {isUp ? 'click here — swing low' : 'release here — swing low'}
             </motion.text>
             <motion.text x={xAt(iHigh)} y={y(hiPrice) - 10} fill="var(--color-up)" fontSize={9.5} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>
-              drag up, release here — swing high
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: isUp ? 1.5 : 0.6 }}>
+              {isUp ? 'drag up, release here — swing high' : 'click here — swing high'}
             </motion.text>
 
             {FIB_RETRACEMENTS.map((pct, i) => {
-              const level = retracementLevel(hiPrice, loPrice, pct);
+              const level = retracementLevel(anchorFrom, anchorTo, pct);
               return (
                 <g key={pct}>
                   <motion.line
@@ -539,16 +584,16 @@ export function FibonacciFigure() {
             })}
 
             {FIB_EXTENSIONS.map((pct, i) => {
-              const level = retracementLevel(hiPrice, loPrice, pct);
+              const level = retracementLevel(anchorFrom, anchorTo, pct);
               return (
                 <g key={pct}>
                   <motion.line
                     x1={0} y1={y(level)} x2={W} y2={y(level)}
-                    stroke="var(--color-up)" strokeDasharray="2 5" strokeWidth={1} opacity={0.6}
+                    stroke={isUp ? 'var(--color-up)' : 'var(--color-down)'} strokeDasharray="2 5" strokeWidth={1} opacity={0.6}
                     initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.6 }}
                     transition={{ delay: 3.8 + i * 0.3, duration: 0.4 }}
                   />
-                  <motion.text x={W - 4} y={y(level) - 3} textAnchor="end" fill="var(--color-up)" fontSize={9}
+                  <motion.text x={W - 4} y={y(level) - 3} textAnchor="end" fill={isUp ? 'var(--color-up)' : 'var(--color-down)'} fontSize={9}
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.9 + i * 0.3 }}>
                     {pct}%
                   </motion.text>
@@ -559,9 +604,9 @@ export function FibonacciFigure() {
         </AnimatePresence>
       </svg>
       <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
-        The largest real rally in a year of {FIB_SYMBOL.replace('.NS', '')}, found by scanning for it rather than
-        chosen by eye. Anchor at the low, anchor at the high, and the grid draws itself — move either anchor and
-        every level moves with it.
+        {isUp
+          ? `The largest real rally in a year of ${FIB_SYMBOL.replace('.NS', '')}, found by scanning for it rather than chosen by eye. Drag from the low up to the high — retracement measures how far a pullback might fall back before the rally resumes, and the dashed lines above 100% are targets if it keeps climbing instead.`
+          : `The largest real decline in the same year of ${FIB_SYMBOL.replace('.NS', '')}. Drag from the high down to the low — retracement now measures how far a BOUNCE might climb before the decline resumes, and the dashed lines below 100% are downside targets if it keeps falling instead.`}
       </p>
     </div>
   );
