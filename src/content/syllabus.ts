@@ -218,6 +218,12 @@ export const SYLLABUS: SyllabusStage[] = [
     why: 'Charts come after risk, and every claim about them is checked against a base rate before it is taught.',
     topics: [
       {
+        id: 'in-t2-chart-types',
+        title: 'Chart types, and what one bar actually contains',
+        covers: 'Candlestick, OHLC bar, Heikin-Ashi, hollow candle and line charts on the same real data, and how much trading one bar compresses at each interval.',
+        built: true,
+      },
+      {
         id: 'in-t2-trend',
         title: 'Trend, without hindsight',
         covers: 'Defining a trend by a rule you could have applied at the time, not one visible only afterwards.',

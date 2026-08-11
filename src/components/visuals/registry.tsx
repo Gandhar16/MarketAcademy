@@ -18,6 +18,7 @@ import {
 import {
   CandlestickTrioFigure,
   ChartPatternFigure,
+  ChartTypeFigure,
   ElliottWaveFigure,
   FibonacciFigure,
   TrendlineFigure,
@@ -40,6 +41,7 @@ export const FIGURES: Record<string, AnyFigure> = {
   ElliottWaveFigure,
   CandlestickTrioFigure,
   VolumeProfileFigure,
+  ChartTypeFigure,
 };
 
 export function renderFigure(name: string, props: Record<string, unknown>) {

@@ -864,6 +864,68 @@ check before calling this fully done.
 `VolumeProfileFigure` on real data — genuinely harder (shape detection, not
 a swing scan), scoped above, not started.
 
+#### 3q. Chart Replay's next-bar button, and chart-type coverage — `[x]` COMPLETE
+
+**The game fix.** `Hold, next bar →` / `Stay flat, next bar →` sat at the
+bottom of `ChartReplay`, below the thesis form and the stop/target sliders.
+Advancing a bar meant scrolling away from the chart to click it, then
+scrolling back up to see what changed. Both buttons already called the
+identical `advance()` — a `Next bar →` control was added directly into the
+chart's own header row, next to `Last / Equity / bars left`, so it is
+always adjacent to the chart regardless of scroll position or which stance
+panel is showing below. The two original buttons stay exactly where they
+were; this is a second way to reach the same action, not a replacement.
+
+**The candlestick coverage gap.** Every chart in this course had been shown
+one way — a filled candlestick — with no lesson on the fact that candlestick
+is one of several conventions, or on what a single bar actually compresses
+at a given interval. New `in-t2-chart-types`, inserted as the FIRST topic of
+stage 5 (before `in-t2-trend`, since every later lesson assumes the reader
+already knows what they are looking at):
+
+- **OHLC bar chart** — the same four prices as a candle, drawn as a tick
+  left (open) and a tick right (close) on a single vertical line. Predates
+  colour screens.
+- **Heikin-Ashi** — each bar's open is the midpoint of the PREVIOUS
+  Heikin-Ashi bar, not this bar's real open. Smooths a trend and makes
+  reversals look calmer — and means the prices are not real trade prices, so
+  a stop or target set directly off one is set off a number nobody could
+  actually transact at. This is the sharpest "why not" in the lesson.
+- **Hollow candles** — pack in two facts a plain candle does not: fill
+  (hollow/solid) is close vs. this bar's own open; colour is close vs. the
+  PREVIOUS bar's close.
+- **Line chart** — only the close survives; the whole range is gone.
+- **What one bar compresses, by interval** — 1 minute is one minute; 1 day
+  is a full 375-minute NSE session (9:15–15:30); 1 week is UP TO five
+  sessions, fewer around a holiday, with no label on the bar to tell you
+  which; 1 month is roughly 21 sessions.
+
+**New figure, on real data**: `ChartTypeFigure` fetches 40 real days of TCS
+and renders the SAME real bars as all five types behind a tab switcher —
+nothing about the underlying trading changes between tabs, only the
+encoding, made concrete rather than asserted. `toHeikinAshi` (the real
+transform) is a new pure function in `chart-drawing.ts`, tested — including
+a test that its second bar's open is NOT the real second bar's open, which
+is the whole point of the series.
+
+- [x] `Next bar →` added to `ChartReplay`'s chart header
+- [x] `toHeikinAshi` in `chart-drawing.ts` + 3 new tests (14 total in that file)
+- [x] `ChartTypeFigure` — real data, five-way toggle, registered in `visuals/registry.tsx`
+- [x] Three new glossary entries: `ohlc-bar-chart`, `heikin-ashi`, `hollow-candle`
+- [x] `in-t2-chart-types` — inserted as the new first topic of stage 5
+- [x] `pnpm verify` clean — 1,241 tests (up from 1,231), build succeeds
+      (100 static pages), lesson and game both return 200 live, `/kb`
+      renders all three new terms
+
+Syllabus is now **12 stages, 85 steps, 80 built, 5 gaps** (same five as
+before — this pass didn't touch them).
+
+**Same visual-verification caveat as §3p**: no browser-automation tool was
+available this session, so the `ChartTypeFigure` tab-switching and the
+`ChartReplay` button placement have not been eyeballed in an actual
+browser. `tsc`/`eslint`/tests/build/live-200s all pass; a manual look is
+still worth doing.
+
 ---
 
 ### M4 · Polish — `[ ]`

@@ -101,3 +101,24 @@ export function retracementLevel(hi: number, lo: number, pct: number): number {
   const range = hi - lo;
   return pct <= 100 ? hi - (range * pct) / 100 : hi + (range * (pct - 100)) / 100;
 }
+
+/**
+ * Heikin-Ashi bars from real OHLC. Each HA close is the average of that
+ * bar's own four real prices; each HA open is the midpoint of the PREVIOUS
+ * HA bar, which is what makes the series smooth — and why HA prices are not
+ * real trade prices. The first bar has no predecessor, so its HA open falls
+ * back to the average of its own open and close, the standard convention.
+ */
+export function toHeikinAshi(bars: Candle[]): Candle[] {
+  const out: Candle[] = [];
+  for (let i = 0; i < bars.length; i++) {
+    const b = bars[i];
+    const haClose = (b.open + b.high + b.low + b.close) / 4;
+    const prev = out[i - 1];
+    const haOpen = prev ? (prev.open + prev.close) / 2 : (b.open + b.close) / 2;
+    const haHigh = Math.max(b.high, haOpen, haClose);
+    const haLow = Math.min(b.low, haOpen, haClose);
+    out.push({ time: b.time, open: haOpen, high: haHigh, low: haLow, close: haClose, volume: b.volume });
+  }
+  return out;
+}

@@ -1147,6 +1147,37 @@ export const GLOSSARY: GlossaryEntry[] = [
       'Confluence is when two or more separate tools point at the same price — Fibonacci retracement and a candle shape, for example. It means more traders are watching that price. It does not mean the signal is more likely to be correct.',
     needs: ['fibonacci-retracement', 'candle'],
   },
+  // ------------------------------------------------------- chart types
+  {
+    id: 'ohlc-bar-chart',
+    term: 'OHLC bar chart',
+    aliases: ['bar chart', 'bar charts', 'OHLC bar', 'OHLC bars'],
+    category: 'charts',
+    tier: 'T2',
+    plain:
+      'An OHLC bar chart draws the same four prices as a candle, as a single vertical line with two small marks — one on the left for the open, one on the right for the close — instead of a filled body.',
+    needs: ['ohlc', 'candle'],
+  },
+  {
+    id: 'heikin-ashi',
+    term: 'Heikin-Ashi',
+    aliases: ['heikin ashi', 'heiken ashi'],
+    category: 'charts',
+    tier: 'T2',
+    plain:
+      'Heikin-Ashi is a way of drawing a candle chart where each bar is smoothed using the previous bar, rather than that bar’s own real open. It makes a trend look calmer, at the cost of the bars no longer being real prices anyone could have traded at.',
+    needs: ['candle'],
+  },
+  {
+    id: 'hollow-candle',
+    term: 'hollow candle',
+    aliases: ['hollow candles'],
+    category: 'charts',
+    tier: 'T2',
+    plain:
+      'A hollow candle chart packs in two separate facts per bar. Whether the body is filled or hollow shows the close against that bar’s own open. The colour shows the close against the PREVIOUS bar’s close, which an ordinary candle does not show at all.',
+    needs: ['candle'],
+  },
 ];
 
 export const GLOSSARY_BY_ID = new Map(GLOSSARY.map((g) => [g.id, g]));

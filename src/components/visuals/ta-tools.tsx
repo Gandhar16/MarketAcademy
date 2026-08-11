@@ -36,6 +36,7 @@ import {
   findPivotLows,
   findTrendlineAnchors,
   retracementLevel,
+  toHeikinAshi,
 } from '@/lib/analysis/chart-drawing';
 
 function ReplayButton({ onReplay }: { onReplay: () => void }) {
@@ -778,6 +779,136 @@ export function VolumeProfileFigure() {
         A normal volume chart answers &ldquo;when was it busy&rdquo;. This answers &ldquo;at what PRICE was it busy&rdquo; — genuinely
         different information. Where the bars land depends entirely on which period you build the profile from, which
         is a choice you make, not a fact handed to you.
+      </p>
+    </div>
+  );
+}
+
+// ── ChartTypeFigure ──────────────────────────────────────────────────────────
+
+const CHART_TYPE_SYMBOL = 'TCS.NS';
+type ChartMode = 'candle' | 'bar' | 'heikin-ashi' | 'hollow' | 'line';
+const CHART_MODES: { id: ChartMode; label: string }[] = [
+  { id: 'candle', label: 'Candlestick' },
+  { id: 'bar', label: 'OHLC bar' },
+  { id: 'heikin-ashi', label: 'Heikin-Ashi' },
+  { id: 'hollow', label: 'Hollow candle' },
+  { id: 'line', label: 'Line' },
+];
+
+/**
+ * The exact same real bars, drawn five different ways. Nothing about the
+ * underlying trading changes between tabs — only how those same four (or
+ * five) numbers per bar are encoded on screen. That is the whole lesson,
+ * made concrete rather than asserted.
+ */
+export function ChartTypeFigure() {
+  const [mode, setMode] = useState<ChartMode>('candle');
+  const { bars, error } = useRealBars(CHART_TYPE_SYMBOL, '3mo');
+
+  if (error) return <ErrorFigure message={error} />;
+  if (!bars || bars.length < 20) return <LoadingFigure />;
+
+  const shown = bars.slice(-40);
+  const haShown = toHeikinAshi(bars).slice(-40);
+
+  const W = 560;
+  const H = 240;
+  const domainSource = mode === 'heikin-ashi' ? haShown : shown;
+  const y = makeYScale(
+    Math.min(...domainSource.map((b) => b.low)),
+    Math.max(...domainSource.map((b) => b.high)),
+    H - 20,
+    0.1,
+  );
+  const slot = W / shown.length;
+  const bodyW = Math.max(1.5, slot * 0.55);
+  const xAt = (i: number) => i * slot + slot / 2;
+
+  return (
+    <div className="rounded-xl border border-line bg-surface p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[11px] uppercase tracking-wider text-ink-faint">
+          {CHART_TYPE_SYMBOL.replace('.NS', '')}, the same 40 real days, five ways
+        </span>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {CHART_MODES.map((m) => (
+          <button
+            key={m.id}
+            onClick={() => setMode(m.id)}
+            className="num rounded-md px-2.5 py-1 text-[11px] transition-colors"
+            style={{
+              background: mode === m.id ? 'var(--color-accent)' : 'var(--color-surface-2)',
+              color: mode === m.id ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+            }}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label={`${mode} chart of real bars`}>
+        <AnimatePresence mode="wait">
+          <motion.g key={mode} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
+            {mode === 'candle' && realCandleElements(shown, W, y)}
+
+            {mode === 'heikin-ashi' && realCandleElements(haShown, W, y)}
+
+            {mode === 'bar' &&
+              shown.map((b, i) => {
+                const cx = xAt(i);
+                const up = b.close >= b.open;
+                const colour = up ? 'var(--color-up)' : 'var(--color-down)';
+                const tick = bodyW * 0.6;
+                return (
+                  <g key={i}>
+                    <line x1={cx} y1={y(b.high)} x2={cx} y2={y(b.low)} stroke={colour} strokeWidth={1.4} />
+                    <line x1={cx - tick} y1={y(b.open)} x2={cx} y2={y(b.open)} stroke={colour} strokeWidth={1.4} />
+                    <line x1={cx} y1={y(b.close)} x2={cx + tick} y2={y(b.close)} stroke={colour} strokeWidth={1.4} />
+                  </g>
+                );
+              })}
+
+            {mode === 'hollow' &&
+              shown.map((b, i) => {
+                const prevClose = i > 0 ? shown[i - 1].close : b.open;
+                const colour = b.close >= prevClose ? 'var(--color-up)' : 'var(--color-down)';
+                const hollow = b.close >= b.open;
+                const cx = xAt(i);
+                const top = y(Math.max(b.open, b.close));
+                const bottom = y(Math.min(b.open, b.close));
+                return (
+                  <g key={i}>
+                    <line x1={cx} y1={y(b.high)} x2={cx} y2={y(b.low)} stroke={colour} strokeWidth={1.2} />
+                    <rect
+                      x={cx - bodyW / 2} y={top} width={bodyW} height={Math.max(1, bottom - top)}
+                      fill={hollow ? 'var(--color-surface)' : colour}
+                      stroke={colour} strokeWidth={1.4}
+                    />
+                  </g>
+                );
+              })}
+
+            {mode === 'line' && (
+              <path
+                d={shown.map((b, i) => `${i === 0 ? 'M' : 'L'}${xAt(i)},${y(b.close)}`).join(' ')}
+                stroke="var(--color-accent)" strokeWidth={2} fill="none"
+              />
+            )}
+          </motion.g>
+        </AnimatePresence>
+      </svg>
+      <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
+        {mode === 'candle' &&
+          'The default in this course: a body between open and close, wicks to the high and low. Colour shows whether close finished above or below that same bar’s open.'}
+        {mode === 'bar' &&
+          'The same four prices, drawn as one vertical line with two short ticks — left for the open, right for the close. No body to fill in, which is why these were common before screens could colour things easily.'}
+        {mode === 'heikin-ashi' &&
+          'Smoothed on purpose: each open is the midpoint of the PREVIOUS Heikin-Ashi bar, not this bar’s real open. That makes trends look cleaner and reversals look calmer — and it means these prices are not real trade prices, so a stop or target set directly off them is set off a number nobody could actually transact at.'}
+        {mode === 'hollow' &&
+          'Colour and fill now carry two separate facts. Colour is close versus the PREVIOUS bar’s close — genuine momentum. Fill is hollow when this bar closed above its own open, solid when it closed below. A standard candle only encodes the second one.'}
+        {mode === 'line' &&
+          'Only the close survives. Everything about the high, the low and the open — the whole range of the fight that produced this close — is gone. Simplicity is the entire feature, which is why index overview charts often default to this.'}
       </p>
     </div>
   );

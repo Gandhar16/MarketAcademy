@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findLargestSwing, findLineTouch, findPivotLows, findTrendlineAnchors, retracementLevel } from './chart-drawing';
+import { findLargestSwing, findLineTouch, findPivotLows, findTrendlineAnchors, retracementLevel, toHeikinAshi } from './chart-drawing';
 import type { Candle } from '../market/types';
 
 function bar(low: number, high: number, open = low, close = high): Candle {
@@ -92,5 +92,30 @@ describe('retracementLevel', () => {
 
   it('extends above the high for percentages over 100', () => {
     expect(retracementLevel(1040, 840, 161.8)).toBeCloseTo(1163.6, 1);
+  });
+});
+
+describe('toHeikinAshi', () => {
+  it('closes each bar at the average of its own four real prices', () => {
+    const bars = [bar(95, 105, 100, 104)];
+    const ha = toHeikinAshi(bars);
+    // (open 100 + high 105 + low 95 + close 104) / 4 = 101
+    expect(ha[0].close).toBeCloseTo(101);
+  });
+
+  it('opens each bar at the midpoint of the PREVIOUS Heikin-Ashi bar, not the real open', () => {
+    const bars = [bar(95, 105, 100, 104), bar(100, 110, 104, 108)];
+    const ha = toHeikinAshi(bars);
+    const expectedSecondOpen = (ha[0].open + ha[0].close) / 2;
+    expect(ha[1].open).toBeCloseTo(expectedSecondOpen);
+    // And it is NOT the real second bar's open (104) — the whole point of the series.
+    expect(ha[1].open).not.toBeCloseTo(104, 0);
+  });
+
+  it('produces the same number of bars as it was given, preserving time', () => {
+    const bars = [bar(95, 105), bar(100, 110), bar(105, 115)];
+    const ha = toHeikinAshi(bars);
+    expect(ha.length).toBe(3);
+    expect(ha.map((b) => b.time)).toEqual(bars.map((b) => b.time));
   });
 });

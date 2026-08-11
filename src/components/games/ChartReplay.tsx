@@ -277,13 +277,24 @@ export function ChartReplay() {
           <div className="text-[11px] uppercase tracking-wider text-ink-faint">
             {revealed ? `Revealed: ${revealed.symbol}` : 'Symbol and dates hidden · future bars are on the server'}
           </div>
-          <div className="num text-sm">
-            <span className="text-ink-faint">Last</span> {price.toFixed(2)}
-            <span className="ml-4 text-ink-faint">Equity</span>{' '}
-            <span style={{ color: eq >= STARTING_CASH ? 'var(--color-up)' : 'var(--color-down)' }}>
-              ₹{Math.round(eq).toLocaleString('en-IN')}
-            </span>
-            <span className="ml-4 text-ink-faint">{remaining} bars left</span>
+          <div className="flex flex-wrap items-baseline gap-3">
+            <div className="num text-sm">
+              <span className="text-ink-faint">Last</span> {price.toFixed(2)}
+              <span className="ml-4 text-ink-faint">Equity</span>{' '}
+              <span style={{ color: eq >= STARTING_CASH ? 'var(--color-up)' : 'var(--color-down)' }}>
+                ₹{Math.round(eq).toLocaleString('en-IN')}
+              </span>
+              <span className="ml-4 text-ink-faint">{remaining} bars left</span>
+            </div>
+            {!finished && (
+              <button
+                onClick={() => void advance()}
+                disabled={stepping}
+                className="num rounded-lg border border-line-strong px-3 py-1.5 text-[12px] text-ink-muted transition-colors hover:text-ink disabled:opacity-40"
+              >
+                {stepping ? 'Revealing…' : 'Next bar →'}
+              </button>
+            )}
           </div>
         </div>
 

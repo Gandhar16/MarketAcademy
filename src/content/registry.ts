@@ -28,6 +28,7 @@ import indexVsStock from './in/t1-index-vs-stock';
 import dividends from './in/t1-dividends';
 import doesThisPatternWork from './in/t2-does-this-pattern-work';
 import supportResistance from './in/t2-support-resistance';
+import chartTypes from './in/t2-chart-types';
 import trend from './in/t2-trend';
 import volumeLesson from './in/t2-volume';
 import patternCatalogue from './in/t2-pattern-catalogue';
@@ -87,7 +88,7 @@ import spreads from './in/t3-spreads';
 import expiryMechanics from './in/t3-expiry';
 import hedging from './in/t3-hedging';
 
-export const LESSONS: Lesson[] = [whatIsAShare, whoDoesWhat, orderBook, settlement, whatMovesPrice, indexLesson, orderTypes, realCostOfATrade, contractNote, readingCandles, firstTrade, positionSizing, stops, expectancyLesson, journal, compounding, sip, indexVsStock, dividends, trend, supportResistance, volumeLesson, doesThisPatternWork, patternCatalogue, indicators, trendlines, fibonacci, reversalChartPatterns, continuationPatterns, elliottWave, candlestickPatterns2, fibonacciConfluence, vwapVolumeProfile, pivotPoints, bollingerBands, choosingTheRightTool, financials, profitVsCash, valuation, screening, sectors, returnRatios, debtAndSolvency, qualityOfEarnings, lossAversion, anchoring, overtrading, margin, whatIsADerivative, futures, callAndPut, strikePrices, optionsFirstPrinciples, greeks, vix, impliedVolatility, spreads, expiryMechanics, hedging, riskOfRuin, kelly, backtestPitfalls, microstructure, portfolio, correlation, algo, tax, circuitLock, physicalSettlement, shortDelivery, freezeQuantity, surveillance, corporateActions, freakTrades, mtf, pledge, slb, gaps, liquidityLesson];
+export const LESSONS: Lesson[] = [whatIsAShare, whoDoesWhat, orderBook, settlement, whatMovesPrice, indexLesson, orderTypes, realCostOfATrade, contractNote, readingCandles, firstTrade, positionSizing, stops, expectancyLesson, journal, compounding, sip, indexVsStock, dividends, chartTypes, trend, supportResistance, volumeLesson, doesThisPatternWork, patternCatalogue, indicators, trendlines, fibonacci, reversalChartPatterns, continuationPatterns, elliottWave, candlestickPatterns2, fibonacciConfluence, vwapVolumeProfile, pivotPoints, bollingerBands, choosingTheRightTool, financials, profitVsCash, valuation, screening, sectors, returnRatios, debtAndSolvency, qualityOfEarnings, lossAversion, anchoring, overtrading, margin, whatIsADerivative, futures, callAndPut, strikePrices, optionsFirstPrinciples, greeks, vix, impliedVolatility, spreads, expiryMechanics, hedging, riskOfRuin, kelly, backtestPitfalls, microstructure, portfolio, correlation, algo, tax, circuitLock, physicalSettlement, shortDelivery, freezeQuantity, surveillance, corporateActions, freakTrades, mtf, pledge, slb, gaps, liquidityLesson];
 
 export const LESSONS_BY_ID = new Map(LESSONS.map((l) => [l.id, l]));
 
