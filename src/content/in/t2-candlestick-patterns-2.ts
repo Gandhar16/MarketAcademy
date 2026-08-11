@@ -24,11 +24,12 @@ export const lesson: Lesson = {
   objectives: [
     'Describe the morning star, evening star, three white soldiers, three black crows and harami shapes',
     'Explain why a three-candle pattern occurs less often than a one-candle pattern by construction',
+    'Explain what real context — location and volume — adds beyond the shape alone',
     'Read a pattern’s occurrence count before trusting its measured edge',
     'Decide whether a stated pattern claim survives its own sample size',
   ],
   prerequisites: ['in-t2-pattern-catalogue', 'in-t2-elliott-wave'],
-  estimatedMinutes: 16,
+  estimatedMinutes: 19,
   introduces: [],
   skills: ['pattern-recognition', 'base-rates', 'evidence'],
   blocks: [
@@ -120,6 +121,27 @@ export const lesson: Lesson = {
     },
     {
       kind: 'callout',
+      tone: 'insight',
+      title: 'Where this comes from, and what real context adds',
+      md:
+        'Candlestick charting itself is credited to 18th-century Japanese rice trader Munehisa Homma. These specific named shapes reached Western traders far later, through Steve Nison\'s 1991 book *Japanese Candlestick Charting Techniques*, which translated and popularised terms most English-language traders had never seen.\n\nTwo pieces of real context traditionally add weight beyond the base rate. WHERE it forms: a morning star at the bottom of an established downtrend, near known support, means more than the same shape mid-range with no trend behind it. Volume on the confirming candle matters too — a real pickup reads as more convincing than quiet trading, the same idea the chart-pattern lessons use for a neckline break.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'A morning star forms twice: once at the bottom of a clear six-month downtrend with the third candle on noticeably heavier volume, once mid-range on ordinary volume. The scanner\'s base rate treats both occurrences identically. What does real trading practice add that the base rate alone does not?',
+      options: [
+        'Nothing — a morning star is a morning star, context does not change the shape',
+        'Context that shifts confidence: an established trend and a volume pickup are read as corroborating evidence, the same way they are for chart patterns',
+        'Proof that only the first occurrence counts and the second should be discarded from the data entirely',
+      ],
+      correct: 1,
+      reveal:
+        'Context that shifts confidence, not a rule that changes the shape\'s detection. The base-rate widgets in this lesson correctly score every occurrence the same way — that is honest statistics on the data as it exists. What traditional practice adds on top is the same idea the chart-pattern lessons already taught for a neckline break or a triangle breakout. An established prior trend and real volume are corroborating evidence, not a guarantee. They shift how much weight a single occurrence deserves, without changing whether it counted toward the statistic.',
+      askWhy: true,
+    },
+    {
+      kind: 'callout',
       tone: 'myth',
       title: 'Rare does not mean special',
       md:
@@ -164,6 +186,20 @@ export const lesson: Lesson = {
           },
           explanation:
             'Eleven occurrences is well under the floor this course has used from the very first pattern lesson. A spectacular edge on eleven days is a story about eleven days, and the size of the edge does not make the sample any bigger.',
+        },
+        {
+          prompt: 'A bullish harami forms after a long downtrend, right at a level that has acted as support before, and the second candle trades on rising volume. Does this real context change the pattern\'s scanned occurrence count or edge?',
+          type: 'decision',
+          spec: {
+            options: [
+              'Yes — the scanner adds bonus weight for a good location and volume',
+              'No — the base rate scores every occurrence identically; context only changes how much confidence a HUMAN should place in this particular instance',
+              'Yes — occurrences without this context should be removed from the sample entirely',
+            ],
+            correct: 'No — the base rate scores every occurrence identically; context only changes how much confidence a HUMAN should place in this particular instance',
+          },
+          explanation:
+            'The scanner is honest, mechanical scoring — it does not and should not adjust the statistic based on context. Location and volume are a separate, judgement-based layer traders apply on top. It is the same corroborating-evidence idea used throughout this stage for chart patterns, never a reason to alter the measured base rate itself.',
         },
       ],
     },

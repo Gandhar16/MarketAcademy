@@ -1502,6 +1502,58 @@ without pretending the framework is more decisive than it is.
 
 ---
 
+#### 3cc. Candlestick patterns 2, depth pass — eighth and LAST of the "one by one, in depth" queue — `[x]` COMPLETE
+
+Picked up the final item from §3u's original list: `in-t2-candlestick-patterns-2`.
+This lesson is the one exception in the stage that DOES report real base
+rates (three-candle patterns are few-bar boolean rules, scored by real
+detectors, unlike hand-drawn chart shapes) — so the depth pass had to
+add real context on top of honest statistics without implying the
+scanner should adjust its numbers for that context.
+
+**What was added:**
+
+- **Real origin, two-stage**: candlestick charting itself credited to
+  18th-century Japanese rice trader Munehisa Homma; these specific named
+  shapes (morning/evening star, three soldiers/crows, harami) reached
+  Western traders via Steve Nison's 1991 book *Japanese Candlestick
+  Charting Techniques*, which is genuinely where most English-language
+  trading vocabulary for these patterns comes from.
+- **Where and volume, as a real corroborating layer, explicitly kept
+  separate from the scored statistic**: a morning star at the bottom of
+  an established downtrend near known support is traditionally read as
+  meaning more than the identical shape appearing mid-range; volume on
+  the confirming candle works the same way. New predict and new
+  checkpoint decision task both make the same point twice from different
+  angles — the scanner correctly scores every occurrence identically,
+  and context is a judgement layer traders apply ON TOP, never a reason
+  to alter the measured base rate.
+- Objectives 4 → 5; `estimatedMinutes` 16 → 19.
+- Fixed 1 schema-size violation (callout >800 chars) and 4 R15
+  violations along the way.
+
+- [x] `in-t2-candlestick-patterns-2` — origin callout, context predict,
+      new checkpoint task, objectives 4 → 5
+- [x] `pnpm verify` clean — 1,252 tests (unchanged, no new pure
+      functions), build succeeds (100 static pages), lesson returns 200
+      live
+
+**The full "one by one, in depth" queue from §3u is now closed.** All
+eight lessons — trendlines, pivot points, Bollinger Bands, VWAP/volume
+profile, indicators, both chart-pattern lessons, Elliott wave, and
+candlestick patterns 2 — have real historical/practical research, both
+directions where applicable, and depth added via `example`/`callout`
+blocks without breaking the R1 interactive/text ratio. Two smaller
+threads remain open from earlier in the session, unrelated to this
+queue: the 5 stage-5b/6b gap lessons (§3n: `in-t2-rsi-divergence`,
+`in-t2-adx-trend-strength`, `in-t2-moat`, `in-t2-reading-annual-report`,
+`in-t2-promoter-signals`), and the 3 illustrative (not-yet-real-data)
+figures (§3p: `ChartPatternFigure`, `ElliottWaveFigure`,
+`VolumeProfileFigure` — genuinely harder, a shape-detection problem, not
+attempted).
+
+---
+
 ### M4 · Polish — `[ ]`
 
 - [x] Mobile layout pass across header, pages, leaderboard, widgets — see §3k
