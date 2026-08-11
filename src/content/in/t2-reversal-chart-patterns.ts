@@ -25,11 +25,11 @@ export const lesson: Lesson = {
     'Describe the anatomy of a head and shoulders and a double top or bottom',
     'Explain why a reversal shape needs an established prior trend to mean anything',
     'Explain why the neckline break, not the shape, is the actual confirmation',
+    'Read the volume pattern that adds real weight to a shape, or takes it away',
     'Compute a measured-move target from the height of a shape',
-    'Decide what to do when a shape has formed but the neckline has not broken',
   ],
   prerequisites: ['in-t2-fibonacci'],
-  estimatedMinutes: 15,
+  estimatedMinutes: 18,
   introduces: ['neckline', 'head-and-shoulders', 'double-top', 'measured-move'],
   skills: ['chart-patterns', 'chart-reading'],
   blocks: [
@@ -125,6 +125,27 @@ export const lesson: Lesson = {
       caption: 'Two peaks near the same height, a neckline at the dip between them, and the same measured-move arithmetic as head and shoulders.',
     },
     {
+      kind: 'callout',
+      tone: 'insight',
+      title: 'The volume tell, from the classic source',
+      md:
+        'This family of shapes was formalised by Robert Edwards and John Magee in *Technical Analysis of Stock Trends* (1948), and their volume observation still holds up as a real, checkable pattern.\n\nIn a genuine head and shoulders, volume tends to run highest on the left shoulder, lower on the head, lowest on the right shoulder. Buying interest fades each peak, even as price makes new highs. A double top shows the same fade: the second peak typically trades lighter than the first.\n\nThe other half of the tell is the breakout. A neckline break on a real volume surge reads as far more convincing than one on quiet volume — many participants agreeing, versus a shape breaking on almost nobody trading it.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'Two head and shoulders formations look identical in shape. Formation A has clearly declining volume across the three peaks and a volume surge on the neckline break. Formation B has flat, unremarkable volume throughout, including on the breakout. Which is the more trustworthy reversal signal?',
+      options: [
+        'Both equally — volume adds nothing once the shape is confirmed by the neckline break',
+        'Formation A — the fading peaks and the breakout surge are real, corroborating evidence, not just the shape',
+        'Formation B — quiet volume means the move is more sustainable',
+      ],
+      correct: 1,
+      reveal:
+        'Formation A. The declining volume into each peak is a real sign that buyers are running out of conviction even as price keeps climbing. That is exactly what a topping trend running out of strength should look like. A neckline break on a volume surge means many participants agreed at once, rather than the price drifting through the line on light activity that could reverse just as easily. Neither volume pattern GUARANTEES anything — the same limit every tool in this stage runs into. But Formation A has two pieces of real, corroborating evidence behind it, and Formation B has only the shape.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'candle-sprint',
       config: {},
@@ -175,6 +196,20 @@ export const lesson: Lesson = {
           },
           explanation:
             'Wait for the close. Acting on the shape alone means acting on something that fails to confirm surprisingly often. Ignoring it outright throws away the one part of the idea — the neckline break — that is at least an observable, specific event rather than a shape you are pattern-matching by eye.',
+        },
+        {
+          prompt: 'A double top forms, but the second peak trades on noticeably HIGHER volume than the first. What does that most honestly suggest?',
+          type: 'decision',
+          spec: {
+            options: [
+              'Nothing — volume is irrelevant once the second peak has formed',
+              'It weakens the classic reversal read, since buying conviction actually grew into the second peak rather than fading',
+              'It guarantees the pattern will fail',
+            ],
+            correct: 'It weakens the classic reversal read, since buying conviction actually grew into the second peak rather than fading',
+          },
+          explanation:
+            'Weakens, not guarantees a failure. The classic tell is FADING volume into the second peak. Rising volume there is the opposite of what a topping pattern is supposed to show — a real reason for caution, not proof the pattern will fail outright. As with every volume observation in this lesson, it shifts how much weight to put on the shape rather than deciding the outcome by itself.',
         },
       ],
     },

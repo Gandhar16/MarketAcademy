@@ -22,11 +22,12 @@ export const lesson: Lesson = {
   objectives: [
     'Distinguish a continuation pattern from a reversal pattern',
     'Draw a triangle as two converging trendlines and explain what a flag changes about that',
+    'Read how volume during the pause and on the breakout adds or removes confidence',
     'Compute a measured-move target from a continuation pattern’s base height',
     'Explain why the breakout direction, not the shape, is the only real information it provides',
   ],
   prerequisites: ['in-t2-reversal-chart-patterns'],
-  estimatedMinutes: 14,
+  estimatedMinutes: 17,
   introduces: [],
   skills: ['chart-patterns', 'trendlines', 'chart-reading'],
   blocks: [
@@ -110,6 +111,27 @@ export const lesson: Lesson = {
     },
     {
       kind: 'callout',
+      tone: 'insight',
+      title: 'The volume tell here, mirrored',
+      md:
+        'The reversal shapes in the last lesson had fading volume into each peak as their tell. A continuation pattern\'s classic volume signature, from the same Edwards and Magee source, runs the same idea in reverse.\n\nVolume typically CONTRACTS while the triangle or flag is forming — the narrowing range reflects genuinely quieter, more hesitant trading, not just a tighter price. Then, on a real continuation, volume EXPANDS sharply on the breakout itself.\n\nA breakout on weak, unremarkable volume is a classic warning sign of a false break. Price pokes through the line without the participation behind it to sustain the move, and often drifts back inside the pattern soon after.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'Two triangles look identical in shape and both break upward. Triangle A\'s volume clearly dries up during the pause and then surges on the breakout bar. Triangle B has ordinary volume throughout, including on the breakout. Which continuation has more real evidence behind it?',
+      options: [
+        'Both equally — volume tells you nothing once the breakout direction is known',
+        'Triangle A — the contraction-then-expansion pattern is the classic signature, and its absence in B is a real reason for caution',
+        'Triangle B — steady volume throughout means the move is calmer and more reliable',
+      ],
+      correct: 1,
+      reveal:
+        'Triangle A. A genuine pause is expected to show quieter trading while it forms, and real participation is expected to show up when the range finally resolves. Triangle A shows both. Triangle B shows neither, which does not prove its breakout will fail, but it removes one real piece of corroborating evidence the textbook signature would otherwise provide. As with the reversal shapes, none of this guarantees anything — it changes how much weight the breakout deserves, not whether it is real.',
+      askWhy: true,
+    },
+    {
+      kind: 'callout',
       tone: 'myth',
       title: 'The trend does not have to resume',
       md:
@@ -153,6 +175,20 @@ export const lesson: Lesson = {
           },
           explanation:
             'The breakout itself. Everything before it is a shape with a name and a folklore attached, and the folklore has a direction baked into it that the geometry does not actually guarantee.',
+        },
+        {
+          prompt: 'A flag breaks out on volume noticeably LIGHTER than the average of the prior sessions. What is the honest read?',
+          type: 'decision',
+          spec: {
+            options: [
+              'A confirmed continuation — the shape has broken, that is enough',
+              'A warning sign of a possible false break, since real continuations classically show a volume surge on the breakout',
+              'Proof the pattern is fake and should be ignored entirely',
+            ],
+            correct: 'A warning sign of a possible false break, since real continuations classically show a volume surge on the breakout',
+          },
+          explanation:
+            'A warning sign, not proof either way. The classic continuation signature pairs a quiet pause with an active breakout. Light volume on the breakout itself is the piece of corroborating evidence missing here, the same kind of caution flag fading volume raises for a reversal shape.',
         },
       ],
     },

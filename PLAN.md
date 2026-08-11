@@ -1407,6 +1407,61 @@ rather than undercut it — divergence, in particular, is presented as
 
 ---
 
+#### 3aa. The volume tell, both directions — sixth of the "one by one, in depth" sequence — `[x]` COMPLETE
+
+Picked up the sixth item, which was always scoped as a PAIR:
+`in-t2-reversal-chart-patterns` and `in-t2-continuation-patterns` both
+needed the volume tell §3t flagged as open. Did both in one pass since
+they are literally the same real observation aimed at opposite claims —
+one lesson's "tell" is the mirror image of the other's.
+
+**Real source for both**: Robert Edwards and John Magee, *Technical
+Analysis of Stock Trends* (1948) — the book that formalised this whole
+family of chart shapes, and whose original volume observations still
+hold up as a real, checkable pattern rather than folklore invented for
+this course.
+
+**`in-t2-reversal-chart-patterns`**: volume tends to run highest on the
+left shoulder, lower on the head, lowest on the right shoulder of a head
+and shoulders — buying interest fading each peak even as price makes new
+highs. A double top's second peak typically trades lighter than the
+first. A neckline break on a volume surge reads as more convincing than
+one on quiet volume. New callout stating this, new predict comparing two
+otherwise-identical head-and-shoulders formations (one with the classic
+fading-then-surging signature, one without), new checkpoint task on a
+double top whose second peak trades HEAVIER than the first (the signature
+inverted — a real reason for caution, not proof of failure).
+
+**`in-t2-continuation-patterns`**: the mirror signature — volume
+CONTRACTS while a triangle or flag forms (a genuine pause, not just a
+tighter price range) and EXPANDS on a real breakout. A breakout on weak
+volume is the classic false-break warning sign. New callout explicitly
+framed as "the volume tell here, mirrored" to connect it back to the
+reversal lesson's version, new predict comparing two identical-looking
+triangle breakouts by their volume signature, new checkpoint task on a
+flag breaking out on lighter-than-average volume.
+
+**Care taken to match each lesson's own established caution**: neither
+addition claims the volume pattern guarantees an outcome — both are
+stated as shifting how much weight a shape deserves, exactly the
+"probability, not proof" framing both lessons already use for the shape
+and the neckline break themselves.
+
+- [x] `in-t2-reversal-chart-patterns` — volume-tell callout, comparison
+      predict, new checkpoint task; objectives swapped one item for the
+      volume-reading objective, `estimatedMinutes` 15 → 18
+- [x] `in-t2-continuation-patterns` — mirrored volume-tell callout,
+      comparison predict, new checkpoint task; objectives +1,
+      `estimatedMinutes` 14 → 17
+- [x] Fixed 1 schema-size violation (callout >800 chars) and 6 R15
+      violations across the two lessons, plus 1 C5 jargon collision
+      ("price band" collided with the `circuit-limit` alias) along the way
+- [x] `pnpm verify` clean — 1,252 tests (unchanged, no new pure
+      functions), build succeeds (100 static pages), both lessons return
+      200 live
+
+---
+
 ### M4 · Polish — `[ ]`
 
 - [x] Mobile layout pass across header, pages, leaderboard, widgets — see §3k
