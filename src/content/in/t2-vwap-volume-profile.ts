@@ -23,10 +23,11 @@ export const lesson: Lesson = {
     'Explain why VWAP is used as an execution benchmark rather than a forecast',
     'Compute VWAP from a sequence of trades',
     'Read a volume profile and identify the point of control and value area',
+    'Tell apart a high-volume node from a low-volume one, and what each implies about how price moves through it',
     'Explain what depends on the period a volume profile is built from',
   ],
   prerequisites: ['in-t2-candlestick-patterns-2'],
-  estimatedMinutes: 15,
+  estimatedMinutes: 18,
   introduces: ['volume-profile'],
   skills: ['vwap', 'volume-profile', 'chart-reading'],
   blocks: [
@@ -95,6 +96,27 @@ export const lesson: Lesson = {
     },
     {
       kind: 'callout',
+      tone: 'insight',
+      title: 'Where both tools actually come from',
+      md:
+        'Volume profile descends from **Market Profile**, developed by J. Peter Steidlmayer at the Chicago Board of Trade in the 1980s. It was a floor trader\'s attempt to see WHERE, not just when, the day\'s business concentrated. The point of control and value area are his terms, still used exactly as he defined them.\n\nVWAP itself has grown one further variant worth knowing: **anchored VWAP**, popularised by trader Brian Shannon. Instead of resetting every session, it starts from one specific real event — an earnings date, a gap, a swing high or low — and runs forward from there. It is read the same way as ordinary VWAP, an average cost basis for everyone who has traded since that anchor, just anchored to a meaningful moment instead of the clock.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'On a volume profile, one price shows heavy, sustained volume (a high-volume node). A nearby price shows almost none (a low-volume node) — the histogram bar is nearly empty. How does price typically behave passing through each?',
+      options: [
+        'The same at both — volume profile says nothing about speed',
+        'It tends to slow down and consolidate at the high-volume node, and move quickly through the low-volume one',
+        'It moves fastest through the high-volume node, since that is where the action is',
+      ],
+      correct: 1,
+      reveal:
+        'Slow at the high-volume node, fast through the low-volume one — and there is a real mechanism behind it. A high-volume node has many participants with a stake at that price, giving price plenty of resting orders to fight through. That is the same reason any well-traded level can act as support or resistance. A low-volume node has almost nobody positioned there, so there is little to slow price down. Traders use exactly this to project targets: price often moves quickly across the gaps between nodes and pauses again at the next high-volume shelf.',
+      askWhy: true,
+    },
+    {
+      kind: 'callout',
       tone: 'myth',
       title: 'Price above VWAP is not a buy signal',
       md:
@@ -108,6 +130,20 @@ export const lesson: Lesson = {
           type: 'compute',
           spec: { metric: 'literal', value: 202.8, tolerance: 0.5, unit: '₹' },
           explanation: '(300 × 200 + 700 × 204) ÷ 1,000 = 202,800 ÷ 1,000 = ₹202.80. The larger trade pulls the average further toward its own price, exactly as volume-weighting is meant to.',
+        },
+        {
+          prompt: 'Price is falling and crosses a stretch of the volume profile with almost no bars — a clear low-volume node. What should you honestly expect?',
+          type: 'decision',
+          spec: {
+            options: [
+              'Price to pause and consolidate there, the way it does at a high-volume node',
+              'Price to move through quickly, since few participants are positioned at those prices to slow it down',
+              'The move to reverse immediately',
+            ],
+            correct: 'Price to move through quickly, since few participants are positioned at those prices to slow it down',
+          },
+          explanation:
+            'A low-volume node has little resting size to fight through, so price tends to cross it fast — the mirror of a high-volume node acting like support or resistance. Traders use exactly this gap to project how far a fast move might run before hitting the next well-traded shelf.',
         },
         {
           prompt: 'Classify each statement about VWAP and volume profile.',

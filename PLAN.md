@@ -1331,6 +1331,42 @@ research-backed content, no new pure functions.
 
 ---
 
+#### 3y. VWAP and volume profile, depth pass — fourth of the "one by one, in depth" sequence — `[x]` COMPLETE
+
+Picked up the fourth item: `in-t2-vwap-volume-profile`. Another
+computed-not-drawn tool, so the depth is research-backed content again.
+
+**What was added:**
+
+- **Real origin for volume profile**: it descends from Market Profile,
+  developed by J. Peter Steidlmayer at the Chicago Board of Trade in the
+  1980s — a floor trader's attempt to see WHERE the day's business
+  concentrated, not just when. Point of control and value area are his
+  own terms, still used exactly as he defined them.
+- **Anchored VWAP introduced**, the real, widely-used variant (popularised
+  by trader Brian Shannon) that starts from one specific event — an
+  earnings date, a gap, a swing high or low — instead of resetting every
+  session, read the same way as ordinary VWAP but anchored to a
+  meaningful moment rather than the clock.
+- **High-volume node vs low-volume node**, a genuinely new practical
+  reading skill this lesson did not previously teach: a new predict and
+  a new checkpoint task on how price behaves passing through each — slow
+  and consolidating at a high-volume node (many resting participants to
+  fight through, same mechanism as any support/resistance level), fast
+  through a low-volume node (almost nobody positioned there) — with the
+  real practical use traders make of it, projecting how far a fast move
+  might run before the next well-traded shelf.
+- Objectives 4 → 5; `estimatedMinutes` 15 → 18.
+- Fixed 2 R15 violations along the way.
+
+- [x] `in-t2-vwap-volume-profile` — origin + anchored-VWAP callout,
+      HVN/LVN predict, new HVN/LVN checkpoint task, objectives 4 → 5
+- [x] `pnpm verify` clean — 1,252 tests (unchanged, no new pure
+      functions), build succeeds (100 static pages), lesson returns 200
+      live
+
+---
+
 ### M4 · Polish — `[ ]`
 
 - [x] Mobile layout pass across header, pages, leaderboard, widgets — see §3k
