@@ -1,0 +1,108 @@
+/**
+ * The game catalogue — one place that knows what every game is and does.
+ *
+ * Both `/play` and `/play/[game]` read this, so a game can never appear in the
+ * index without a page or vice versa. The `skill` line is the promise each game
+ * makes: one specific, measurable thing it trains.
+ */
+export interface GameEntry {
+  slug: string;
+  name: string;
+  skill: string;
+  /** One-line description for the index card. */
+  blurb: string;
+  /** Longer framing shown above the game itself, including any honesty caveats. */
+  intro: string;
+  /** True where the game runs on a model rather than market data. */
+  modelled?: boolean;
+}
+
+export const GAME_CATALOGUE: GameEntry[] = [
+  {
+    slug: 'chart-replay',
+    name: 'Chart Replay',
+    skill: 'Decision-making without hindsight',
+    blurb:
+      'Real historical bars, one at a time, symbol and dates hidden. You must write a thesis and set a stop before you can enter. The engine cannot read ahead.',
+    intro:
+      'Real daily bars from a real Indian stock, streamed from the server one at a time. The symbol and the dates are hidden so you cannot recall the outcome, and the future bars are never sent to your browser — there is nothing to peek at.',
+  },
+  {
+    slug: 'order-gauntlet',
+    name: 'Order Gauntlet',
+    skill: 'Order-type selection under pressure',
+    blurb:
+      'Timed scenarios. Pick market, limit, SL or SL-M — and every wrong choice shows what it would actually have cost.',
+    intro:
+      'Six situations, each on a clock. There is only one question behind all of them: do you need certainty of FILL or certainty of PRICE? Running out of time counts as a wrong answer, because hesitating is a decision too.',
+  },
+  {
+    slug: 'cost-cutter',
+    name: 'Cost Cutter',
+    skill: 'Cost drag awareness',
+    blurb: 'Same idea, four levers. Get your annual cost under 1% of capital and find out which lever actually moved it.',
+    intro:
+      'Real Indian statutory charges as of August 2026, computed by the same engine the simulator fills against. Find the lever that actually matters — most people reach for the wrong one first.',
+  },
+  {
+    slug: 'risk-roulette',
+    name: 'Risk Roulette',
+    skill: 'Position sizing and risk of ruin',
+    blurb: 'A fixed, genuinely positive edge. The only variable is bet size. Watch a good strategy bankrupt itself.',
+    intro:
+      'Your edge is fixed and positive. The only variable is how much you bet. These are modelled draws with your stated edge, not market data — the point is the mathematics of sizing, which is identical either way.',
+    modelled: true,
+  },
+  {
+    slug: 'payoff-builder',
+    name: 'Payoff Builder',
+    skill: 'Options structures from first principles',
+    blurb: 'Build four named structures from legs. Graded on the SHAPE, so any equivalent construction passes.',
+    intro:
+      'Four target payoffs, built from calls and puts you add yourself. Grading compares your curve against the target at sampled prices rather than checking a recipe — a bull call spread and a bull put spread have the same shape, and building the other one means you understood more, not less.',
+    modelled: true,
+  },
+  {
+    slug: 'circuit-breaker',
+    name: 'Circuit Breaker',
+    skill: 'Edge-case survival',
+    blurb: 'A scripted crash. Gaps, a market-wide halt, and a lower circuit that locks your exit. Get out alive.',
+    intro:
+      'A limit-down session played out beat by beat, using the same circuit-breaker and price-band rules as the rest of the app. The lesson is that some actions are simply not available — no amount of chart study prepares you for a book with nobody on the other side.',
+  },
+  {
+    slug: 'earnings-roulette',
+    name: 'Earnings Roulette',
+    skill: 'IV crush',
+    blurb: 'Buy the straddle before results. Get the direction right. Lose money anyway.',
+    intro:
+      'Priced with Black–Scholes throughout, so the loss is a consequence of the model rather than a scripted punchline. Outcomes are drawn from a distribution shaped so most results move the stock less than the market priced in — which is what the historical record shows.',
+    modelled: true,
+  },
+  {
+    slug: 'bias-buster',
+    name: 'Bias Buster',
+    skill: 'Behavioural traps',
+    blurb: 'Framing, anchoring, disposition effect, sunk cost. You fall for it, then it is explained.',
+    intro:
+      'Six questions. You must answer before anything is revealed, and the app then tells you whether you picked the answer most people pick. Reading a list of cognitive biases changes nothing; watching yourself fall for one — having been warned this is a bias test — is what makes it land.',
+  },
+  {
+    slug: 'candle-sprint',
+    name: 'Candle Sprint',
+    skill: 'Pattern recognition, then the honest hit rate',
+    blurb: 'Identify patterns fast on real bars — then find out what they were actually worth.',
+    intro:
+      'Ten charts of real daily bars, identified against the clock. The second half is the point: the debrief tells you what each pattern you spotted was actually worth on that symbol’s history, which is usually nothing.',
+  },
+  {
+    slug: 'the-long-game',
+    name: 'The Long Game',
+    skill: 'Compounding and sequence risk',
+    blurb: 'Twenty years of real NIFTY returns, inflation-adjusted, with fees — and the order of returns reversed.',
+    intro:
+      'Real NIFTY 50 calendar-year returns from 2005 to 2024, including the 52% fall of 2008. Four things almost nobody has seen a chart of: what inflation does to a big number, what a 1% fee costs over twenty years, why the average return is not the return you get, and why the ORDER of returns matters once you are contributing.',
+  },
+];
+
+export const GAMES_BY_SLUG = new Map(GAME_CATALOGUE.map((g) => [g.slug, g]));

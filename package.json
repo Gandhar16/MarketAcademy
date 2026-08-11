@@ -1,0 +1,43 @@
+{
+  "name": "market-academy",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "_comment_test_live": "Set MARKET_LIVE=1 in your shell first — these hit the live provider and are excluded from `verify` on purpose.",
+    "test:live": "vitest run src/lib/market/live.integration.test.ts",
+    "typecheck": "tsc --noEmit",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "clsx": "^2.1.1",
+    "framer-motion": "^13.0.0",
+    "lightweight-charts": "^5.2.0",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "tailwind-merge": "^3.6.0",
+    "yahoo-finance2": "^4.0.1",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^4.1.10"
+  },
+  "packageManager": "pnpm@11.17.0"
+}

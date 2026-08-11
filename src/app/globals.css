@@ -1,0 +1,242 @@
+@import 'tailwindcss';
+
+/**
+ * Market Academy design tokens.
+ *
+ * The visual language is deliberately NOT "fintech dashboard". Those interfaces
+ * are designed to make you trade; this one is designed to make you think. So:
+ * a calm dark ground, generous space, one accent used sparingly, and semantic
+ * up/down colours that are colour-blind-safe rather than the default red/green
+ * that ~8% of men cannot reliably distinguish.
+ */
+
+@theme {
+  /* Ground — near-black with a blue cast, not pure #000, so elevation reads. */
+  --color-ground: #0a0d12;
+  --color-surface: #11151d;
+  --color-surface-2: #171c26;
+  --color-line: #232a37;
+  --color-line-strong: #323a4b;
+
+  --color-ink: #e8ecf3;
+  --color-ink-muted: #9aa5b8;
+  --color-ink-faint: #67718a;
+
+  /* One accent. Amber, because it reads as "attention", not "buy now". */
+  --color-accent: #f0b429;
+  --color-accent-dim: #8a6714;
+
+  /* Market direction. Teal/amber instead of green/red: distinguishable under
+     deuteranopia and protanopia, which classic red/green is not. */
+  --color-up: #2dd4a7;
+  --color-down: #ff7a5c;
+
+  --color-danger: #ff5c5c;
+  --color-info: #6ba9ff;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Numbers must be tabular everywhere. A price column that shifts as digits
+     change is unreadable, and this app is mostly numbers. */
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
+
+  --radius-card: 0.75rem;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------------------
+   Small-screen safety net.
+
+   Every layout in the app is written mobile-first, and these rules exist for
+   the cases a layout cannot anticipate: a learner-supplied name with no spaces,
+   an SVG figure authored at a fixed size, a table that has to be wide.
+
+   `overflow-x: clip` on the body rather than `hidden`: hidden on the body
+   creates a scroll container, which breaks `position: sticky` on the header.
+   Clip does not. This is the fix for the whole class of "one element is 3px too
+   wide and now the entire page rocks sideways" bugs, without disabling
+   deliberate horizontal scrolling INSIDE a container.
+   --------------------------------------------------------------------------- */
+
+body {
+  overflow-x: clip;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* A long unbroken token — an email address, a symbol, a pasted URL — must wrap
+   rather than push the page wider than the screen. */
+h1,
+h2,
+h3,
+p,
+li,
+dd,
+td,
+th {
+  overflow-wrap: break-word;
+}
+
+/* Range inputs are used throughout the widgets and are the main thing a learner
+   drags on a phone. The default track is a few pixels tall, which is under
+   every touch-target guideline going. */
+input[type='range'] {
+  min-height: 1.75rem;
+  touch-action: pan-y;
+}
+
+/* Every numeric readout in the app opts into this. Tabular figures are not a
+   nicety here — they are what stops a ticking price from jittering. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: var(--color-accent-dim);
+  color: var(--color-ink);
+}
+
+/* Respect the setting. Several widgets animate price movement, and for anyone
+   who has asked the OS to stop that, we stop. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Form and button primitives.
+
+   Plain CSS rather than Tailwind @apply, because these are used by the auth and
+   account screens where a half-styled input during a slow load reads as a
+   broken page rather than an unstyled one.
+   --------------------------------------------------------------------------- */
+
+.input {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-surface-2);
+  padding: 0.6rem 0.8rem;
+  color: var(--color-ink);
+  font-size: 0.9375rem;
+  transition: border-color 120ms ease;
+}
+
+.input:hover {
+  border-color: var(--color-ink-faint);
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-ground);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #ffc542;
+}
+
+.btn-secondary {
+  background: var(--color-surface-2);
+  border-color: var(--color-line-strong);
+  color: var(--color-ink);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-ink-faint);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------------
+   Glossary terms inside lesson prose.
+
+   Underlined with a dotted rule rather than coloured, because a lesson can
+   contain a dozen of these and a dozen coloured words is a ransom note. The
+   dotted underline is the long-standing convention for "there is a definition
+   here", and it stays legible when the surrounding text is already emphasised.
+   --------------------------------------------------------------------------- */
+
+.term {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: help;
+  text-decoration: underline dotted var(--color-ink-faint);
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+
+.term:hover,
+.term:focus-visible {
+  color: var(--color-ink);
+  text-decoration-color: var(--color-accent);
+}
