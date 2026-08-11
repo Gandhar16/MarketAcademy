@@ -21,13 +21,13 @@ export const lesson: Lesson = {
     'Traders draw lines through chart highs and lows and act as if price will respect them. This shows how that line actually gets drawn, and why two people rarely draw it the same way.',
   objectives: [
     'Check whether a real bar qualifies as a swing high or low by comparing it to its neighbours',
-    'Draw a trendline through two swing points and explain why that alone proves nothing',
-    'Say what a third touch adds that the first two points could not',
+    'Draw a trendline through two swing points in BOTH directions — rising through higher lows, falling through lower highs',
+    'Say what a third touch adds that the first two points could not, on either kind of line',
     'Recompute where a rising or falling trendline sits before using it as a stop level',
     'Explain why a trendline drawn after a move looks more obvious than it would have in real time',
   ],
   prerequisites: ['in-t2-support-resistance'],
-  estimatedMinutes: 15,
+  estimatedMinutes: 17,
   introduces: ['swing-point', 'trendline'],
   skills: ['trendlines', 'chart-reading', 'stop-placement'],
   blocks: [
@@ -63,7 +63,14 @@ export const lesson: Lesson = {
       figure: 'TrendlineFigure',
       props: {},
       caption:
-        'Drawn on a real chart — two real swing lows found by scanning, a line through them, and a real third touch when one exists. Press replay and watch how little the first two points alone tell you.',
+        'Drawn on a real chart in both directions — toggle between them. Uptrend clicks two swing LOWS along a RISING line; downtrend clicks two swing HIGHS along a FALLING line. Watch for a real third touch — it does not always show up in this window, the honest, ordinary case.',
+    },
+    {
+      kind: 'callout',
+      tone: 'insight',
+      title: 'Which direction, and why it matters',
+      md:
+        'A RISING line is drawn under price, through two swing lows, each higher than the last. The rule: find a swing low, find the next one that sits above it, connect them, extend right. It marks a floor buyers keep defending.\n\nA FALLING line is drawn above price, through two swing highs, each lower than the last — the mirrored rule, marking a ceiling sellers keep defending.\n\nUse a rising line while a stock is making higher lows, to judge where a pullback might find support. Use a falling line while it is making lower highs, to judge where a rally might meet resistance. A stock chopping sideways with no clear sequence of either has no clean line to draw — forcing one onto a flat chart is the most common misuse of this tool.',
     },
     {
       kind: 'example',
@@ -109,6 +116,50 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'example',
+      title: 'The mirror case — a falling trendline as a stop for a short',
+      setup:
+        'A falling trendline drawn through two swing highs sits at ₹864 today and drops ₹1.80 a day. A trader is short the stock, which trades at ₹831, with an ATR of ₹14.',
+      steps: [
+        {
+          label: 'Where the trendline sits today',
+          detail: 'Read straight off the falling line, not off the current price',
+          value: '₹864',
+        },
+        {
+          label: 'Where it will sit six trading days from now',
+          detail: 'A falling line drops every session whether or not you redraw it',
+          compute: { fn: 'literal', value: 853.2 },
+        },
+        {
+          label: 'A stop for the short, placed exactly on the line',
+          detail: 'Sits inside the ordinary wobble this stock makes most days',
+          value: '₹864',
+        },
+        {
+          label: 'A stop above the line, with ATR room',
+          detail: 'Line plus one ATR — the mirror of a long stop sitting below a rising line',
+          compute: { fn: 'literal', value: 878 },
+        },
+      ],
+      conclusion:
+        'A short risks being stopped out on ordinary noise the same way a long does. The fix is the same fix, mirrored: give the line ATR-sized room on the side price would have to close through to actually invalidate the trade.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'Price has been making lower highs for two months, respecting a falling trendline each time. One day it closes firmly ABOVE the line for the first time. What does that most likely signal?',
+      options: [
+        'Nothing — one close above a falling line is noise',
+        'Demand has started overwhelming the supply that was capping every prior rally',
+        'The stock is now guaranteed to keep rising',
+      ],
+      correct: 1,
+      reveal:
+        'A break above a falling trendline is read as demand finally absorbing the supply that turned back every earlier rally. The sellers who defended that ceiling either ran out of size or changed their mind — a real, meaningful shift in the tug-of-war the line was tracking. It is not a guarantee, though: a false break that reverses back below the line happens often enough. Most traders wait for the close, not just an intraday poke through it, before treating the break as real.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'candle-sprint',
       config: {},
@@ -129,6 +180,13 @@ export const lesson: Lesson = {
           spec: { metric: 'literal', value: 652, tolerance: 1, unit: '₹' },
           explanation:
             '₹640 + (₹1.20 × 10) = ₹652. A trendline is arithmetic on a slope, and the number changes every session whether or not you redraw the line. Using a stale value from a week ago is a small, easy-to-miss way of misjudging where price actually is relative to the line.',
+        },
+        {
+          prompt: 'A falling trendline sits at ₹420 today and drops ₹0.90 a day. Where does it sit 8 trading days from now?',
+          type: 'compute',
+          spec: { metric: 'literal', value: 412.8, tolerance: 1, unit: '₹' },
+          explanation:
+            '₹420 − (₹0.90 × 8) = ₹412.80. The same arithmetic as a rising line, just subtracting instead of adding. A falling line moves down every session it stays intact, so a stop or breakout level read off a stale point misjudges where the ceiling actually sits today.',
         },
         {
           prompt: 'Classify each statement about trendlines.',

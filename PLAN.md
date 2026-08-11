@@ -1164,16 +1164,89 @@ entirely, which is what made room for real research-backed depth:
 
 **Still open, explicitly, for whoever continues this** — the same
 "what/why/when/where, in both directions where applicable, with real
-research" treatment, not yet applied to: `in-t2-trendlines` (a trendline
-in a downtrend is drawn through LOWER HIGHS, the mirror of the higher-lows
-case already taught — not yet shown), `in-t2-pivot-points`,
+research" treatment, not yet applied to: `in-t2-pivot-points`,
 `in-t2-bollinger-bands`, `in-t2-vwap-volume-profile`, `in-t2-indicators`
 (RSI/MACD/moving averages/ATR), `in-t2-reversal-chart-patterns` and
 `in-t2-continuation-patterns` (the volume tell from §3t), `in-t2-elliott-wave`,
 `in-t2-candlestick-patterns-2`. Each is a well-defined, bounded addition in
 the same shape as this one — pick a lesson, research the real mechanism
 and its real historical/practical context, add depth through `example`
-blocks rather than more predicts, verify the block ratios still pass.
+blocks rather than more predicts, verify the block ratios still pass. The
+user asked to go through this list "one by one in depth" — §3v below is
+the first of that explicit sequence.
+
+---
+
+#### 3v. Trendlines in both directions — the first of the "one by one, in depth" sequence — `[x]` COMPLETE
+
+Picked up the first item from §3u's open list: `in-t2-trendlines` only
+ever showed the uptrend case (a rising line through higher swing lows).
+Added the mirror — a falling line through lower swing highs — with the
+same real-data-scan-not-chosen-by-eye discipline the rest of this stage
+uses, plus the what/why/when/where research pass.
+
+**New pure functions in `chart-drawing.ts`, mirroring the existing
+low-based ones exactly:**
+
+- `findPivotHighs(bars, window)` — mirror of `findPivotLows`.
+- `findFallingTrendlineAnchors(bars)` — mirror of `findTrendlineAnchors`:
+  first pivot high, then the next pivot high that sits LOWER (a genuine
+  lower high), widening the pivot window on failure and returning `null`
+  rather than inventing a point, same honesty rule as the rising case.
+- `findLineTouchHigh(bars, p1, p2, afterIdx, tolerance)` — mirror of
+  `findLineTouch`, checking a real bar's HIGH against the projected line
+  instead of its low.
+- 6 new tests (findPivotHighs ×2, findFallingTrendlineAnchors ×2,
+  findLineTouchHigh ×2) — 25 tests total in this file, up from 19.
+
+**`TrendlineFigure` rewritten with a direction toggle**, same UI pattern
+as `FibonacciFigure`'s Uptrend/Downtrend buttons. Uptrend branch is the
+untouched original logic; downtrend branch swaps every low-based call for
+its high-based mirror (`findLargestDecline` instead of `findLargestSwing`
+for the fallback anchor, `findFallingTrendlineAnchors`/`findLineTouchHigh`
+instead of the rising versions) and a shared `priceAt(i)` helper picks
+`.low` or `.high` per bar so the rest of the geometry (slope, `lineAt`,
+domain, touch detection) is written once and used both ways rather than
+duplicated. Line colour flips (`--color-up` / `--color-down`) so the two
+modes are visually distinct at a glance, not just by the caption text.
+
+**`in-t2-trendlines` research content added:**
+
+- New callout **"Which direction, and why it matters"** — the actual
+  drawing rule stated for both lines (rising: swing low → next higher
+  swing low, floor buyers defend; falling: swing high → next lower swing
+  high, ceiling sellers defend), plus explicit guidance on WHEN each
+  applies (higher-lows sequence vs lower-highs sequence) and the single
+  most common misuse: forcing a line onto a sideways, non-trending chart
+  that has no clean swing sequence to anchor to at all.
+- New **example**, mirroring the existing "moving target" one: a short
+  trade's stop placed on a falling trendline, recomputed forward, then
+  widened by one ATR above the line — the same "give it room" lesson the
+  long case already taught, proven in the other direction with different
+  real numbers rather than just asserted to also apply.
+- New **predict**: a close firmly above a falling trendline after two
+  months of respected lower highs — what does it signal? Correct answer:
+  demand overwhelming the supply that capped every prior rally, a real
+  and meaningful shift, but not a guarantee — flags the common false-break
+  case and why most traders wait for a close rather than an intraday poke
+  through the line.
+- New **checkpoint task**: compute where a falling trendline sits N days
+  forward (same arithmetic as the existing rising-line task, subtracting
+  instead of adding).
+- Objectives rewritn to explicitly name both directions; figure caption
+  updated to describe the toggle; `estimatedMinutes` 15 → 17.
+- Fixed 3 R15 (sentence too long) violations and 2 schema-size violations
+  (objectives >5 items, caption >300 chars) along the way — same
+  familiar validator loop as every other content turn this stage.
+
+- [x] `findPivotHighs`, `findFallingTrendlineAnchors`, `findLineTouchHigh`
+      in `chart-drawing.ts` + 6 new tests (25 total, up from 19)
+- [x] `TrendlineFigure` — direction toggle, real data both ways, shared
+      `priceAt` helper instead of duplicating the geometry
+- [x] `in-t2-trendlines` — new callout (drawing rule + when/where), new
+      downtrend example, new downtrend predict, new checkpoint task
+- [x] `pnpm verify` clean — 1,252 tests (up from 1,246), build succeeds
+      (100 static pages), lesson returns 200 live
 
 ---
 

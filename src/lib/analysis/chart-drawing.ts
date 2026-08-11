@@ -93,6 +93,40 @@ export function findTrendlineAnchors(bars: Candle[]): { p1: number; p2: number }
   return null;
 }
 
+/** Bars whose high is higher than every bar within `window` places on either side. */
+export function findPivotHighs(bars: Candle[], window: number): number[] {
+  const pivots: number[] = [];
+  for (let i = window; i < bars.length - window; i++) {
+    let isPivot = true;
+    for (let k = 1; k <= window; k++) {
+      if (bars[i].high < bars[i - k].high || bars[i].high < bars[i + k].high) {
+        isPivot = false;
+        break;
+      }
+    }
+    if (isPivot) pivots.push(i);
+  }
+  return pivots;
+}
+
+/**
+ * Two real swing highs a falling trendline could be drawn through — the
+ * mirror of `findTrendlineAnchors` for a downtrend: the first pivot high
+ * found, and the next pivot high after it that sits LOWER (a genuine lower
+ * high). Drawn through resistance instead of support, sloping down instead
+ * of up. Same honesty rule: `null` rather than an invented second point.
+ */
+export function findFallingTrendlineAnchors(bars: Candle[]): { p1: number; p2: number } | null {
+  for (const window of [3, 2, 1]) {
+    const pivots = findPivotHighs(bars, window);
+    if (pivots.length < 2) continue;
+    const p1 = pivots[0];
+    const p2 = pivots.slice(1).find((i) => bars[i].high < bars[p1].high);
+    if (p2 != null) return { p1, p2 };
+  }
+  return null;
+}
+
 /**
  * The first bar, after `afterIdx`, whose low sits within `tolerance` of the
  * line projected from (p1, p2) through it — a real third touch, if one
@@ -112,6 +146,30 @@ export function findLineTouch(
     const proj = lineAt(i);
     if (proj <= 0) continue;
     const gap = Math.abs(bars[i].low - proj) / proj;
+    if (gap < tolerance) return i;
+  }
+  return null;
+}
+
+/**
+ * The mirror of `findLineTouch` for a falling trendline drawn through swing
+ * HIGHS: the first bar, after `afterIdx`, whose high sits within `tolerance`
+ * of the line projected from (p1, p2) — a real test of resistance from
+ * below, if one exists in the window.
+ */
+export function findLineTouchHigh(
+  bars: Candle[],
+  p1: number,
+  p2: number,
+  afterIdx: number,
+  tolerance = 0.012,
+): number | null {
+  const slope = (bars[p2].high - bars[p1].high) / (p2 - p1);
+  const lineAt = (i: number) => bars[p1].high + slope * (i - p1);
+  for (let i = afterIdx; i < bars.length; i++) {
+    const proj = lineAt(i);
+    if (proj <= 0) continue;
+    const gap = Math.abs(bars[i].high - proj) / proj;
     if (gap < tolerance) return i;
   }
   return null;

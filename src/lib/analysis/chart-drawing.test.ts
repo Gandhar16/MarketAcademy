@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { findLargestDecline, findLargestSwing, findLineTouch, findPivotLows, findTrendlineAnchors, retracementLevel, toHeikinAshi } from './chart-drawing';
+import {
+  findFallingTrendlineAnchors,
+  findLargestDecline,
+  findLargestSwing,
+  findLineTouch,
+  findLineTouchHigh,
+  findPivotHighs,
+  findPivotLows,
+  findTrendlineAnchors,
+  retracementLevel,
+  toHeikinAshi,
+} from './chart-drawing';
 import type { Candle } from '../market/types';
 
 function bar(low: number, high: number, open = low, close = high): Candle {
@@ -88,6 +99,55 @@ describe('findTrendlineAnchors', () => {
   it('returns null rather than inventing a point when no two-pivot line exists', () => {
     const bars = [bar(50, 55), bar(48, 52)];
     expect(findTrendlineAnchors(bars)).toBeNull();
+  });
+});
+
+describe('findPivotHighs', () => {
+  it('finds a high surrounded by lower highs on both sides', () => {
+    const bars = [bar(40, 45), bar(44, 50), bar(48, 55), bar(44, 51), bar(40, 46)];
+    expect(findPivotHighs(bars, 2)).toEqual([2]);
+  });
+
+  it('finds nothing when the series is monotonic', () => {
+    const bars = [bar(10, 51), bar(20, 41), bar(30, 31), bar(40, 21), bar(50, 11)];
+    expect(findPivotHighs(bars, 2)).toEqual([]);
+  });
+});
+
+describe('findFallingTrendlineAnchors', () => {
+  it('picks the first pivot and the next LOWER pivot high — the mirror of findTrendlineAnchors', () => {
+    // Pivots (window 2) at index 2 (high 62) and index 6 (high 58) — a genuine lower high.
+    const bars = [
+      bar(45, 50), bar(52, 58), bar(55, 62), bar(48, 54), bar(42, 47),
+      bar(46, 51), bar(50, 58), bar(44, 49), bar(38, 40),
+    ];
+    const anchors = findFallingTrendlineAnchors(bars);
+    expect(anchors).not.toBeNull();
+    expect(anchors!.p1).toBe(2);
+    expect(bars[anchors!.p2].high).toBeLessThan(bars[anchors!.p1].high);
+  });
+
+  it('returns null rather than inventing a point when no two-pivot line exists', () => {
+    const bars = [bar(50, 55), bar(48, 52)];
+    expect(findFallingTrendlineAnchors(bars)).toBeNull();
+  });
+});
+
+describe('findLineTouchHigh', () => {
+  it('finds a real bar whose high sits on the projected falling line', () => {
+    // p1 = index 0 (high 120), p2 = index 4 (high 100): slope = -5/bar.
+    // At index 8 the line projects to 80 — put a bar there with high 80.1, within tolerance.
+    const bars = [
+      bar(95, 120), bar(90, 115), bar(85, 110), bar(80, 105), bar(75, 100),
+      bar(60, 90), bar(50, 70), bar(40, 65), bar(35, 80.1),
+    ];
+    const touch = findLineTouchHigh(bars, 0, 4, 5);
+    expect(touch).toBe(8);
+  });
+
+  it('returns null when the line has not been tested again', () => {
+    const bars = [bar(95, 120), bar(90, 115), bar(85, 110), bar(80, 105), bar(75, 100), bar(10, 20)];
+    expect(findLineTouchHigh(bars, 0, 4, 5)).toBeNull();
   });
 });
 

@@ -31,9 +31,12 @@ import type { Candle } from '@/lib/market/types';
 import { PATTERNS_BY_ID, type PatternId } from '@/lib/analysis/patterns';
 import { INDIA_EQUITIES } from '@/lib/market/symbols';
 import {
+  findFallingTrendlineAnchors,
   findLargestDecline,
   findLargestSwing,
   findLineTouch,
+  findLineTouchHigh,
+  findPivotHighs,
   findPivotLows,
   findTrendlineAnchors,
   retracementLevel,
@@ -333,29 +336,46 @@ export function SwingPointFigure() {
 const TRENDLINE_SYMBOL = 'HDFCBANK.NS';
 
 /**
- * A trendline drawn on REAL daily bars. `findTrendlineAnchors` finds two
- * real swing lows algorithmically; `findLineTouch` checks whether the line
- * has genuinely been tested again since. Both outcomes are shown honestly —
- * a confirmed touch when one exists in the window, and the equally common
- * "still waiting" case when one does not, rather than only ever showing the
- * flattering version.
+ * A trendline drawn on REAL daily bars, in both directions. `findTrendlineAnchors`
+ * finds two real swing lows for a RISING support line (an uptrend); the
+ * mirror `findFallingTrendlineAnchors` finds two real swing highs for a
+ * FALLING resistance line (a downtrend). `findLineTouch`/`findLineTouchHigh`
+ * check whether the line has genuinely been tested again since — both
+ * outcomes are shown honestly, a confirmed touch when one exists in the
+ * window, and the equally common "still waiting" case when one does not.
  */
 export function TrendlineFigure() {
   const [play, setPlay] = useState(0);
+  const [direction, setDirection] = useState<'up' | 'down'>('up');
   const { bars: allBars, error } = useRealBars(TRENDLINE_SYMBOL, '1y');
 
   if (error) return <ErrorFigure message={error} />;
   if (!allBars || allBars.length < 30) return <LoadingFigure />;
 
-  const swing = findLargestSwing(allBars);
-  const anchors = findTrendlineAnchors(allBars) ?? {
-    p1: swing.lowIdx,
-    p2: findPivotLows(allBars, 1).find((i) => i > swing.lowIdx) ?? Math.min(swing.lowIdx + 12, allBars.length - 1),
-  };
-  const { p1, p2 } = anchors;
+  const isUp = direction === 'up';
+
+  let p1: number;
+  let p2: number;
+  if (isUp) {
+    const swing = findLargestSwing(allBars);
+    const anchors = findTrendlineAnchors(allBars) ?? {
+      p1: swing.lowIdx,
+      p2: findPivotLows(allBars, 1).find((i) => i > swing.lowIdx) ?? Math.min(swing.lowIdx + 12, allBars.length - 1),
+    };
+    p1 = anchors.p1;
+    p2 = anchors.p2;
+  } else {
+    const decline = findLargestDecline(allBars);
+    const anchors = findFallingTrendlineAnchors(allBars) ?? {
+      p1: decline.highIdx,
+      p2: findPivotHighs(allBars, 1).find((i) => i > decline.highIdx) ?? Math.min(decline.highIdx + 12, allBars.length - 1),
+    };
+    p1 = anchors.p1;
+    p2 = anchors.p2;
+  }
 
   // A fuller daily-chart window, not a tight crop around just the two
-  // anchors — enough real context before the first swing low to see the
+  // anchors — enough real context before the first swing point to see the
   // move that produced it, and enough after the second to see the line
   // actually get tested, the way a learner would look at a real chart.
   const startIdx = Math.max(0, p1 - 18);
@@ -365,60 +385,79 @@ export function TrendlineFigure() {
   const iP2 = p2 - startIdx;
   const lineEndIdx = bars.length - 1;
 
-  const slope = (bars[iP2].low - bars[iP1].low) / (iP2 - iP1);
-  const lineAt = (i: number) => bars[iP1].low + slope * (i - iP1);
-  const realTouch = findLineTouch(allBars, p1, p2, p2 + 1);
+  const priceAt = (i: number) => (isUp ? bars[i].low : bars[i].high);
+  const slope = (priceAt(iP2) - priceAt(iP1)) / (iP2 - iP1);
+  const lineAt = (i: number) => priceAt(iP1) + slope * (i - iP1);
+  const realTouch = isUp ? findLineTouch(allBars, p1, p2, p2 + 1) : findLineTouchHigh(allBars, p1, p2, p2 + 1);
   const touchIdx = realTouch != null && realTouch <= endIdx ? realTouch - startIdx : null;
+  const lineColour = isUp ? 'var(--color-up)' : 'var(--color-down)';
 
   const W = 560;
   const H = 240;
   const domainLo = Math.min(...bars.map((b) => b.low), lineAt(iP1), lineAt(lineEndIdx));
-  const domainHi = Math.max(...bars.map((b) => b.high));
+  const domainHi = Math.max(...bars.map((b) => b.high), lineAt(iP1), lineAt(lineEndIdx));
   const y = makeYScale(domainLo, domainHi, H - 24, 0.1);
   const slot = W / bars.length;
   const xAt = (i: number) => i * slot + slot / 2;
 
   return (
     <div className="rounded-xl border border-line bg-surface p-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-[11px] uppercase tracking-wider text-ink-faint">
           Drawing a trendline on {TRENDLINE_SYMBOL.replace('.NS', '')}, real daily bars
         </span>
         <ReplayButton onReplay={() => setPlay((n) => n + 1)} />
       </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {(['up', 'down'] as const).map((d) => (
+          <button
+            key={d}
+            onClick={() => setDirection(d)}
+            className="num rounded-md px-2.5 py-1 text-[11px] transition-colors"
+            style={{
+              background: direction === d ? 'var(--color-accent)' : 'var(--color-surface-2)',
+              color: direction === d ? 'var(--color-ground)' : 'var(--color-ink-muted)',
+            }}
+          >
+            {d === 'up' ? 'Uptrend — rising support' : 'Downtrend — falling resistance'}
+          </button>
+        ))}
+      </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="A trendline drawn on a real chart">
         <AnimatePresence mode="wait">
-          <g key={play}>
+          <g key={`${play}-${direction}`}>
             <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
               {realCandleElements(bars, W, y)}
             </motion.g>
 
             <MouseDrag
-              from={[xAt(iP1), y(bars[iP1].low)]}
-              to={[xAt(iP2), y(bars[iP2].low)]}
+              from={[xAt(iP1), y(priceAt(iP1))]}
+              to={[xAt(iP2), y(priceAt(iP2))]}
               startDelay={0.2}
               moveDuration={0.9}
             />
 
             {[iP1, iP2].map((idx, i) => (
               <motion.circle
-                key={i} cx={xAt(idx)} cy={y(bars[idx].low)} r={4.5} fill="var(--color-accent)"
+                key={i} cx={xAt(idx)} cy={y(priceAt(idx))} r={4.5} fill="var(--color-accent)"
                 initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i === 0 ? 0.55 : 1.45, duration: 0.3 }}
               />
             ))}
-            <motion.text x={xAt(iP1)} y={y(bars[iP1].low) + 18} fill="var(--color-accent)" fontSize={9.5} textAnchor="middle"
+            <motion.text
+              x={xAt(iP1)} y={y(priceAt(iP1)) + (isUp ? 18 : -12)} fill="var(--color-accent)" fontSize={9.5} textAnchor="middle"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
-              click — swing low 1
+              {isUp ? 'click — swing low 1' : 'click — swing high 1'}
             </motion.text>
-            <motion.text x={xAt(iP2)} y={y(bars[iP2].low) + 18} fill="var(--color-accent)" fontSize={9.5} textAnchor="middle"
+            <motion.text
+              x={xAt(iP2)} y={y(priceAt(iP2)) + (isUp ? 18 : -12)} fill="var(--color-accent)" fontSize={9.5} textAnchor="middle"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>
-              release — swing low 2
+              {isUp ? 'release — swing low 2' : 'release — swing high 2'}
             </motion.text>
 
             <motion.line
-              x1={xAt(iP1)} y1={y(bars[iP1].low)} x2={xAt(lineEndIdx)} y2={y(lineAt(lineEndIdx))}
-              stroke="var(--color-up)" strokeWidth={2}
+              x1={xAt(iP1)} y1={y(priceAt(iP1))} x2={xAt(lineEndIdx)} y2={y(lineAt(lineEndIdx))}
+              stroke={lineColour} strokeWidth={2}
               initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
               transition={{ delay: 2.1, duration: 0.8 }}
             />
@@ -426,10 +465,11 @@ export function TrendlineFigure() {
             {touchIdx != null && (
               <>
                 <motion.circle
-                  cx={xAt(touchIdx)} cy={y(bars[touchIdx].low)} r={6} fill="none" stroke="var(--color-up)" strokeWidth={2}
+                  cx={xAt(touchIdx)} cy={y(priceAt(touchIdx))} r={6} fill="none" stroke={lineColour} strokeWidth={2}
                   initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 3.2, duration: 0.3 }}
                 />
-                <motion.text x={xAt(touchIdx)} y={y(bars[touchIdx].low) - 12} fill="var(--color-up)" fontSize={9.5} textAnchor="middle"
+                <motion.text
+                  x={xAt(touchIdx)} y={y(priceAt(touchIdx)) + (isUp ? -12 : 18)} fill={lineColour} fontSize={9.5} textAnchor="middle"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.5 }}>
                   a real third touch
                 </motion.text>
@@ -439,9 +479,13 @@ export function TrendlineFigure() {
         </AnimatePresence>
       </svg>
       <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
-        {touchIdx != null
-          ? 'Real daily bars, real swing lows, found by scanning rather than by eye. Price came back to this exact line and respected it — that real touch is what turns two points into something worth watching.'
-          : 'Real daily bars, real swing lows, found by scanning rather than by eye. The line is drawn and projected forward — price has not tested it again in this window yet, which is the ordinary case: most trendlines are waiting, not confirmed.'}
+        {isUp
+          ? touchIdx != null
+            ? 'Real daily bars, real swing lows, found by scanning rather than by eye. Price came back to this exact line and respected it — that real touch is what turns two points into something worth watching.'
+            : 'Real daily bars, real swing lows, found by scanning rather than by eye. The line is drawn and projected forward — price has not tested it again in this window yet, which is the ordinary case: most trendlines are waiting, not confirmed.'
+          : touchIdx != null
+            ? 'The mirror case: real swing highs instead of lows, a line sloping DOWN through them instead of up. Price rallied back up into this exact line and failed to close above it — a real touch of resistance, the same read as a support touch on the other side of the market.'
+            : 'The mirror case: real swing highs instead of lows, a line sloping DOWN through them instead of up. The line is drawn and projected forward — price has not tested it again in this window yet, the same "waiting, not confirmed" state a rising line spends most of its life in too.'}
       </p>
     </div>
   );
