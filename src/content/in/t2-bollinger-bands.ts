@@ -22,10 +22,11 @@ export const lesson: Lesson = {
     'State the Bollinger Bands formula and what drives its width',
     'Compute band width from a moving average and a standard deviation',
     'Explain what a squeeze indicates and what it does not',
+    'Tell apart a band touch that means "reversal" from one that means "trend continuing"',
     'Decide what a tight squeeze honestly tells you about what happens next',
   ],
   prerequisites: ['in-t2-pivot-points'],
-  estimatedMinutes: 14,
+  estimatedMinutes: 17,
   introduces: ['bollinger-bands', 'volatility'],
   skills: ['bollinger-bands', 'volatility', 'chart-reading'],
   blocks: [
@@ -79,6 +80,27 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'callout',
+      tone: 'insight',
+      title: 'Where this comes from, and the rule its own inventor gave',
+      md:
+        'John Bollinger developed this indicator in the early 1980s. He adapted an older idea — fixed-percentage trading bands around a moving average — into rails that widen and narrow with actual measured volatility instead of a constant percentage.\n\nBollinger also defined **%B**, a single number for where price sits inside the channel right now: %B = (price − lower band) ÷ (upper band − lower band). 0 means price is on the lower band, 1 means it is on the upper band, above 1 means price has pushed outside the bands entirely.\n\nHis own stated rule, worth taking seriously precisely because he built the tool: never trade off the bands alone. Pair them with a second, unrelated indicator — he favoured volume and momentum tools — because the bands describe volatility, not trend direction or strength.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'A stock in a strong uptrend rides right along the upper band for six straight sessions without pulling back. Going purely by "touching the upper band," a new trader sells, expecting a reversal. What actually happened?',
+      options: [
+        'The trader was right — six touches guarantees an imminent drop',
+        'A "band walk" — a strong trend can hug a band for a long stretch, and treating every touch as overbought fights the trend',
+        'The bands are broken and need to be recalculated',
+      ],
+      correct: 1,
+      reveal:
+        'A band walk. The upper band is two standard deviations above a moving average, not a hard ceiling. A genuinely strong trend can print closes riding along it for many sessions in a row. Reading every touch as "overbought, must reverse" is a common mistake — it means selling into the strongest part of a real trend. That is exactly why Bollinger\'s own rule was to check a second indicator before acting on any single touch.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'candle-sprint',
       config: {},
@@ -98,6 +120,13 @@ export const lesson: Lesson = {
           type: 'compute',
           spec: { metric: 'literal', value: 1236, tolerance: 2, unit: '₹' },
           explanation: '₹1,200 + (2 × ₹18) = ₹1,236. The same two-step formula every time: the average, plus twice the standard deviation.',
+        },
+        {
+          prompt: 'Upper band ₹1,236, lower band ₹1,164, price ₹1,215. What is %B?',
+          type: 'compute',
+          spec: { metric: 'literal', value: 0.71, tolerance: 0.03, unit: '' },
+          explanation:
+            '%B = (1,215 − 1,164) ÷ (1,236 − 1,164) = 51 ÷ 72 = 0.71. Price sits 71% of the way up the channel — closer to the upper band than the middle, but not outside it.',
         },
         {
           prompt: 'Classify each statement about Bollinger Bands.',

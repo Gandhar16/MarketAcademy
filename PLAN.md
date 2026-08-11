@@ -1295,6 +1295,42 @@ research-backed content added via `callout`/`example`/`predict` blocks.
 
 ---
 
+#### 3x. Bollinger Bands, depth pass — third of the "one by one, in depth" sequence — `[x]` COMPLETE
+
+Picked up the third item: `in-t2-bollinger-bands`. Same shape as pivot
+points — a computed, always-on indicator, so all the depth is
+research-backed content, no new pure functions.
+
+**What was added:**
+
+- **Real origin, stated**: John Bollinger, early 1980s, adapting the
+  older fixed-percentage trading-band idea into rails that widen and
+  narrow with actual measured volatility.
+- **%B formalised**: (price − lower band) ÷ (upper band − lower band) —
+  a single number for where price sits inside the channel, 0 at the
+  lower band, 1 at the upper, above 1 meaning price has pushed outside
+  the bands entirely. New checkpoint task computing it.
+- **The inventor's own stated rule, taken seriously**: never trade the
+  bands alone — pair with a second, unrelated indicator, because the
+  bands measure volatility, not trend direction or strength.
+- **The "band walk" misread, addressed head-on**: a new predict where a
+  strong uptrend rides the upper band for six straight sessions, and a
+  new trader sells expecting a reversal. This is arguably the single
+  most common real-world Bollinger Bands mistake — treating every touch
+  as "overbought" — and the lesson now names it explicitly rather than
+  only teaching the squeeze side of the tool.
+- Objectives 4 → 5 (telling a reversal touch from a trend-continuation
+  touch apart); `estimatedMinutes` 14 → 17.
+- Fixed 3 R15 violations along the way.
+
+- [x] `in-t2-bollinger-bands` — origin + %B callout, band-walk predict,
+      new %B checkpoint task, objectives 4 → 5
+- [x] `pnpm verify` clean — 1,252 tests (unchanged, no new pure
+      functions), build succeeds (100 static pages), lesson returns 200
+      live
+
+---
+
 ### M4 · Polish — `[ ]`
 
 - [x] Mobile layout pass across header, pages, leaderboard, widgets — see §3k
