@@ -33,11 +33,12 @@ export const lesson: Lesson = {
   objectives: [
     'State what inputs any given indicator actually uses',
     'Say how many bars of delay a given average carries',
-    'Explain why no indicator can contain information about the future',
+    'Compute RSI from a small set of gains and losses',
+    'Explain why divergence compares two swings instead of reading one static level',
     'Test a folklore threshold against what really followed it',
   ],
   prerequisites: ['in-t2-trend'],
-  estimatedMinutes: 16,
+  estimatedMinutes: 19,
   introduces: ['moving-average', 'rsi', 'atr', 'vwap', 'candle', 'ohlc', 'volume', 'base-rate', 'support', 'resistance', 'statistical-significance'],
   skills: ['indicators', 'chart-reading', 'evidence'],
   blocks: [
@@ -119,6 +120,41 @@ export const lesson: Lesson = {
     },
     {
       kind: 'callout',
+      tone: 'insight',
+      title: 'Where RSI, ATR and MACD actually come from',
+      md:
+        'RSI and ATR share an inventor: J. Welles Wilder Jr., a mechanical engineer turned trader. He published both in his 1978 book *New Concepts in Technical Trading Systems* — the same book that introduced ADX and Parabolic SAR. MACD came a year later, from Gerald Appel.\n\nBoth are decades-old, hand-computable formulas, designed before anyone had a computer at their desk — which is exactly why they are simple arithmetic on prices rather than anything more elaborate. Their age makes them neither more nor less trustworthy today; it only explains why the arithmetic stayed this plain.',
+    },
+    {
+      kind: 'example',
+      title: 'Computing RSI from a short run of days',
+      setup:
+        'Over the last 5 days, a stock moved: +₹4, +₹6, −₹3, +₹2, −₹1. RSI compares the average size of the up days to the average size of the down days.',
+      steps: [
+        { label: 'Average gain', detail: '(4 + 6 + 2) ÷ 5 — down days count as zero here', compute: { fn: 'literal', value: 2.4 } },
+        { label: 'Average loss', detail: '(3 + 1) ÷ 5 — up days count as zero here', compute: { fn: 'literal', value: 0.8 } },
+        { label: 'Relative strength (RS)', detail: 'Average gain ÷ average loss', compute: { fn: 'literal', value: 3 } },
+        { label: 'RSI', detail: '100 − [100 ÷ (1 + RS)]', compute: { fn: 'literal', value: 75 } },
+      ],
+      conclusion:
+        'RSI of 75 means up moves have been roughly three times the size of down moves over this stretch, scaled onto a fixed 0–100 line. It is arithmetic on the same five numbers you started with, nothing else.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'Price prints a lower low than its previous swing low, but RSI prints a HIGHER low at the same time — the two disagree. What is this called, and why do some traders treat it more seriously than a plain "RSI below 30"?',
+      options: [
+        'A false reading — the indicator is broken and should be ignored',
+        'Divergence — it compares two swings against each other rather than reading one static level in isolation',
+        'Nothing unusual — RSI and price always move together',
+      ],
+      correct: 1,
+      reveal:
+        'Divergence. Price making a lower low means sellers pushed further; RSI making a higher low means the down move that got them there was, by this measure, weaker than the previous one. That is a real, structural disagreement between two pieces of arithmetic, not folklore about a fixed number like 30 or 70. It is still built entirely from past prices, carrying the same hard ceiling as every other indicator in this lesson — no future information, no guarantee. What makes it more defensible than a static threshold is that it compares the market against ITSELF at two points, not against an arbitrary line drawn once and never adjusted.',
+      askWhy: true,
+    },
+    {
+      kind: 'callout',
       tone: 'myth',
       title: 'Overbought and oversold',
       md:
@@ -139,6 +175,13 @@ export const lesson: Lesson = {
           spec: { metric: 'literal', value: 15, tolerance: 2, unit: 'bars' },
           explanation:
             'About half the window, so roughly 15 bars. Knowing this number for whatever setting you use is the difference between using an average and being surprised by it. It also tells you what the tool is for. A 200-day average is 100 days behind, so it is useless for timing an entry and perfectly good for asking whether something is broadly rising.',
+        },
+        {
+          prompt: 'Over 5 days a stock moves +₹5, +₹3, −₹4, −₹2, +₹6. What is the RSI?',
+          type: 'compute',
+          spec: { metric: 'literal', value: 70, tolerance: 2, unit: '' },
+          explanation:
+            'Average gain = (5+3+6)÷5 = 2.8. Average loss = (4+2)÷5 = 1.2. RS = 2.8÷1.2 = 2.33. RSI = 100 − [100 ÷ (1+2.33)] ≈ 70. The same two-average, one-ratio formula every time.',
         },
         {
           prompt:

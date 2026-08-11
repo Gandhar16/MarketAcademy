@@ -1367,6 +1367,46 @@ computed-not-drawn tool, so the depth is research-backed content again.
 
 ---
 
+#### 3z. Indicators (RSI/MACD/ATR), depth pass — fifth of the "one by one, in depth" sequence — `[x]` COMPLETE
+
+Picked up the fifth item: `in-t2-indicators`, the RSI/MACD/moving-average/
+ATR catalogue lesson. This lesson's whole thesis is skepticism about
+indicators-as-instruments, so the depth added had to fit that frame
+rather than undercut it — divergence, in particular, is presented as
+"more defensible than a static threshold," not as a new guarantee.
+
+**What was added:**
+
+- **Real origin, and a genuinely nice connective fact**: RSI and ATR
+  share an inventor — J. Welles Wilder Jr., 1978, the same book that also
+  introduced ADX and Parabolic SAR. MACD came a year later, from Gerald
+  Appel. Both predate desktop computers, which is stated as the actual
+  reason the arithmetic stayed this simple, not a mark against them.
+- **RSI actually computed from real numbers for the first time** in this
+  lesson — previous prose only described it in words ("size of recent up
+  moves against recent down moves"). New worked example: average
+  gain, average loss, RS, then the 100 − 100/(1+RS) formula, landing on
+  RSI = 75. New checkpoint task with different numbers (RSI = 70).
+- **Divergence introduced**, the first time this lesson has gone beyond
+  a static overbought/oversold line: a new predict where price prints a
+  lower low but RSI prints a higher low. Framed carefully to match the
+  lesson's own thesis — a real, structural disagreement between two
+  pieces of arithmetic, still built entirely from past prices, still no
+  future information or guarantee. What makes it more defensible than
+  "RSI below 30" is that it compares the market against itself at two
+  points instead of against an arbitrary fixed line.
+- Objectives 4 → 5 (RSI computation, divergence); `estimatedMinutes`
+  16 → 19.
+- Fixed 1 R15 violation along the way.
+
+- [x] `in-t2-indicators` — origin callout, RSI worked example, divergence
+      predict, new RSI checkpoint task, objectives 4 → 5
+- [x] `pnpm verify` clean — 1,252 tests (unchanged, no new pure
+      functions), build succeeds (100 static pages), lesson returns 200
+      live
+
+---
+
 ### M4 · Polish — `[ ]`
 
 - [x] Mobile layout pass across header, pages, leaderboard, widgets — see §3k
