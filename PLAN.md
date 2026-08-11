@@ -926,6 +926,68 @@ available this session, so the `ChartTypeFigure` tab-switching and the
 browser. `tsc`/`eslint`/tests/build/live-200s all pass; a manual look is
 still worth doing.
 
+#### 3r. An animated mouse cursor for the click-drag tools — `[x]` COMPLETE
+
+**The ask.** The figures in §3p mark up real charts, but the marking itself
+just appeared — a dot fading in at each anchor, no sense of a person
+actually clicking and dragging the way they would on a real platform.
+Explicit request: show the mouse doing it, bottom to top for Fibonacci, and
+the same treatment for the other tools that are genuinely drawn by a
+click-and-drag gesture.
+
+**New shared component, `MouseDrag`.** A small cursor glyph (`CURSOR_PATH`)
+that fades in at the first point, a click ripple, a drag to the second
+point, a click ripple there too. Built from two NESTED `motion.g` groups
+rather than one keyframed animation — the outer handles the fade-in at a
+fixed position, the inner handles the `(0,0) → (to − from)` offset after a
+further delay. SVG transforms on nested groups compose additively, so this
+sidesteps keyframe-timing-fraction arithmetic entirely: the visible result
+lands exactly on `to` because inner + outer offsets literally add up in the
+SVG coordinate system, not because the timing was tuned to make it look
+right.
+
+**Where it was added, and where it deliberately was not:**
+
+- **`FibonacciFigure`** — bottom to top, exactly as asked: press at the
+  swing low, drag up, release at the swing high. The grid now waits for the
+  drag to finish before it starts drawing.
+- **`TrendlineFigure`** — click swing low 1, drag to swing low 2, release;
+  the trendline itself now draws in only after the release.
+- **`ChartPatternFigure`** — the mouse traces the neckline left to right for
+  every non-triangle shape (head-and-shoulders, inverse, double-top,
+  double-bottom); the triangle variant has no single neckline to trace, so
+  it was left as-is.
+- **NOT added to `CandlestickTrioFigure` or `VolumeProfileFigure`.** Neither
+  is a click-and-drag gesture — a candlestick pattern is FOUND in real
+  history, not drawn, and a volume profile is computed, not anchored by two
+  points. Adding a fake drag gesture to either would have taught a false
+  mechanism.
+- **NOT added to `ElliottWaveFigure`.** Labelling eight sequential points is
+  a different gesture from a two-point drag, and chaining eight small drags
+  would have been busier than instructive. Flagged here rather than done
+  half-heartedly — worth a dedicated multi-point cursor treatment later if
+  wanted, not attempted this pass.
+
+Every existing animation delay downstream of an anchor point was re-timed
+to wait for the drag to actually finish (press → drag → release) before
+the tool starts drawing, in all three figures — not just layered visually
+on top of the old schedule.
+
+- [x] `MouseDrag` shared component in `ta-tools.tsx`
+- [x] Wired into `FibonacciFigure`, `TrendlineFigure`, `ChartPatternFigure`, all re-timed
+- [x] `pnpm verify` clean — 1,241 tests (unchanged — pure animation/UI, no
+      logic changed), build succeeds, all four affected lesson pages
+      return 200 live
+
+**Same visual-verification caveat as §3p and §3q**, and it matters more
+here than anywhere else in this stage: this is a purely visual feature, and
+no browser-automation tool was available to actually watch the cursor move.
+The `translateX`/`translateY` animation technique is framer-motion's
+standard, documented way to animate an arbitrary transform on any element
+including SVG groups — not something invented for this — but it has not
+been eyeballed running. If anything about the cursor looks wrong, this is
+the first place to look.
+
 ---
 
 ### M4 · Polish — `[ ]`

@@ -58,6 +58,66 @@ function ErrorFigure({ message }: { message: string }) {
   return <div className="rounded-xl border border-danger/50 bg-danger/10 p-4 text-sm text-danger">{message}</div>;
 }
 
+/** A small mouse-pointer glyph, tip at the origin — positioned entirely via `translate`. */
+const CURSOR_PATH = 'M0,0 L0,15.5 L3.8,12.2 L6.2,17.6 L8.6,16.5 L6.2,11.2 L10.8,11.2 Z';
+
+/**
+ * The click-drag-click a learner would actually perform: press at `from`,
+ * drag to `to`, release. Used everywhere a tool in this stage is anchored
+ * by two points a person clicks — a Fibonacci grid, a trendline, a
+ * chart-shape neckline — rather than for tools nobody drags into place
+ * (a candlestick pattern is found, not drawn; a volume profile is computed).
+ *
+ * Built from two nested groups rather than one keyframed animation: the
+ * outer handles the fade-in at a fixed position, the inner handles the
+ * (0,0) → (to − from) offset after a further delay. SVG transforms on
+ * nested groups compose additively, so the visible result lands exactly on
+ * `to` without juggling keyframe-time fractions for a single element.
+ */
+function MouseDrag({
+  from,
+  to,
+  startDelay,
+  moveDuration = 0.9,
+}: {
+  from: [number, number];
+  to: [number, number];
+  startDelay: number;
+  moveDuration?: number;
+}) {
+  const pressDelay = startDelay + 0.35;
+  const releaseDelay = pressDelay + moveDuration;
+  return (
+    <>
+      <motion.g
+        initial={{ translateX: from[0], translateY: from[1], opacity: 0 }}
+        animate={{ opacity: [0, 1, 1, 0] }}
+        transition={{ delay: startDelay, duration: moveDuration + 0.85, times: [0, 0.15, 0.9, 1] }}
+      >
+        <motion.g
+          initial={{ translateX: 0, translateY: 0 }}
+          animate={{ translateX: to[0] - from[0], translateY: to[1] - from[1] }}
+          transition={{ delay: pressDelay, duration: moveDuration, ease: 'easeInOut' }}
+        >
+          <path d={CURSOR_PATH} fill="var(--color-ink)" stroke="var(--color-ground)" strokeWidth={1} />
+        </motion.g>
+      </motion.g>
+      <motion.circle
+        cx={from[0]} cy={from[1]} r={3} fill="none" stroke="var(--color-accent)" strokeWidth={1.5}
+        initial={{ opacity: 0, r: 3 }}
+        animate={{ r: [3, 13], opacity: [0.9, 0] }}
+        transition={{ delay: pressDelay, duration: 0.4 }}
+      />
+      <motion.circle
+        cx={to[0]} cy={to[1]} r={3} fill="none" stroke="var(--color-accent)" strokeWidth={1.5}
+        initial={{ opacity: 0, r: 3 }}
+        animate={{ r: [3, 13], opacity: [0.9, 0] }}
+        transition={{ delay: releaseDelay, duration: 0.4 }}
+      />
+    </>
+  );
+}
+
 /**
  * Real daily bars for one symbol. The only path these figures reach real
  * data through. Loading is DERIVED — the held data's own key against the
@@ -183,37 +243,44 @@ export function TrendlineFigure() {
               {realCandleElements(bars, W, y)}
             </motion.g>
 
+            <MouseDrag
+              from={[xAt(iP1), y(bars[iP1].low)]}
+              to={[xAt(iP2), y(bars[iP2].low)]}
+              startDelay={0.2}
+              moveDuration={0.9}
+            />
+
             {[iP1, iP2].map((idx, i) => (
               <motion.circle
                 key={i} cx={xAt(idx)} cy={y(bars[idx].low)} r={4.5} fill="var(--color-accent)"
                 initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1 + i * 0.5, duration: 0.3 }}
+                transition={{ delay: i === 0 ? 0.55 : 1.45, duration: 0.3 }}
               />
             ))}
             <motion.text x={xAt(iP1)} y={y(bars[iP1].low) + 18} fill="var(--color-accent)" fontSize={9.5} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }}>
-              swing low 1
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
+              click — swing low 1
             </motion.text>
             <motion.text x={xAt(iP2)} y={y(bars[iP2].low) + 18} fill="var(--color-accent)" fontSize={9.5} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}>
-              swing low 2 — now draw it
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>
+              release — swing low 2
             </motion.text>
 
             <motion.line
               x1={xAt(iP1)} y1={y(bars[iP1].low)} x2={xAt(lineEndIdx)} y2={y(lineAt(lineEndIdx))}
               stroke="var(--color-up)" strokeWidth={2}
               initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ delay: 2.2, duration: 0.8 }}
+              transition={{ delay: 2.1, duration: 0.8 }}
             />
 
             {touchIdx != null && (
               <>
                 <motion.circle
                   cx={xAt(touchIdx)} cy={y(bars[touchIdx].low)} r={6} fill="none" stroke="var(--color-up)" strokeWidth={2}
-                  initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 3.3, duration: 0.3 }}
+                  initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 3.2, duration: 0.3 }}
                 />
                 <motion.text x={xAt(touchIdx)} y={y(bars[touchIdx].low) - 12} fill="var(--color-up)" fontSize={9.5} textAnchor="middle"
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.6 }}>
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.5 }}>
                   a real third touch
                 </motion.text>
               </>
@@ -282,17 +349,24 @@ export function FibonacciFigure() {
               {realCandleElements(bars, W, y)}
             </motion.g>
 
+            <MouseDrag
+              from={[xAt(iLow), y(loPrice)]}
+              to={[xAt(iHigh), y(hiPrice)]}
+              startDelay={0.2}
+              moveDuration={0.9}
+            />
+
             <motion.circle cx={xAt(iLow)} cy={y(loPrice)} r={5} fill="var(--color-down)"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} />
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }} />
             <motion.circle cx={xAt(iHigh)} cy={y(hiPrice)} r={5} fill="var(--color-up)"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }} />
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.45 }} />
             <motion.text x={xAt(iLow)} y={y(loPrice) + 18} fill="var(--color-down)" fontSize={9.5} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }}>
-              anchor 1 — swing low
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
+              click here — swing low
             </motion.text>
             <motion.text x={xAt(iHigh)} y={y(hiPrice) - 10} fill="var(--color-up)" fontSize={9.5} textAnchor="middle"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.15 }}>
-              anchor 2 — swing high
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>
+              drag up, release here — swing high
             </motion.text>
 
             {FIB_RETRACEMENTS.map((pct, i) => {
@@ -305,10 +379,10 @@ export function FibonacciFigure() {
                     strokeDasharray={pct === 0 || pct === 100 ? undefined : '4 4'}
                     strokeWidth={pct === 50 ? 1.5 : 1} opacity={0.85}
                     initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.85 }}
-                    transition={{ delay: 1.6 + i * 0.22, duration: 0.4 }}
+                    transition={{ delay: 2 + i * 0.22, duration: 0.4 }}
                   />
                   <motion.text x={W - 4} y={y(level) - 3} textAnchor="end" fill="var(--color-ink-faint)" fontSize={9}
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.7 + i * 0.22 }}>
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.1 + i * 0.22 }}>
                     {pct}%
                   </motion.text>
                 </g>
@@ -323,10 +397,10 @@ export function FibonacciFigure() {
                     x1={0} y1={y(level)} x2={W} y2={y(level)}
                     stroke="var(--color-up)" strokeDasharray="2 5" strokeWidth={1} opacity={0.6}
                     initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.6 }}
-                    transition={{ delay: 3.4 + i * 0.3, duration: 0.4 }}
+                    transition={{ delay: 3.8 + i * 0.3, duration: 0.4 }}
                   />
                   <motion.text x={W - 4} y={y(level) - 3} textAnchor="end" fill="var(--color-up)" fontSize={9}
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.5 + i * 0.3 }}>
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.9 + i * 0.3 }}>
                     {pct}%
                   </motion.text>
                 </g>
@@ -417,17 +491,23 @@ export function ChartPatternFigure({ pattern }: { pattern: ChartPatternId }) {
 
             {!isTriangle && (
               <>
+                <MouseDrag
+                  from={[20, def.neckY]}
+                  to={[W - 20, def.neckY]}
+                  startDelay={1.3}
+                  moveDuration={0.5}
+                />
                 <motion.line
                   x1={20} y1={def.neckY} x2={W - 20} y2={def.neckY}
                   stroke="var(--color-accent)" strokeDasharray="5 4" strokeWidth={1.5}
                   initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ delay: 1.5, duration: 0.6 }}
+                  transition={{ delay: 2.15, duration: 0.6 }}
                 />
                 <motion.text
                   x={26} y={def.neckY - 6} fill="var(--color-accent)" fontSize={10}
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.7 }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.35 }}
                 >
-                  {def.label}
+                  {def.label} — traced by dragging left to right
                 </motion.text>
               </>
             )}
@@ -446,12 +526,12 @@ export function ChartPatternFigure({ pattern }: { pattern: ChartPatternId }) {
                   stroke={isBearish ? 'var(--color-down)' : 'var(--color-up)'} strokeWidth={2}
                   markerEnd="url(#ta-arrow)"
                   initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ delay: 2.2, duration: 0.6 }}
+                  transition={{ delay: 2.85, duration: 0.6 }}
                 />
                 <motion.text
                   x={lastX + 8} y={(lastY + targetY) / 2}
                   fill={isBearish ? 'var(--color-down)' : 'var(--color-up)'} fontSize={10}
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.6 }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.25 }}
                 >
                   measured move
                 </motion.text>
