@@ -50,7 +50,14 @@ export const REPLAY_POOL = [
   'SUNPHARMA.NS',
 ];
 
-export const WARMUP_BARS = 60;
+/**
+ * Roughly seven months of daily bars shown before the learner has to act —
+ * enough to actually mark a trendline, a support zone or a chart pattern on
+ * real history rather than guessing from a handful of candles. Raised from
+ * 60 (three months) after feedback that there was not enough history on
+ * screen to analyse before the replay portion began.
+ */
+export const WARMUP_BARS = 150;
 export const SESSION_BARS = 60;
 
 function sweep(now = Date.now()): void {

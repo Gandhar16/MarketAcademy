@@ -95,15 +95,18 @@ Order → validate (margin, freeze qty, circuit band, tick size, lot size) → m
 
 ---
 
-## 3. Curriculum — one sequence, 10 stages, 65 steps — COMPLETE
+## 3. Curriculum — one sequence, 11 stages, 71 steps — COMPLETE
+
+(This section's tier table below predates the full build and is stale — §3f
+and §3m are the authoritative counts and per-stage detail.)
 
 Each lesson = 8–15 min, 6–12 blocks, ≥60% interactive, at least one worked example
 followed within three blocks by a question about it, and a graded checkpoint that
 asks the learner to produce an answer rather than recognise one.
 
 The tiers below are how difficulty is priced and how mastery decay is grouped.
-The learner never navigates them: `/learn` is one numbered road of 60 steps, and
-the mapping from stages to tiers is in §3f.
+The learner never navigates them: `/learn` is one numbered road of 71 steps, and
+the mapping from stages to tiers is in §3f and §3m.
 
 **T0 · Foundations** (8, `1 built`) — what a share actually is · exchange vs broker vs depository · demat & the settlement chain · order book mechanics · T+1 · who's on the other side of your trade
 **T1 · Beginner** (18, `4 built`) — order types · the real cost of a trade · reading candles honestly · position sizing · index vs stock · SIP & compounding · your first full trade end-to-end
@@ -539,13 +542,261 @@ Verified end to end against a running server: register → file a winning run
 knowledge 0.0 throughout, with 178 game XP on the account — outcome-blind, as
 designed.
 
+#### 3m. Technical-analysis toolkit — drawing tools and chart patterns — `[x]` COMPLETE
+
+**Why this stage exists.** The course already tests candlestick patterns and
+support/resistance against real base rates (§3f, stage 5). What it does not yet
+cover is the rest of the technician's actual toolkit — the things a trader
+draws on a chart by hand: trendlines, Fibonacci levels, the named reversal and
+continuation SHAPES (head and shoulders, double top/bottom, triangles, flags),
+Elliott wave counts, and the three-candle patterns the ten-pattern catalogue
+left out (evening star, morning star, three white soldiers/crows, harami).
+Requested explicitly, with the instruction to research beyond the named
+examples and to prefer a short animated visual over a static image wherever
+one can show HOW something is drawn rather than just what it looks like.
+
+**The honesty problem this stage has to solve.** Candlestick patterns are a
+few-bar boolean rule — `patterns.ts` can detect one on 20,000 real bars and
+report a real base rate, which is exactly what stage 5 already does. A
+trendline, a Fibonacci grid, a head-and-shoulders or an Elliott wave count is
+not a boolean rule. Two competent chartists draw the same chart differently.
+That is not a gap in this course's rigor — it is the actual, honest fact about
+these tools, and pretending otherwise (by inventing a detector and reporting a
+number as if it were as solid as the candlestick base rates) would be a worse
+failure than not testing them at all. So the house style for THIS stage is
+different from stage 5's: rather than "here is the measured edge", it is
+"here is the mechanism, here is exactly how to draw it, and here is why two
+people drawing it will not agree" — the same scepticism the course already
+applies everywhere, aimed at a class of tool where subjectivity is the
+finding rather than an oversight.
+
+**Where real testing IS possible, it is still done.** The three-candle
+patterns extend `PATTERNS` in `src/lib/analysis/patterns.ts` with real
+detectors — evening star, morning star, three white soldiers, three black
+crows, bullish harami, bearish harami — and get the same `PatternScanner` /
+`PatternBaseRate` treatment as the existing ten, because that IS mechanically
+testable. The line between "testable" and "a judgement call" is drawn
+explicitly in the Elliott wave lesson, because that is the sharpest case of
+it: the same five swings can be labelled as a complete five-wave impulse or
+as wave 3 of a larger one, and both labellings survive contact with the
+chart. That is not a shortcoming of the learner's technique. It is the
+reason professional Elliott wave counts disagree with each other in real
+time, and the lesson says so.
+
+**Visual design — short animation instead of a video.** No lesson in this
+course ships a video file or a GIF; every diagram is inline SVG so it
+inherits the theme, stays sharp at any width, and costs nothing to download
+(`docs/plain-language.md` §2 explains why). This stage is the first to
+animate them: `framer-motion` has been a dependency since the project
+started and unused until now (M4 noted this explicitly). A new
+`src/components/visuals/ta-tools.tsx` holds five parameterised, autoplaying
+figures that step through HOW a tool is drawn, with a replay control:
+
+- `TrendlineFigure` — places two swing points, draws the line through them,
+  then shows a third touch confirming it and a break invalidating it.
+- `FibonacciFigure` — anchors a swing low and swing high, draws the
+  retracement grid level by level (23.6/38.2/50/61.8/78.6), then the two
+  common extension levels (161.8/261.8) projected beyond the swing.
+- `ChartPatternFigure` — one component, five `pattern` values
+  (`head-shoulders` · `inverse-head-shoulders` · `double-top` ·
+  `double-bottom` · `triangle`), draws the shape, the neckline, and the
+  measured-move projection.
+- `ElliottWaveFigure` — labels five impulse waves then three correction
+  waves in sequence, then replays the SAME price path with an alternative,
+  equally defensible count to make the subjectivity point concrete rather
+  than asserted.
+- `CandlestickTrioFigure` — three candles appearing in sequence for the
+  evening-star/morning-star family, extending the `CandleAnatomy` visual
+  language from stage 2.
+
+**New syllabus stage.** Inserted as `stage-5b` in `src/content/syllabus.ts`,
+between stage 5 (Reading a chart honestly) and stage 6 (Reading a business) —
+after the base-rate scepticism of stage 5 is established, before valuation.
+Tier T2, question: *"How do traders actually mark up a chart — and which of
+those markings mean anything?"*
+
+| Topic id | Title | Tests against real data? |
+|---|---|---|
+| `in-t2-trendlines` | Drawing a trendline that means something | No — mechanism + subjectivity |
+| `in-t2-fibonacci` | Fibonacci retracement and extension | No — mechanism + reflexivity argument |
+| `in-t2-reversal-chart-patterns` | Head and shoulders, double tops and double bottoms | No — mechanism + measured-move arithmetic |
+| `in-t2-continuation-patterns` | Triangles, flags and wedges: pauses, not reversals | No — mechanism, contrasted with stage-5 rigor |
+| `in-t2-elliott-wave` | Elliott wave: the count nobody can agree on | No, by design — the disagreement IS the lesson |
+| `in-t2-candlestick-patterns-2` | Evening star, morning star, and the three-candle patterns | **Yes** — real `PatternScanner`/`PatternBaseRate` |
+
+**New glossary entries**, tier T2, category `charts` unless noted:
+`swing-point` · `trendline` · `fibonacci-retracement` · `neckline` ·
+`head-and-shoulders` · `double-top` · `measured-move` · `elliott-wave`
+(category `analysis`). `vwap` already exists and is already taught in
+`in-t2-indicators`; a volume-profile lesson was scoped out — see "still open".
+
+**Progress — `[x]` COMPLETE**
+
+- [x] Plan written here
+- [x] Glossary entries (8) — `swing-point` · `trendline` · `fibonacci-retracement` ·
+      `neckline` · `head-and-shoulders` · `double-top` · `measured-move` ·
+      `elliott-wave`. All pass `glossary.test.ts` (needs-cycle check, no
+      undeclared jargon in `plain`). One real C5 collision found and fixed:
+      `in-t1-journal` used "swing low" as ordinary flavour text in a worked
+      example, three tiers before the term is taught — reworded to "recent
+      low" rather than adding it to a T1 lesson's `introduces`.
+- [x] `patterns.ts` — six new candlestick detectors: `morning-star` ·
+      `evening-star` · `three-white-soldiers` · `three-black-crows` ·
+      `bullish-harami` · `bearish-harami`. `PATTERNS` now has 16 entries;
+      `PatternScanner` and `PatternBaseRate` needed no changes at all —
+      both already iterate the array generically.
+- [x] `ta-tools.tsx` — five animated figures, all using `framer-motion`
+      (installed since the project started, unused until this stage; see M4)
+- [x] `in-t2-trendlines`
+- [x] `in-t2-fibonacci`
+- [x] `in-t2-reversal-chart-patterns`
+- [x] `in-t2-continuation-patterns`
+- [x] `in-t2-elliott-wave`
+- [x] `in-t2-candlestick-patterns-2`
+- [x] Syllabus stage `stage-5b` inserted, registry updated, `built: true` on
+      all six topics — syllabus is now **11 stages, 71 steps**, all built
+- [x] `pnpm verify` clean — `tsc --noEmit` · `eslint --max-warnings=0` ·
+      1,164 tests (up from 1,129) · `next build` (91 static pages, up from
+      85) · smoke-tested on a live dev server against the real Turso
+      database: all six lesson pages return 200, `/kb` renders all eight
+      new terms, `/learn` shows the new stage
+
+**R15 fired on every single one of these six lessons** — same finding as the
+original 65-lesson build, still the rule that actually bites in practice.
+
+**Superseded — see §3n:** the note that used to live here about VWAP, volume
+profile and Ichimoku being cut is resolved below. An interactive
+draw-your-own-trendline widget remains genuinely out of scope — the animated
+figure teaches the mechanism; a fully interactive version is a larger widget
+than either stage needed.
+
+#### 3n. Second toolkit pass — more TA tools, and fundamentals in depth — `[~]` 7 of 11 built
+
+**Why a second pass.** §3m asked "did we cover support and resistance" —
+yes, `in-t2-support-resistance` shipped in the original 65-lesson build
+(stage 5, before §3m even started) and is unchanged. What was missing is
+breadth: real intraday tools traders actually open every morning (VWAP,
+pivot points), one more testable-vs-untestable technical tool
+(Bollinger Bands, RSI divergence), and — the larger gap — fundamental
+analysis stayed at five lessons (statements, cash vs profit, valuation,
+screening, sectors) with no lesson on the actual RATIOS analysts compute,
+why a number that looks good can be a warning sign, or where to look in a
+real filing. This pass researches both gaps and fills them.
+
+**Research — the technical-analysis half.** What professional and serious
+retail traders actually use, beyond what stage 5 / 5b already cover
+(trend, support/resistance, moving averages, RSI, MACD, ATR, the ten+six
+candlestick patterns, trendlines, Fibonacci, chart shapes, Elliott wave):
+
+| Tool | Real usage | Testable here? |
+|---|---|---|
+| VWAP | The single most-used intraday reference on NSE desks — institutions benchmark execution against it | Already computed (`indicators.ts`); the LESSON is new |
+| Volume profile | Value area / point of control — where volume concentrated by PRICE, not by time. Genuinely different information from a normal volume-by-time chart | No live histogram widget exists; mechanism figure, same honesty as chart shapes |
+| Pivot points | The classic five-level intraday grid (P, R1–R2, S1–S2) — still on every intraday trader's screen, mechanically identical to yesterday's OHLC | Pure arithmetic — computed live from real yesterday's bars via `compute` |
+| Bollinger Bands | Already computed and already toggleable on every `chart` block in this app | **Yes** — live indicator, real squeeze/expansion behaviour |
+| RSI divergence | Distinct claim from "RSI > 70 is overbought" (already taught) — price and momentum disagreeing | No — geometry-matching across swings is a judgement call, same honesty as chart shapes |
+| ADX | Trend-strength companion to the existing trend lesson | Not yet computed; taught conceptually with worked arithmetic, like Elliott wave |
+| Ichimoku Cloud | Real, but five overlapping lines with no consensus reading even among practitioners | **Cut again, deliberately** — worse fit than Elliott wave, not better; noted so nobody re-researches this |
+| Gann angles/fans | Numerology-adjacent; no credible mechanism, no serious practitioner consensus | **Cut** — the site does not teach tools it cannot state an honest mechanism for |
+
+**Research — the fundamentals half.** What "detailed fundamental learning"
+concretely means, beyond the five lessons that exist:
+
+| Lesson | What to look for | Why it matters | Why it can mislead |
+|---|---|---|---|
+| Return ratios (ROE/ROCE/ROA) | How efficiently capital is turned into profit | The engine behind stage 4's compounding curve — this is what compounds | High ROE can be leverage, not skill; ROCE strips that out |
+| Debt and solvency | Debt-to-equity, interest coverage, current ratio | Whether the company survives a bad year | `t2-sectors` already flags that the SAME ratio means different things for a bank vs a software firm |
+| Quality of earnings | Profit vs. operating cash flow divergence, receivable days, related-party transactions | Catches manipulated or fragile profit before the market does | Extends `t2-profit-vs-cash` directly rather than repeating it |
+| Economic moat | Pricing power, market-share stability, margin durability vs. peers | The reason stage 4 says "hold for years" is defensible for SOME companies and not others | Moats erode; a moat lesson that promises permanence would be the site's first invented claim |
+| Reading an annual report | MD&A, auditor's report/qualifications, related-party note, cash flow statement FIRST | The actual document, not a summary of it | Most of it is written to be skimmed past; this teaches where the real information hides |
+| Promoter and governance signals | Pledged shares, promoter buying/selling, board independence | India-specific — promoter behaviour is a stronger public signal here than in most markets | A promoter buying is not proof of anything by itself; the lesson is explicit about that |
+
+**Progress — `[x]` COMPLETE for everything checked below**
+
+- [x] Plan and research written here
+- [x] `in-t2-vwap-volume-profile`
+- [x] `in-t2-pivot-points`
+- [x] `in-t2-bollinger-bands`
+- [x] `in-t2-choosing-the-right-tool` — capstone added mid-pass; maps all
+      nine built technical tools to the specific question each answers, and
+      closes the whole stage by pointing back at stage 3's position-sizing
+      rule, the one thing every tool leaves undecided
+- [x] `in-t2-return-ratios`
+- [x] `in-t2-debt-and-solvency`
+- [x] `in-t2-quality-of-earnings`
+- [ ] `in-t2-rsi-divergence`
+- [ ] `in-t2-adx-trend-strength`
+- [ ] `in-t2-moat`
+- [ ] `in-t2-reading-annual-report`
+- [ ] `in-t2-promoter-signals`
+- [x] New glossary entries for everything built so far (10 — 3 more than
+      planned, since `in-t2-bollinger-bands` also had to introduce
+      `volatility`, a T3 term used a tier early, which `curriculum.test.ts`
+      caught immediately)
+- [x] `VolumeProfileFigure` added to `ta-tools.tsx` (a sixth animated
+      figure, not in the original plan — needed once VWAP got its own
+      lesson and volume profile turned out to deserve more than a mention)
+- [x] `WARMUP_BARS` in `src/lib/replay/server-session.ts` raised from 60 to
+      150 (three months of daily bars to seven) — a direct fix for
+      "not enough history to analyse before acting", confirmed live via
+      `/api/replay`: `warmup.length` now returns 150
+- [x] `pnpm verify` clean on everything built so far — `tsc --noEmit` ·
+      `eslint --max-warnings=0` · 1,213 tests (up from 1,164) · `next build`
+      (98 static pages, up from 91) · all seven new lesson pages return 200
+      on a live dev server, `/kb` renders all ten new terms
+
+**Where the built ones live:** the four TA lessons are appended to
+`stage-5b` (now 12 topics — the original six, plus these four, plus two
+still-open gaps). The three fundamentals lessons open a new `stage-6b`,
+"Reading a business like an analyst", inserted between stage 6 and stage 7 —
+after the first five fundamentals lessons, before behaviour. Syllabus is now
+**12 stages, 83 steps, 78 built**.
+
+**Still open, explicitly, for whoever continues this:** the five unchecked
+items above have their `id`, title and one-line scope already decided in
+this table — writing them is "pick the next box", not "start from
+research". `in-t2-rsi-divergence` and `in-t2-adx-trend-strength` extend
+`stage-5b`; the other three extend `stage-6b`.
+
+#### 3o. Confluence — candlestick and chart-shape signals at Fibonacci levels — `[x]` COMPLETE
+
+**The gap.** Every tool in `stage-5b` up to this point was taught in
+isolation. Real technical traders combine them — specifically, a reversal
+candle (hammer, engulfing, morning/evening star) or a chart shape completing
+right at a Fibonacci retracement is read as a stronger setup than either
+alone. That combination, and which retracement levels actually get watched
+for it (the 50%–61.8% "golden zone" most of all), was not taught anywhere.
+
+**The honest version of the claim.** "Confluence" is real as an ATTENTION
+effect — more traders watching one price means more orders cluster there,
+the same reflexivity argument the Fibonacci lesson already made. It is NOT
+independent evidence in the statistical sense: a Fibonacci grid and a candle
+shape are both drawn by the same person off the same chart, so stacking them
+does not multiply how likely either is to be right. `in-t2-fibonacci-confluence`
+teaches exactly this distinction — attention, not certainty — rather than
+either dismissing confluence or overselling it.
+
+- [x] `in-t2-fibonacci-confluence` — inserted into `stage-5b` right after
+      `in-t2-candlestick-patterns-2`, with four prerequisites
+      (`in-t2-fibonacci`, `in-t2-reversal-chart-patterns`,
+      `in-t2-continuation-patterns`, `in-t2-candlestick-patterns-2` — every
+      tool it combines has to be taught first)
+- [x] New glossary entry `confluence` (tier T2, `needs: ['fibonacci-retracement', 'candle']`)
+- [x] `pnpm verify` clean — 1,220 tests (up from 1,213), build succeeds,
+      lesson returns 200 live, `/kb` renders `confluence`
+
+Syllabus is still **12 stages**, now **84 steps, 79 built, 5 gaps** (the
+same five from §3n — this lesson didn't touch them, it only added one more
+built topic to `stage-5b`).
+
 ---
 
 ### M4 · Polish — `[ ]`
 
 - [x] Mobile layout pass across header, pages, leaderboard, widgets — see §3k
 - [ ] Accessibility audit: keyboard paths, focus order, screen-reader labels on charts
-- [ ] Motion and transitions (Framer Motion is installed, unused so far)
+- [x] Motion and transitions — five figures in `ta-tools.tsx` use Framer
+      Motion (§3m); still unused elsewhere in the app
 - [ ] Performance: bundle split for the charting library, route-level prefetch
 - [ ] Offline support once snapshots land
 - [ ] Onboarding flow and share cards

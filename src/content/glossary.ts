@@ -957,6 +957,196 @@ export const GLOSSARY: GlossaryEntry[] = [
       'What you make per trade on average, once wins and losses are weighted by how often each happens. A strategy that wins 70% of the time can still have negative expectancy if the losses are large enough.',
     needs: ['risk-per-trade'],
   },
+  // ------------------------------------------ technical-analysis toolkit
+  {
+    id: 'swing-point',
+    term: 'swing point',
+    aliases: ['swing points', 'swing high', 'swing low', 'swing highs', 'swing lows'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'A swing point is a price high that is higher than the highs on either side of it, or a price low that is lower than the lows on either side of it. It is the starting point most chart-drawing tools are built from.',
+    needs: ['price'],
+  },
+  {
+    id: 'trendline',
+    term: 'trendline',
+    aliases: ['trend line', 'trendlines', 'trend lines'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'A trendline is a straight line drawn through two or more swing points, used to show the general direction price has been moving in and to mark roughly where that direction might change.',
+    needs: ['swing-point'],
+  },
+  {
+    id: 'fibonacci-retracement',
+    term: 'Fibonacci retracement',
+    aliases: ['fibonacci retracements', 'fibonacci levels', 'fibonacci extension', 'fibonacci extensions', 'fib levels', 'fibonacci'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Fibonacci retracement is a set of horizontal lines drawn between a swing high and a swing low, at fixed percentages of that move, used to guess where a pullback might pause or how far a further move might reach.',
+    needs: ['swing-point'],
+  },
+  {
+    id: 'neckline',
+    term: 'neckline',
+    aliases: ['necklines'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'A neckline is the line drawn under the low points, or over the high points, of a named chart shape. Price closing back through it is usually treated as confirmation that the shape is complete.',
+    needs: ['swing-point'],
+  },
+  {
+    id: 'head-and-shoulders',
+    term: 'head and shoulders',
+    aliases: ['head-and-shoulders', 'inverse head and shoulders', 'inverse head-and-shoulders'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Head and shoulders is a chart shape made of three peaks, a taller one in the middle between two shorter ones, said to mark a rising trend running out of strength. Turned upside down, on three troughs instead of three peaks, it is called inverse head and shoulders and is read as a falling trend running out of strength.',
+    needs: ['swing-point'],
+  },
+  {
+    id: 'double-top',
+    term: 'double top',
+    aliases: ['double tops', 'double bottom', 'double bottoms', 'M pattern', 'W pattern', 'M top', 'W bottom'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'A double top is a chart shape where price reaches roughly the same high twice with a dip between the two, said to mark a level that rejected price twice in a row. The mirror image, on two lows instead of two highs, is called a double bottom.',
+    needs: ['swing-point'],
+  },
+  {
+    id: 'measured-move',
+    term: 'measured move',
+    aliases: ['measured-move target', 'measured move target'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'A measured move is a price target found by measuring the height of a chart shape and projecting that same distance onward from the point where the shape is considered complete.',
+    needs: ['neckline'],
+  },
+  {
+    id: 'elliott-wave',
+    term: 'Elliott wave',
+    aliases: ['Elliott waves', 'Elliott wave theory', 'wave count', 'wave counting'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Elliott wave is a framework that describes a price move as five waves running with the trend, followed by three waves running against it, with each of those waves said to be built from the same five-and-three pattern at a smaller scale.',
+    needs: ['swing-point'],
+  },
+  // -------------------------------------- second toolkit pass: intraday tools
+  {
+    id: 'volume-profile',
+    term: 'volume profile',
+    aliases: ['value area', 'point of control', 'POC'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Volume profile shows how much trading happened at each PRICE over a period, rather than at each moment in time. The price with the most volume is the point of control; the band around it holding most of the volume is the value area.',
+    needs: ['volume', 'price'],
+  },
+  {
+    id: 'pivot-point',
+    term: 'pivot point',
+    aliases: ['pivot points', 'pivot level', 'pivot levels'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'A pivot point is a price level computed from yesterday’s high, low and close using a fixed formula, used as a rough guide to where today’s price might pause before the day has traded at all.',
+    needs: ['ohlc'],
+  },
+  {
+    id: 'bollinger-bands',
+    term: 'Bollinger Bands',
+    aliases: ['bollinger band', 'bollinger squeeze'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Bollinger Bands are a moving average with two lines drawn a fixed statistical distance above and below it, widening when price is volatile and narrowing when it is calm.',
+    needs: ['moving-average'],
+  },
+  // -------------------------------------- second toolkit pass: fundamentals
+  {
+    id: 'roe',
+    term: 'return on equity',
+    aliases: ['ROE'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Return on equity measures how much profit a company makes for every rupee shareholders have invested in it. A company earning ₹18 for every ₹100 of shareholder money has a return on equity of 18%.',
+    needs: ['share'],
+  },
+  {
+    id: 'roa',
+    term: 'return on assets',
+    aliases: ['ROA'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Return on assets measures profit generated per rupee of everything a company owns, regardless of whether that was funded by shareholders or by borrowing.',
+    needs: ['share'],
+  },
+  {
+    id: 'roce',
+    term: 'return on capital employed',
+    aliases: ['ROCE'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Return on capital employed measures profit generated per rupee of all the money funding a business, both what shareholders put in and what the company borrowed. It is a broader measure than return on equity: how well the whole capital base is used, not just the shareholders’ slice of it.',
+    needs: ['roe'],
+  },
+  {
+    id: 'debt-to-equity',
+    term: 'debt-to-equity ratio',
+    aliases: ['debt to equity', 'D/E ratio'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Debt-to-equity compares how much a company has borrowed to how much shareholders have put in. A ratio of 1 means it has borrowed roughly as much as shareholders have invested.',
+    needs: ['share'],
+  },
+  {
+    id: 'interest-coverage-ratio',
+    term: 'interest coverage ratio',
+    aliases: ['interest coverage'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Interest coverage ratio compares a company’s operating profit to the interest it owes on its debt each year. A ratio of 5 means operating profit is five times the annual interest bill, a comfortable cushion before a missed payment becomes a real risk.',
+    needs: [],
+  },
+  {
+    id: 'current-ratio',
+    term: 'current ratio',
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Current ratio compares what a company can turn into cash within a year to what it owes within a year. A ratio above 1 means it can, on paper, cover its near-term bills.',
+    needs: [],
+  },
+  {
+    id: 'quality-of-earnings',
+    term: 'quality of earnings',
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Quality of earnings is a question about whether a company’s reported profit is actually backed by cash coming in the door, or built partly from accounting choices that can reverse. The same rupee of profit can mean very different things depending on the answer.',
+    needs: [],
+  },
+  {
+    id: 'confluence',
+    term: 'confluence',
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'Confluence is when two or more separate tools point at the same price — Fibonacci retracement and a candle shape, for example. It means more traders are watching that price. It does not mean the signal is more likely to be correct.',
+    needs: ['fibonacci-retracement', 'candle'],
+  },
 ];
 
 export const GLOSSARY_BY_ID = new Map(GLOSSARY.map((g) => [g.id, g]));

@@ -69,7 +69,7 @@ export const lesson: Lesson = {
       steps: [
         {
           label: 'Trade A — what you wrote at the time',
-          detail: 'Level held twice, stop under the swing low, target the prior high',
+          detail: 'Level held twice, stop under the recent low, target the prior high',
           value: '2.4 : 1 planned',
         },
         {

@@ -14,7 +14,7 @@ a shelf of loose chapters, not as a course.
 
 ## What replaced it
 
-`src/content/syllabus.ts` is the single ordered road: **10 stages, 65 steps**,
+`src/content/syllabus.ts` is the single ordered road: **12 stages, 84 steps**,
 from what a share is to the edge cases that end accounts.
 
 Every stage is titled with the plain-English **question it answers**, not with a
@@ -28,7 +28,9 @@ know they want to know why their order filled worse than the screen showed.
 | 3 | Staying alive | How do I make sure one bad trade does not end this? | T1 | 4 |
 | 4 | Owning for years | What if I do not want to trade at all? | T1 | 4 |
 | 5 | Reading a chart honestly | Do the patterns everyone draws actually predict anything? | T2 | 6 |
+| 5b | The technician's toolkit | How do traders actually mark up a chart, and which of those markings mean anything? | T2 | 13 (11 built) |
 | 6 | Reading a business | Is this company worth what it costs? | T2 | 5 |
+| 6b | Reading a business like an analyst | A company looks fine on the surface. What would change your mind? | T2 | 6 (3 built) |
 | 7 | Your own head | Why do I keep doing the thing I promised myself I would not? | T2 | 3 |
 | 8 | Leverage and derivatives | How do futures and options work, and why do they end so many accounts? | T3 | 12 |
 | 9 | Thinking like a professional | How do people who do this for a living decide anything? | T4 | 8 |
@@ -57,9 +59,23 @@ number, its one-line description, and a plain "not written yet" label on the
 map. Hiding it would make the course look finished by making the missing parts
 invisible — the same dishonesty as a fake progress bar.
 
-As of now there are no gaps: **all 65 steps are written**, and the label no
-longer appears anywhere on the map. The mechanism stays, because the US content
-pack will reintroduce gaps the moment it is started.
+**79 of 84 steps are written.** Five gaps are visible on the map right now —
+`in-t2-rsi-divergence`, `in-t2-adx-trend-strength` in stage 5b, and
+`in-t2-moat`, `in-t2-reading-annual-report`, `in-t2-promoter-signals` in
+stage 6b — each with its title, one-line description and a "not written yet"
+label rather than being hidden. The mechanism that makes this honest rather
+than embarrassing is the same one from the original 65-lesson build: a gap
+in place is more honest than a course that looks finished because the
+missing parts are invisible. Full scope for each gap is in `PLAN.md` §3n.
+
+**Stages 5b and 6b were inserted, not appended.** 5b sits after stage 5
+because it depends on the base-rate scepticism stage 5 already taught. 6b
+sits after stage 6 because it depends on the three statements and first
+valuation stage 6 already taught, and before stage 7 because it is
+depended on by nothing in behaviour. Inserting a stage mid-road only
+requires giving it an id that sorts between its neighbours in the array —
+step numbers are derived from array position, so nothing else needed
+renumbering. Full design rationale in `PLAN.md` §3m and §3n.
 
 **Nothing is locked.** Prerequisites are stated and validated; they are not
 enforced in the UI. A learner who already knows what a candle is should not have

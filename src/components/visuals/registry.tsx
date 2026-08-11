@@ -15,6 +15,14 @@ import {
   SettlementTimeline,
   SpreadDiagram,
 } from './diagrams';
+import {
+  CandlestickTrioFigure,
+  ChartPatternFigure,
+  ElliottWaveFigure,
+  FibonacciFigure,
+  TrendlineFigure,
+  VolumeProfileFigure,
+} from './ta-tools';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- per-figure props are the figure's own concern
 type AnyFigure = ComponentType<any>;
@@ -26,6 +34,12 @@ export const FIGURES: Record<string, AnyFigure> = {
   LongShortDiagram,
   CompoundingCurve,
   RiskRewardDiagram,
+  TrendlineFigure,
+  FibonacciFigure,
+  ChartPatternFigure,
+  ElliottWaveFigure,
+  CandlestickTrioFigure,
+  VolumeProfileFigure,
 };
 
 export function renderFigure(name: string, props: Record<string, unknown>) {

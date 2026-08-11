@@ -26,7 +26,13 @@ export type PatternId =
   | 'gap-down'
   | 'inside-bar'
   | 'three-up-days'
-  | 'three-down-days';
+  | 'three-down-days'
+  | 'morning-star'
+  | 'evening-star'
+  | 'three-white-soldiers'
+  | 'three-black-crows'
+  | 'bullish-harami'
+  | 'bearish-harami';
 
 export interface PatternDefinition {
   id: PatternId;
@@ -136,6 +142,106 @@ export const PATTERNS: PatternDefinition[] = [
     folklore: 'Three red days means capitulation and a bounce is due.',
     lookback: 3,
     detect: (b, i) => isDown(b[i]) && isDown(b[i - 1]) && isDown(b[i - 2]),
+  },
+  {
+    id: 'morning-star',
+    label: 'Morning star',
+    folklore: 'A big down day, a small indecisive day, then a big up day marks a bottom.',
+    lookback: 5,
+    detect: (b, i) => {
+      const c1 = b[i - 2];
+      const c2 = b[i - 1];
+      const c3 = b[i];
+      if (range(c1) <= 0 || range(c2) <= 0 || range(c3) <= 0) return false;
+      const downtrend = c1.close < b[i - 5].close;
+      const firstBearish = isDown(c1) && body(c1) >= range(c1) * 0.5;
+      const secondSmall = body(c2) <= body(c1) * 0.4;
+      const midpoint = (c1.open + c1.close) / 2;
+      const thirdBullish = isUp(c3) && c3.close > midpoint;
+      return downtrend && firstBearish && secondSmall && thirdBullish;
+    },
+  },
+  {
+    id: 'evening-star',
+    label: 'Evening star',
+    folklore: 'A big up day, a small indecisive day, then a big down day marks a top.',
+    lookback: 5,
+    detect: (b, i) => {
+      const c1 = b[i - 2];
+      const c2 = b[i - 1];
+      const c3 = b[i];
+      if (range(c1) <= 0 || range(c2) <= 0 || range(c3) <= 0) return false;
+      const uptrend = c1.close > b[i - 5].close;
+      const firstBullish = isUp(c1) && body(c1) >= range(c1) * 0.5;
+      const secondSmall = body(c2) <= body(c1) * 0.4;
+      const midpoint = (c1.open + c1.close) / 2;
+      const thirdBearish = isDown(c3) && c3.close < midpoint;
+      return uptrend && firstBullish && secondSmall && thirdBearish;
+    },
+  },
+  {
+    id: 'three-white-soldiers',
+    label: 'Three white soldiers',
+    folklore: 'Three solid up days in a row, each closing higher, confirms a new uptrend.',
+    lookback: 2,
+    detect: (b, i) => {
+      const c1 = b[i - 2];
+      const c2 = b[i - 1];
+      const c3 = b[i];
+      const solid = (c: Candle) => range(c) > 0 && body(c) >= range(c) * 0.5;
+      return (
+        isUp(c1) && isUp(c2) && isUp(c3) &&
+        solid(c1) && solid(c2) && solid(c3) &&
+        c2.close > c1.close && c3.close > c2.close &&
+        c2.open > c1.open && c3.open > c2.open
+      );
+    },
+  },
+  {
+    id: 'three-black-crows',
+    label: 'Three black crows',
+    folklore: 'Three solid down days in a row, each closing lower, confirms a new downtrend.',
+    lookback: 2,
+    detect: (b, i) => {
+      const c1 = b[i - 2];
+      const c2 = b[i - 1];
+      const c3 = b[i];
+      const solid = (c: Candle) => range(c) > 0 && body(c) >= range(c) * 0.5;
+      return (
+        isDown(c1) && isDown(c2) && isDown(c3) &&
+        solid(c1) && solid(c2) && solid(c3) &&
+        c2.close < c1.close && c3.close < c2.close &&
+        c2.open < c1.open && c3.open < c2.open
+      );
+    },
+  },
+  {
+    id: 'bullish-harami',
+    label: 'Bullish harami',
+    folklore: 'A small green body tucked inside the prior big red one signals selling has stalled.',
+    lookback: 1,
+    detect: (b, i) => {
+      const prev = b[i - 1];
+      const cur = b[i];
+      if (body(prev) <= 0) return false;
+      const prevLo = Math.min(prev.open, prev.close);
+      const prevHi = Math.max(prev.open, prev.close);
+      return isDown(prev) && isUp(cur) && cur.open >= prevLo && cur.close <= prevHi && body(cur) < body(prev) * 0.6;
+    },
+  },
+  {
+    id: 'bearish-harami',
+    label: 'Bearish harami',
+    folklore: 'A small red body tucked inside the prior big green one signals buying has stalled.',
+    lookback: 1,
+    detect: (b, i) => {
+      const prev = b[i - 1];
+      const cur = b[i];
+      if (body(prev) <= 0) return false;
+      const prevLo = Math.min(prev.open, prev.close);
+      const prevHi = Math.max(prev.open, prev.close);
+      return isUp(prev) && isDown(cur) && cur.open <= prevHi && cur.close >= prevLo && body(cur) < body(prev) * 0.6;
+    },
   },
 ];
 

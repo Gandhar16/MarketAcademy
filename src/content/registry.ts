@@ -32,6 +32,20 @@ import trend from './in/t2-trend';
 import volumeLesson from './in/t2-volume';
 import patternCatalogue from './in/t2-pattern-catalogue';
 import indicators from './in/t2-indicators';
+import trendlines from './in/t2-trendlines';
+import fibonacci from './in/t2-fibonacci';
+import reversalChartPatterns from './in/t2-reversal-chart-patterns';
+import continuationPatterns from './in/t2-continuation-patterns';
+import elliottWave from './in/t2-elliott-wave';
+import candlestickPatterns2 from './in/t2-candlestick-patterns-2';
+import fibonacciConfluence from './in/t2-fibonacci-confluence';
+import vwapVolumeProfile from './in/t2-vwap-volume-profile';
+import pivotPoints from './in/t2-pivot-points';
+import bollingerBands from './in/t2-bollinger-bands';
+import choosingTheRightTool from './in/t2-choosing-the-right-tool';
+import returnRatios from './in/t2-return-ratios';
+import debtAndSolvency from './in/t2-debt-and-solvency';
+import qualityOfEarnings from './in/t2-quality-of-earnings';
 import financials from './in/t2-financials';
 import profitVsCash from './in/t2-profit-vs-cash';
 import valuation from './in/t2-valuation';
@@ -73,7 +87,7 @@ import spreads from './in/t3-spreads';
 import expiryMechanics from './in/t3-expiry';
 import hedging from './in/t3-hedging';
 
-export const LESSONS: Lesson[] = [whatIsAShare, whoDoesWhat, orderBook, settlement, whatMovesPrice, indexLesson, orderTypes, realCostOfATrade, contractNote, readingCandles, firstTrade, positionSizing, stops, expectancyLesson, journal, compounding, sip, indexVsStock, dividends, trend, supportResistance, volumeLesson, doesThisPatternWork, patternCatalogue, indicators, financials, profitVsCash, valuation, screening, sectors, lossAversion, anchoring, overtrading, margin, whatIsADerivative, futures, callAndPut, strikePrices, optionsFirstPrinciples, greeks, vix, impliedVolatility, spreads, expiryMechanics, hedging, riskOfRuin, kelly, backtestPitfalls, microstructure, portfolio, correlation, algo, tax, circuitLock, physicalSettlement, shortDelivery, freezeQuantity, surveillance, corporateActions, freakTrades, mtf, pledge, slb, gaps, liquidityLesson];
+export const LESSONS: Lesson[] = [whatIsAShare, whoDoesWhat, orderBook, settlement, whatMovesPrice, indexLesson, orderTypes, realCostOfATrade, contractNote, readingCandles, firstTrade, positionSizing, stops, expectancyLesson, journal, compounding, sip, indexVsStock, dividends, trend, supportResistance, volumeLesson, doesThisPatternWork, patternCatalogue, indicators, trendlines, fibonacci, reversalChartPatterns, continuationPatterns, elliottWave, candlestickPatterns2, fibonacciConfluence, vwapVolumeProfile, pivotPoints, bollingerBands, choosingTheRightTool, financials, profitVsCash, valuation, screening, sectors, returnRatios, debtAndSolvency, qualityOfEarnings, lossAversion, anchoring, overtrading, margin, whatIsADerivative, futures, callAndPut, strikePrices, optionsFirstPrinciples, greeks, vix, impliedVolatility, spreads, expiryMechanics, hedging, riskOfRuin, kelly, backtestPitfalls, microstructure, portfolio, correlation, algo, tax, circuitLock, physicalSettlement, shortDelivery, freezeQuantity, surveillance, corporateActions, freakTrades, mtf, pledge, slb, gaps, liquidityLesson];
 
 export const LESSONS_BY_ID = new Map(LESSONS.map((l) => [l.id, l]));
 
