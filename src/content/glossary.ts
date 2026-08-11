@@ -1178,6 +1178,59 @@ export const GLOSSARY: GlossaryEntry[] = [
       'A hollow candle chart packs in two separate facts per bar. Whether the body is filled or hollow shows the close against that bar’s own open. The colour shows the close against the PREVIOUS bar’s close, which an ordinary candle does not show at all.',
     needs: ['candle'],
   },
+  // ------------------------------------------------------- indicators, extended
+  {
+    id: 'rsi-divergence',
+    term: 'RSI divergence',
+    aliases: ['RSI divergence', 'bullish divergence', 'bearish divergence'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'RSI divergence is when price makes a new high or low but RSI does not agree — for example, price falls to a lower low while RSI rises to a higher low. It means the move that produced the new price extreme was, by this one measure, weaker than the move before it.',
+    needs: ['rsi'],
+  },
+  {
+    id: 'adx',
+    term: 'ADX',
+    aliases: ['ADX', 'average directional index'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'ADX is a number that measures how strongly a market is trending, without saying which direction. It rises during a strong move up or down and falls when a market goes sideways.',
+  },
+  // ------------------------------------------------------- fundamentals, extended
+  {
+    id: 'moat',
+    term: 'economic moat',
+    aliases: ['economic moat', 'competitive moat'],
+    searchAliases: ['moat'],
+    category: 'analysis',
+    tier: 'T2',
+    plain:
+      'An economic moat is a durable reason competitors cannot simply copy what is working and compete away a company’s profits — a real barrier like high switching costs or a network effect, not just a good year of results.',
+  },
+  // ------------------------------------------------------- india, extended
+  {
+    id: 'promoter-shareholding',
+    term: 'promoter shareholding',
+    aliases: ['promoter shareholding', 'promoter holding', 'promoter stake'],
+    searchAliases: ['promoter', 'promoters'],
+    category: 'india',
+    tier: 'T2',
+    plain:
+      'In India, "promoters" are a company’s founders and their families, tracked separately from other shareholders and disclosed as a percentage of the company each quarter, because that stake is assumed to carry more information than an ordinary investor’s.',
+  },
+  {
+    id: 'pledged-shares',
+    term: 'pledged shares',
+    aliases: ['pledged shares', 'share pledging'],
+    searchAliases: ['pledge', 'pledged', 'pledging'],
+    category: 'india',
+    tier: 'T2',
+    plain:
+      'Pledged shares are shares posted as collateral against a loan, valued at a discount. A promoter can pledge their own shares the same way a trader can pledge holdings to borrow against them — the shares stay owned, but a large enough price fall can force them to be sold to cover the loan.',
+    needs: ['promoter-shareholding'],
+  },
 ];
 
 export const GLOSSARY_BY_ID = new Map(GLOSSARY.map((g) => [g.id, g]));

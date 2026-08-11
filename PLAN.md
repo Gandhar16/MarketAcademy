@@ -1647,6 +1647,114 @@ palette and no theme infrastructure at all before this turn. Added:
       other visual feature built this session — open this in a real
       browser before trusting the visual result further.
 
+**Mid-turn revision, based on direct feedback on the first version.** Two
+changes: `ThemeToggle` rebuilt from a single cycling button into a real
+3-segment sliding control (`role="radiogroup"`, one absolutely-positioned
+pill whose `left` animates between three fixed-width slots — cheaper and
+more predictable than animating three separate buttons). And "market"
+theme rebuilt from "light palette + very faint background" into "the
+ORIGINAL dark palette + a genuinely visible animated backdrop" — the
+first version read as indistinguishable from plain light theme, which
+was the exact complaint. The ticker line is now built from individual
+`<line>` segments coloured by local direction (`--color-up`/
+`--color-down` per segment, not one flat colour) so it actually reads as
+"market lines going up and down," plus a second independent ticker layer
+at a different speed/opacity for depth, both at opacity 0.3–0.55 instead
+of 0.06–0.09 — real headroom exists now because the ground underneath
+is dark again, not white.
+
+---
+
+#### 3ee. The five remaining stage-5b/6b gap lessons, all written — `[x]` COMPLETE
+
+Closed the last open content thread from §3n: the five lessons that were
+visible in the syllabus, scoped with an id/title/covers, but never
+written. All five follow the established 7-block template
+(predict·callout·example·predict·chart-or-game·callout·checkpoint) from
+"How to write the next lesson" below.
+
+- **`in-t2-rsi-divergence`** — deliberately positioned as the deep
+  follow-up to the divergence predict already added to `in-t2-indicators`
+  in an earlier pass this session (§3z), not a duplicate of it. Bullish/
+  bearish divergence defined, RSI computed at two real swing points to
+  PROVE a disagreement rather than assert one, and — matching every
+  hand-drawn chart shape in this stage — an explicit statement that no
+  base rate is reported, since matching swing points by eye is the same
+  judgement call a trendline needs.
+- **`in-t2-adx-trend-strength`** — the fourth tool from Wilder's 1978
+  book taught in this course (after RSI, ATR, and now ADX; Parabolic SAR
+  remains untaught). Core distinction: ADX measures trend STRENGTH, not
+  direction — a hard downtrend registers exactly the same rising ADX a
+  hard uptrend would. +DM/−DM computed from real high/low pairs, with a
+  transfer-test predict deliberately designed to trap the "a new high
+  means +DM must win" assumption (a small new high can still lose to a
+  much larger new low on the other side). No live ADX indicator exists
+  in `indicators.ts` — out of scope for a content-only pass — so the
+  `chart` block stays illustrative (real bars, no toggle), same honest
+  pattern already used for `ChartPatternFigure`/`ElliottWaveFigure`.
+- **`in-t2-moat`** — the least mechanical concept in the fundamentals
+  stage, so the lesson leans on DURATION under competitive pressure as
+  the actual test (fifteen years of an unmatched margin vs. one good
+  year), names four concrete sources (switching costs, network effects,
+  cost advantages, intangible assets) instead of leaving "moat" as a
+  vibe, and a worked compounding example showing what a margin that
+  holds vs. one that fades is actually worth over ten years of identical
+  revenue growth.
+- **`in-t2-reading-annual-report`** — which sections of a multi-hundred-
+  page filing actually carry information: the auditor's report first (a
+  floor, not praise), the related-party note second, the cash flow
+  statement third, cross-checked against the chairman's letter. Central
+  point: an unqualified audit opinion is a legal/accounting floor, not a
+  verdict on business quality — plenty of weak businesses carry one every
+  year.
+- **`in-t2-promoter-signals`** — India-specific, since "promoter" is a
+  defined, quarterly-disclosed category here. Promoter buying read as
+  cleaner evidence than promoter selling (buying costs real money with
+  no offsetting benefit; selling has many unrelated explanations).
+  Pledged shares computed three genuinely different correct ways from
+  the same two facts (% of company, % of promoter holding, and which
+  one a headline is actually quoting), plus the RATE of change in
+  pledging treated as more informative than the static percentage.
+
+**New glossary terms**: `rsi-divergence`, `adx`, `moat`,
+`promoter-shareholding`, `pledged-shares`. `pledged-shares` deliberately
+reuses the general "shares as loan collateral" mechanism rather than
+inventing a second, disconnected definition — `in-t5-pledge` already
+teaches the trader's-own-margin case; this is the same mechanism at the
+founding-family level, so the existing T5 lesson's use of the word
+benefits from the (now earlier) definition rather than conflicting with
+it.
+
+**Two real content bugs caught and fixed before shipping**: the ADX
+transfer-test predict originally had inconsistent numbers (`+DM = 12`
+computed in the reveal text while the marked-correct option claimed
+`−DM` won) — caught by hand-tracing the arithmetic before running
+anything, same discipline as the Fibonacci anchor-order bug in §3u.
+Fixed by rebuilding the scenario with numbers where `−DM` genuinely
+wins (18 vs 3). Separately, `moat.plain` and `pledged-shares.plain` in
+the glossary both used the bare word "margin" in an unrelated sense
+(profit margin / borrowing against holdings), which the glossary's own
+jargon-in-`plain` test caught as a collision with the existing `margin`
+term — fixed by rewording rather than declaring a false `needs`
+dependency.
+
+- [x] All 5 lessons written, registered in `registry.ts`, marked
+      `built: true` in `syllabus.ts`
+- [x] 5 new glossary entries, each following the multi-word-alias /
+      bare-word-`searchAliases` collision-avoidance pattern
+- [x] `pnpm verify` clean — 1,287 tests (up from 1,252), tsc/eslint
+      clean, build succeeds (100 static pages), all 5 lessons return 200
+      live
+- [ ] **Not verified in an actual browser** — same standing caveat as
+      every visual feature this session; content-only verification via
+      the validator, tsc, eslint, tests, build and live 200 checks.
+
+**With this, every content gap tracked in PLAN.md going into this turn
+is closed.** The only remaining open threads are the 3 illustrative
+(not-yet-real-data) figures from §3p — `ChartPatternFigure`,
+`ElliottWaveFigure`, `VolumeProfileFigure` — which need real shape-
+detection, a genuinely harder problem not attempted this session.
+
 ---
 
 ### M4 · Polish — `[ ]`

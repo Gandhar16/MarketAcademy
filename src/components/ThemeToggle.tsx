@@ -1,15 +1,17 @@
 'use client';
 
 /**
- * Three-way theme toggle: dark (the site's original, still the default),
- * light, and market — a light palette plus an animated background layer
- * (`MarketThemeBackground`), toggled purely by the same `data-theme`
+ * Three-way theme switch: dark (the site's original, still the default),
+ * light, and market — a dark base with a visibly animated ticker/candle
+ * backdrop (`MarketThemeBackground`), all driven by the same `data-theme`
  * attribute this component sets on `<html>`.
  *
- * The choice is persisted to `localStorage` and applied by a blocking
- * inline script in `layout.tsx`'s `<head>` BEFORE this component ever
- * mounts, so there is no flash of the wrong theme on load — this component
- * only needs to keep the attribute and storage in sync after that.
+ * A sliding segmented control rather than a single cycling button: a pill
+ * background slides to whichever of the three segments is active, so
+ * switching reads as a physical toggle rather than "click and reread the
+ * label to see what changed". The choice is persisted to `localStorage` and
+ * applied by a blocking inline script in `layout.tsx`'s `<head>` BEFORE this
+ * component ever mounts, so there is no flash of the wrong theme on load.
  */
 import { useEffect, useState } from 'react';
 
@@ -19,7 +21,7 @@ type Theme = (typeof THEMES)[number];
 const THEME_META: Record<Theme, { label: string; icon: string }> = {
   dark: { label: 'Dark', icon: '●' },
   light: { label: 'Light', icon: '○' },
-  market: { label: 'Market', icon: '△' },
+  market: { label: 'Market', icon: '▲' },
 };
 
 export const THEME_STORAGE_KEY = 'ma-theme';
@@ -51,27 +53,45 @@ export function ThemeToggle() {
 
   if (!theme) {
     // A fixed-size placeholder, not nothing — avoids a layout shift once the
-    // real button mounts a moment later.
-    return <span className="inline-block h-8 w-[4.5rem]" aria-hidden />;
+    // real control mounts a moment later.
+    return <span className="inline-block h-8 w-[6.5rem]" aria-hidden />;
   }
 
-  const next = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+  const activeIndex = THEMES.indexOf(theme);
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        applyTheme(next);
-        setTheme(next);
-      }}
-      className="num inline-flex h-8 items-center gap-1.5 rounded-full border border-line-strong bg-surface-2 px-3 text-[11px] uppercase tracking-wide text-ink-muted transition-colors hover:text-ink"
-      title={`Theme: ${THEME_META[theme].label}. Click for ${THEME_META[next].label}.`}
+    <div
+      role="radiogroup"
+      aria-label="Theme"
+      className="relative inline-flex h-8 items-center rounded-full border border-line-strong bg-surface-2 p-0.5"
     >
-      <span aria-hidden className="text-[13px] leading-none text-accent">
-        {THEME_META[theme].icon}
-      </span>
-      <span className="hidden sm:inline">{THEME_META[theme].label}</span>
-      <span className="sr-only">Current theme: {THEME_META[theme].label}. Activate to switch to {THEME_META[next].label}.</span>
-    </button>
+      {/* The sliding pill — one absolutely-positioned element whose `left`
+          animates between the three fixed-width slots, rather than three
+          separately-animated buttons. `transition-[left]` alone is enough
+          because every slot is the same width. */}
+      <span
+        aria-hidden
+        className="absolute top-0.5 bottom-0.5 rounded-full bg-accent transition-[left] duration-300 ease-out"
+        style={{ left: `calc(${activeIndex} * 2rem + 0.125rem)`, width: '2rem' }}
+      />
+      {THEMES.map((t) => (
+        <button
+          key={t}
+          type="button"
+          role="radio"
+          aria-checked={theme === t}
+          onClick={() => {
+            applyTheme(t);
+            setTheme(t);
+          }}
+          title={THEME_META[t].label}
+          className="num relative z-10 flex h-7 w-8 items-center justify-center text-[13px] leading-none transition-colors"
+          style={{ color: theme === t ? 'var(--color-on-emphasis)' : 'var(--color-ink-muted)' }}
+        >
+          <span aria-hidden>{THEME_META[t].icon}</span>
+          <span className="sr-only">{THEME_META[t].label}</span>
+        </button>
+      ))}
+    </div>
   );
 }

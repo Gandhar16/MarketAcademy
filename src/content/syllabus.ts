@@ -332,11 +332,13 @@ export const SYLLABUS: SyllabusStage[] = [
         id: 'in-t2-rsi-divergence',
         title: 'RSI divergence: when price and momentum disagree',
         covers: 'Price making a new extreme while RSI does not, and why matching the two by eye is a judgement call like a chart shape.',
+        built: true,
       },
       {
         id: 'in-t2-adx-trend-strength',
         title: 'ADX: telling a trend from a chop',
         covers: 'A number that measures how much a market is trending, without saying which direction — and why that pairs with the earlier trend lesson.',
+        built: true,
       },
       {
         id: 'in-t2-choosing-the-right-tool',
@@ -414,16 +416,19 @@ export const SYLLABUS: SyllabusStage[] = [
         id: 'in-t2-moat',
         title: 'Does this business have a moat, and does it matter',
         covers: 'Pricing power, margin durability and why "hold for years" only makes sense for some companies.',
+        built: true,
       },
       {
         id: 'in-t2-reading-annual-report',
         title: 'Reading an annual report, not a summary of one',
         covers: 'Where the real information actually sits — the auditor’s report, related-party note, and the cash flow statement read first.',
+        built: true,
       },
       {
         id: 'in-t2-promoter-signals',
         title: 'Promoter and governance signals',
         covers: 'Pledged shares, promoter buying and selling, and what these India-specific signals do and do not prove.',
+        built: true,
       },
     ],
   },

@@ -62,18 +62,19 @@
    overrides. `:root[data-theme="x"]` has higher specificity than the bare
    `:root` the @theme block emits, so these win regardless of source order.
 
-   "market" is deliberately the SAME light palette as "light" — the request
-   was "keep it light so reading stays easy". What makes it "market" is the
-   animated background layer in <MarketThemeBackground>, toggled on purely by
-   this same data-theme attribute, not a different colour scheme.
+   "market" keeps the ORIGINAL dark surfaces — it is a variant of dark, not
+   of light — so it needs no palette override at all here; it inherits
+   straight from the bare `:root` above. What makes it "market" is
+   `<MarketThemeBackground>`: real-looking ticker lines and candles, coloured
+   by direction and animated, at an opacity tuned to be genuinely visible on
+   a dark ground without ever competing with body text sitting on top of it.
    --------------------------------------------------------------------------- */
 
 :root {
   color-scheme: dark;
 }
 
-:root[data-theme='light'],
-:root[data-theme='market'] {
+:root[data-theme='light'] {
   color-scheme: light;
   --color-ground: #f6f7fb;
   --color-surface: #ffffff;
@@ -179,10 +180,13 @@ input[type='range'] {
    `pointer-events: none` so it can never intercept a click meant for the
    real page underneath it.
 
-   Opacity is intentionally very low (0.05-0.09) — enough to read as "alive"
-   in peripheral vision, never enough to compete with body text sitting on
-   top of it. `prefers-reduced-motion` freezes the drift via the rule above,
-   same as every other animation in this app.
+   The dark ground gives real headroom for this to actually read as "market
+   lines" rather than a texture — opacity is tuned high enough to be
+   genuinely visible at a glance, with body text staying legible on top
+   because every real page element sits on an opaque card (`bg-surface`),
+   not directly on the bare page background this layer lives behind.
+   `prefers-reduced-motion` freezes the drift via the rule above, same as
+   every other animation in this app.
    --------------------------------------------------------------------------- */
 
 .market-bg {
@@ -192,7 +196,6 @@ input[type='range'] {
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  color: var(--color-ink-faint);
 }
 
 :root[data-theme='market'] .market-bg {
@@ -208,14 +211,22 @@ input[type='range'] {
 }
 
 .market-bg-ticker {
-  top: 12%;
-  opacity: 0.09;
-  animation: market-bg-drift 90s linear infinite;
+  top: 10%;
+  height: 34%;
+  opacity: 0.55;
+  animation: market-bg-drift 70s linear infinite;
+}
+
+.market-bg-ticker--second {
+  top: 58%;
+  opacity: 0.3;
+  animation: market-bg-drift 100s linear infinite reverse;
 }
 
 .market-bg-candles {
-  bottom: 6%;
-  opacity: 0.06;
+  bottom: 4%;
+  height: 20%;
+  opacity: 0.4;
   animation: market-bg-drift 130s linear infinite reverse;
 }
 
