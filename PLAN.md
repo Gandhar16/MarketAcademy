@@ -988,6 +988,46 @@ including SVG groups — not something invented for this — but it has not
 been eyeballed running. If anything about the cursor looks wrong, this is
 the first place to look.
 
+#### 3s. Marking swing highs and lows themselves, one bar at a time — `[x]` COMPLETE
+
+**The gap §3r left.** Every figure in §3r assumes the learner can already
+SPOT a swing point — `findPivotLows` runs invisibly, the two anchors just
+appear. Both the trendline and Fibonacci lessons introduce `swing-point` as
+a term without ever showing the actual check a person runs against a real
+bar. Explicit request: show that check itself, with the mouse.
+
+**New `SwingPointFigure`, on real bars.** Fetches real ICICI Bank history
+and runs the exact one-neighbour-each-side rule `findPivotLows` already
+implements, but SLOWED DOWN and shown three times: click a candidate bar,
+draw a dashed guide out to the bar on each side, colour that neighbour
+green if it sits higher (supports the case) or red if it sits lower
+(breaks it), then a verdict — ✓ for a genuine swing low, ✗ naming which
+side failed. Two of the three examples are real confirmed swing lows; the
+third is deliberately the honestly tricky case — a real bar found NEAR a
+real swing low, close enough to look like a candidate, that fails the
+check on one side. Nothing here is a hand-picked "obviously wrong" example.
+
+New shared `MouseClick` (press, ripple, release — no drag) alongside the
+`MouseDrag` from §3r, for tools checked one point at a time rather than
+anchored by two.
+
+**Where it lives.** Inserted into `in-t2-trendlines` — the lesson that
+already introduces `swing-point` — right before the existing
+`TrendlineFigure`, so the sequence now reads: here is how you CHECK a
+candidate bar, here is how you DRAW a line through two confirmed ones.
+`FibonacciFigure` and the other figures were left as-is; they already
+assume the swing-point skill this new figure is what actually teaches.
+
+- [x] `MouseClick` shared component in `ta-tools.tsx`
+- [x] `SwingPointFigure` — real data, three worked checks (two confirmed, one rejected), registered in `visuals/registry.tsx`
+- [x] Inserted into `in-t2-trendlines`, new objective added, `estimatedMinutes` 14 → 15
+- [x] `pnpm verify` clean — 1,241 tests (unchanged — no logic outside the
+      component changed; the geometry it calls, `findPivotLows`, was
+      already tested in §3p), build succeeds, lesson returns 200 live
+
+**Same visual-verification caveat as §3p–3r**: not eyeballed in an actual
+browser this session.
+
 ---
 
 ### M4 · Polish — `[ ]`

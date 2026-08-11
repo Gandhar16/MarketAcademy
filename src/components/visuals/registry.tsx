@@ -21,6 +21,7 @@ import {
   ChartTypeFigure,
   ElliottWaveFigure,
   FibonacciFigure,
+  SwingPointFigure,
   TrendlineFigure,
   VolumeProfileFigure,
 } from './ta-tools';
@@ -35,6 +36,7 @@ export const FIGURES: Record<string, AnyFigure> = {
   LongShortDiagram,
   CompoundingCurve,
   RiskRewardDiagram,
+  SwingPointFigure,
   TrendlineFigure,
   FibonacciFigure,
   ChartPatternFigure,

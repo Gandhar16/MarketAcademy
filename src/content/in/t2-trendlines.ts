@@ -20,13 +20,14 @@ export const lesson: Lesson = {
   plainSummary:
     'Traders draw lines through chart highs and lows and act as if price will respect them. This shows how that line actually gets drawn, and why two people rarely draw it the same way.',
   objectives: [
+    'Check whether a real bar qualifies as a swing high or low by comparing it to its neighbours',
     'Draw a trendline through two swing points and explain why that alone proves nothing',
     'Say what a third touch adds that the first two points could not',
     'Recompute where a rising or falling trendline sits before using it as a stop level',
     'Explain why a trendline drawn after a move looks more obvious than it would have in real time',
   ],
   prerequisites: ['in-t2-support-resistance'],
-  estimatedMinutes: 14,
+  estimatedMinutes: 15,
   introduces: ['swing-point', 'trendline'],
   skills: ['trendlines', 'chart-reading', 'stop-placement'],
   blocks: [
@@ -49,6 +50,13 @@ export const lesson: Lesson = {
       title: 'Two points always make a line',
       md:
         'This is the trap a trendline sets that a horizontal support zone does not. A **swing point** requires nothing more than a high or low surrounded by smaller ones, and any chart has dozens of them.\n\nPick two that happen to line up and you can draw something that LOOKS like a trend. That is why the confirming touch matters so much more than the first two points do. It is the only part of the process you did not choose in advance.',
+    },
+    {
+      kind: 'figure',
+      figure: 'SwingPointFigure',
+      props: {},
+      caption:
+        'The check itself, on real bars: click a candidate, compare it to the bar on each side. Both higher and it is a genuine swing low. One lower and it is rejected, however close it looked.',
     },
     {
       kind: 'figure',

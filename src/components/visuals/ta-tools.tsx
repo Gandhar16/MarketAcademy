@@ -118,6 +118,27 @@ function MouseDrag({
   );
 }
 
+/** A single click — press, ripple, release — for tools checked one point at a time rather than dragged. */
+function MouseClick({ at, delay }: { at: [number, number]; delay: number }) {
+  return (
+    <>
+      <motion.g
+        initial={{ translateX: at[0], translateY: at[1], opacity: 0 }}
+        animate={{ opacity: [0, 1, 1, 0] }}
+        transition={{ delay, duration: 1.15, times: [0, 0.2, 0.75, 1] }}
+      >
+        <path d={CURSOR_PATH} fill="var(--color-ink)" stroke="var(--color-ground)" strokeWidth={1} />
+      </motion.g>
+      <motion.circle
+        cx={at[0]} cy={at[1]} r={3} fill="none" stroke="var(--color-accent)" strokeWidth={1.5}
+        initial={{ opacity: 0, r: 3 }}
+        animate={{ r: [3, 13], opacity: [0.9, 0] }}
+        transition={{ delay: delay + 0.25, duration: 0.4 }}
+      />
+    </>
+  );
+}
+
 /**
  * Real daily bars for one symbol. The only path these figures reach real
  * data through. Loading is DERIVED — the held data's own key against the
@@ -180,6 +201,128 @@ function realCandleElements(bars: Candle[], width: number, y: (v: number) => num
       </g>
     );
   });
+}
+
+// ── SwingPointFigure ─────────────────────────────────────────────────────────
+
+const SWING_SYMBOL = 'ICICIBANK.NS';
+
+/**
+ * The check that `findTrendlineAnchors` and `findLargestSwing` both run
+ * silently, made visible one bar at a time: click a candidate, compare it
+ * to the bar on each side, and either both neighbours sit higher — a real
+ * swing low — or one does not, and the candidate is rejected. Every
+ * candidate here is a REAL bar; the rejected one is a real bar found NEAR a
+ * real swing low, chosen because it is the honestly tricky case rather
+ * than an obvious miss.
+ */
+export function SwingPointFigure() {
+  const [play, setPlay] = useState(0);
+  const { bars: allBars, error } = useRealBars(SWING_SYMBOL, '6mo');
+
+  if (error) return <ErrorFigure message={error} />;
+  if (!allBars || allBars.length < 45) return <LoadingFigure />;
+
+  const shown = allBars.slice(-42);
+  const pivots = findPivotLows(shown, 1);
+  const inRange = (i: number) => i >= 2 && i <= shown.length - 3;
+  const confirmed = pivots.filter(inRange).slice(0, 2);
+
+  let rejected: number | null = null;
+  if (confirmed.length > 0) {
+    for (const offset of [2, -2, 3, -3, 4, -4]) {
+      const idx = confirmed[0] + offset;
+      if (inRange(idx) && !pivots.includes(idx)) {
+        rejected = idx;
+        break;
+      }
+    }
+  }
+
+  if (confirmed.length < 2 || rejected == null) {
+    return <ErrorFigure message="Could not find a clean set of real examples in this window. Reload to try a fresh one." />;
+  }
+
+  const points: { idx: number; isSwing: boolean }[] = [
+    { idx: confirmed[0], isSwing: true },
+    { idx: confirmed[1], isSwing: true },
+    { idx: rejected, isSwing: false },
+  ];
+
+  const W = 560;
+  const H = 250;
+  const y = makeYScale(Math.min(...shown.map((b) => b.low)), Math.max(...shown.map((b) => b.high)), H - 24, 0.12);
+  const slot = W / shown.length;
+  const xAt = (i: number) => i * slot + slot / 2;
+  const STEP = 2.4;
+
+  return (
+    <div className="rounded-xl border border-line bg-surface p-5">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] uppercase tracking-wider text-ink-faint">
+          Checking real bars on {SWING_SYMBOL.replace('.NS', '')} for swing lows
+        </span>
+        <ReplayButton onReplay={() => setPlay((n) => n + 1)} />
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="Checking real bars for swing lows one at a time">
+        <AnimatePresence mode="wait">
+          <g key={play}>
+            <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+              {realCandleElements(shown, W, y)}
+            </motion.g>
+
+            {points.map((p, pi) => {
+              const d = 0.3 + pi * STEP;
+              const cx = xAt(p.idx);
+              const cy = y(shown[p.idx].low);
+              const neighbours = [p.idx - 1, p.idx + 1];
+              const failing = neighbours.find((n) => shown[n].low < shown[p.idx].low);
+
+              return (
+                <g key={pi}>
+                  <MouseClick at={[cx, cy]} delay={d} />
+                  <motion.circle cx={cx} cy={cy} r={4.5} fill="var(--color-accent)"
+                    initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: d + 0.25, duration: 0.25 }} />
+
+                  {neighbours.map((n, ni) => {
+                    const nx = xAt(n);
+                    const ny = y(shown[n].low);
+                    const good = shown[n].low > shown[p.idx].low;
+                    return (
+                      <g key={ni}>
+                        <motion.line x1={cx} y1={cy} x2={nx} y2={cy} stroke="var(--color-ink-faint)" strokeDasharray="3 3"
+                          initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.8 }}
+                          transition={{ delay: d + 0.6, duration: 0.3 }} />
+                        <motion.circle cx={nx} cy={ny} r={4} fill="none"
+                          stroke={good ? 'var(--color-up)' : 'var(--color-down)'} strokeWidth={2}
+                          initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: d + 0.9, duration: 0.25 }} />
+                      </g>
+                    );
+                  })}
+
+                  <motion.text
+                    x={cx} y={cy + (p.isSwing ? 22 : -14)} textAnchor="middle" fontSize={10.5}
+                    fill={p.isSwing ? 'var(--color-up)' : 'var(--color-down)'}
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: d + 1.3 }}
+                  >
+                    {p.isSwing
+                      ? '✓ swing low — both neighbours are higher'
+                      : `✗ not a swing low — the ${failing! < p.idx ? 'left' : 'right'} neighbour is lower`}
+                  </motion.text>
+                </g>
+              );
+            })}
+          </g>
+        </AnimatePresence>
+      </svg>
+      <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
+        The rule is mechanical: click a candidate, check the bar on each side. Both higher, and it is a real swing
+        low. One lower, and it is rejected — however much it might have looked like one at a glance.
+      </p>
+    </div>
+  );
 }
 
 // ── TrendlineFigure ─────────────────────────────────────────────────────────
