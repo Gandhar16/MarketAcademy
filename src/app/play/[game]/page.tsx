@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { GAME_CATALOGUE, GAMES_BY_SLUG } from '@/lib/games/catalogue';
 import { GameHost } from '@/components/games/registry';
 import { ProPaywall } from '@/components/payments/ProPaywall';
-import { isGameGated } from '@/lib/payments/access';
+import { isGameGated, paywallEnabled } from '@/lib/payments/access';
 import { currentUserHasProAccess } from '@/lib/payments/gate';
 
 export function generateStaticParams() {
@@ -21,7 +21,7 @@ export default async function GamePage({ params }: { params: Promise<{ game: str
   const entry = GAMES_BY_SLUG.get(game);
   if (!entry) notFound();
 
-  const allowed = !isGameGated(entry.slug) || (await currentUserHasProAccess());
+  const allowed = !paywallEnabled() || !isGameGated(entry.slug) || (await currentUserHasProAccess());
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">

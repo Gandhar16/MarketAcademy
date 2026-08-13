@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { LESSONS_BY_ID } from '@/content/registry';
 import { SEQUENCE_BY_ID } from '@/content/syllabus';
 import { checkpointAnswersFor, revealFor } from '@/lib/lesson/sanitize';
-import { isTierGated } from '@/lib/payments/access';
+import { isTierGated, paywallEnabled } from '@/lib/payments/access';
 import { currentUserHasProAccess } from '@/lib/payments/gate';
 
 export const runtime = 'nodejs';
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
   // someone from getting the answer anyway by calling the reveal endpoint
   // directly with the lesson id and block index.
   const here = SEQUENCE_BY_ID.get(lessonId);
-  if (here && isTierGated(here.stage.tier) && !(await currentUserHasProAccess())) {
+  if (paywallEnabled() && here && isTierGated(here.stage.tier) && !(await currentUserHasProAccess())) {
     return NextResponse.json({ error: 'forbidden', message: 'This lesson is part of Pro.' }, { status: 403 });
   }
 

@@ -4,6 +4,30 @@ Razorpay, INR only. US-market monetization was explicitly deferred to a later
 Stripe integration when this was scoped — nothing here assumes a second
 currency exists.
 
+## The kill switch
+
+Enforcement ships OFF by default. `PAYWALL_ENABLED` is unset (or anything
+other than the literal string `true`) means **nothing is actually locked** —
+every gate check in `src/lib/payments/access.ts`'s `paywallEnabled()`
+consumers (the lesson page, `/api/lesson/reveal`, `/api/lesson/grade`, the
+game page, an embedded game inside a lesson, and `/api/replay`'s
+session-start) stays open, while the DB, the checkout flow, the webhook, and
+the "Pro" badges on course/game cards are all fully live. This mirrors how
+the game-unlock badge shipped cosmetic-only during testing before becoming a
+real gate (see the original comment in `GameGrid.tsx`).
+
+This means you can deploy the whole feature, set up Razorpay, and even walk
+a real checkout through to completion — the plan gets recorded correctly in
+the database — all while every learner still has full access to everything.
+Set `PAYWALL_ENABLED=true` in Vercel (Production and Preview) once you're
+ready to actually start gating content.
+
+Note `hasProAccess()` itself is deliberately **not** affected by the switch
+— the account and pricing pages call it directly to show a learner their
+real "Free" vs "Pro" status, and that has to stay honest regardless of
+whether enforcement is switched on. The switch only affects what happens at
+each enforcement call site.
+
 ## Why Razorpay and not Stripe
 
 Stripe India has been invite-only since May 2024 and, even with an invite,

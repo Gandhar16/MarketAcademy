@@ -5,7 +5,7 @@ import { LessonPlayer } from '@/components/lesson/LessonPlayer';
 import { ProPaywall } from '@/components/payments/ProPaywall';
 import { stripAnswers } from '@/lib/lesson/sanitize';
 import { SEQUENCE_BY_ID, TOTAL_TOPICS, nextBuilt, previousBuilt } from '@/content/syllabus';
-import { isTierGated } from '@/lib/payments/access';
+import { isTierGated, paywallEnabled } from '@/lib/payments/access';
 import { currentUserHasProAccess } from '@/lib/payments/gate';
 
 export function generateStaticParams() {
@@ -21,12 +21,15 @@ export default async function LessonPage({ params }: { params: Promise<{ lesson:
   const prev = previousBuilt(id);
   const next = nextBuilt(id);
 
-  // Computed once: gates the lesson itself if its course is Pro-tier, AND is
-  // passed down to LessonPlayer so an embedded game block can be gated
-  // independently — a free-tier lesson can still embed a Pro-tier game (see
-  // e.g. t1-journal.ts embedding chart-replay), and the lesson being free
-  // must not make the game free by association.
-  const isPro = await currentUserHasProAccess();
+  // "Should this render as Pro-accessible" — folds in the PAYWALL_ENABLED
+  // kill switch (see access.ts) as well as the learner's real plan, so
+  // LessonPlayer (a client component, which cannot read a server-only env
+  // var itself) just gets one resolved boolean. Computed once and passed
+  // down so an embedded game block can be gated independently of the
+  // lesson's own tier — a free-tier lesson can still embed a Pro-tier game
+  // (see e.g. t1-journal.ts embedding chart-replay), and the lesson being
+  // free must not make the game free by association.
+  const isPro = !paywallEnabled() || (await currentUserHasProAccess());
   const allowed = !here || !isTierGated(here.stage.tier) || isPro;
 
   return (

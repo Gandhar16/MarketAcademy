@@ -11,7 +11,7 @@ import { LESSONS_BY_ID } from '@/content/registry';
 import { SEQUENCE_BY_ID } from '@/content/syllabus';
 import { gradeCheckpoint, type TaskType } from '@/lib/lesson/grading';
 import { enforceRateLimit } from '@/lib/market/http';
-import { isTierGated } from '@/lib/payments/access';
+import { isTierGated, paywallEnabled } from '@/lib/payments/access';
 import { currentUserHasProAccess } from '@/lib/payments/gate';
 
 export const runtime = 'nodejs';
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   }
 
   const here = SEQUENCE_BY_ID.get(body.lesson);
-  if (here && isTierGated(here.stage.tier) && !(await currentUserHasProAccess())) {
+  if (paywallEnabled() && here && isTierGated(here.stage.tier) && !(await currentUserHasProAccess())) {
     return NextResponse.json({ error: 'forbidden', message: 'This lesson is part of Pro.' }, { status: 403 });
   }
 

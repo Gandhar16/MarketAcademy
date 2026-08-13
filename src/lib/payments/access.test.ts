@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { FLAGSHIP_GAMES, FREE_TIERS, hasProAccess, isGameGated, isTierGated } from './access';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { FLAGSHIP_GAMES, FREE_TIERS, hasProAccess, isGameGated, isTierGated, paywallEnabled } from './access';
 import { TIERS } from '@/lib/lesson/dsl';
 
 describe('isTierGated', () => {
@@ -52,5 +52,48 @@ describe('hasProAccess', () => {
   it('is false the instant a recurring plan expires — no grace period', () => {
     expect(hasProAccess({ plan: 'pro', planExpiresAt: NOW }, NOW)).toBe(false);
     expect(hasProAccess({ plan: 'pro', planExpiresAt: NOW - 1 }, NOW)).toBe(false);
+  });
+});
+
+describe('paywallEnabled', () => {
+  const original = process.env.PAYWALL_ENABLED;
+  afterEach(() => {
+    if (original === undefined) delete process.env.PAYWALL_ENABLED;
+    else process.env.PAYWALL_ENABLED = original;
+  });
+
+  it('defaults to off — unset means enforcement is off', () => {
+    delete process.env.PAYWALL_ENABLED;
+    expect(paywallEnabled()).toBe(false);
+  });
+
+  it('is off for anything other than the literal string "true"', () => {
+    for (const v of ['1', 'yes', 'True', 'TRUE', '']) {
+      process.env.PAYWALL_ENABLED = v;
+      expect(paywallEnabled()).toBe(false);
+    }
+  });
+
+  it('is on only for the exact string "true"', () => {
+    process.env.PAYWALL_ENABLED = 'true';
+    expect(paywallEnabled()).toBe(true);
+  });
+});
+
+describe('paywallEnabled does not affect hasProAccess', () => {
+  const original = process.env.PAYWALL_ENABLED;
+  beforeEach(() => {
+    process.env.PAYWALL_ENABLED = 'false';
+  });
+  afterEach(() => {
+    if (original === undefined) delete process.env.PAYWALL_ENABLED;
+    else process.env.PAYWALL_ENABLED = original;
+  });
+
+  it('reports the true plan state regardless of the kill switch — account/pricing pages must stay honest', () => {
+    // hasProAccess is deliberately independent of the switch; enforcement
+    // call sites check paywallEnabled() themselves. See access.ts.
+    expect(hasProAccess({ plan: 'free', planExpiresAt: null })).toBe(false);
+    expect(hasProAccess({ plan: 'pro', planExpiresAt: null })).toBe(true);
   });
 });

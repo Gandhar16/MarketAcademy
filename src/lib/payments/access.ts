@@ -5,6 +5,26 @@
  */
 import type { Tier } from '@/lib/lesson/dsl';
 
+/**
+ * Kill switch for enforcement, mirroring how the game-unlock badge shipped
+ * cosmetic-only during testing before becoming a real gate (see
+ * GameGrid.tsx's original comment). Unset — or set to anything other than
+ * the literal string "true" — means every enforcement point below stays
+ * open: the DB, the checkout flow, the webhook, and the "Pro" badges are
+ * all fully live, but nothing is actually locked for a real user. Flip
+ * PAYWALL_ENABLED=true once you're ready to enforce it for real.
+ *
+ * Deliberately NOT read inside `hasProAccess()` — that function is also
+ * what the account and pricing pages use to show a learner their actual
+ * "Free" vs "Pro" status, and that should stay truthful regardless of
+ * whether enforcement is switched on. The switch is checked at each
+ * enforcement call site instead (the lesson page, the game page, the
+ * lesson APIs, LessonPlayer's embedded-game case, and /api/replay).
+ */
+export function paywallEnabled(): boolean {
+  return process.env.PAYWALL_ENABLED === 'true';
+}
+
 /** T0 (Foundations) and T1 (Beginner) stay free forever — the trust-building hook. */
 export const FREE_TIERS: readonly Tier[] = ['T0', 'T1'];
 
