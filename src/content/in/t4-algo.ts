@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'SpecificationGapExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Nine or more silent decisions are hiding behind one confident-sounding sentence.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The specification is the product',
@@ -107,6 +114,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "A trader writes: 'Buy when the 20-day average crosses above the 50-day average.' There is no exit rule at all, not vague, simply missing. Can this be tested?",
+      options: [
+        'Yes — untested exits do not affect whether a strategy can be evaluated',
+        'No — without an exit, there is no way to know when a trade ends, so no result can be computed',
+        'Yes, as long as the entry condition is precise',
+      ],
+      correct: 1,
+      reveal:
+        'No, it cannot be tested at all. Without an exit, a trade never closes, so there is no result to measure. A precise entry with no exit is not half a specification. It is an entry with nothing attached, and nothing can be evaluated until both halves exist.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'PatternScanner',
       props: { symbol: 'RELIANCE.NS' },
@@ -123,6 +144,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader has a precise, fully specified entry rule but no stated exit rule of any kind. Decide whether this strategy can be backtested.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Yes, since the entry is precise and testable on its own',
+              'No — without an exit, trades never close and no result exists to measure',
+              'Yes, but only using the average holding period of similar strategies',
+            ],
+            correct: 'No — without an exit, trades never close and no result exists to measure',
+          },
+          explanation:
+            'No. A trade that never closes produces no measurable result. An exit rule is not an optional extra — without it there is nothing to test.',
+        },
         {
           prompt:
             'Account ₹5,00,000 risking 1%. Entry ₹1,400, stop at the 10-bar low of ₹1,352. How many shares does the rule buy?',

@@ -62,6 +62,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'NecklineExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The peaks form long before anything is confirmed — watch for the moment the line itself actually breaks.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The neckline is the trigger, not the peaks',
@@ -146,6 +153,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A head and shoulders forms with a small left shoulder and a much taller right shoulder. Does the asymmetry invalidate the pattern?',
+      options: [
+        'Yes — the two shoulders must be roughly the same height for the pattern to count',
+        'No — the core requirement is a taller head between two lower peaks, not matching shoulder heights',
+        'Yes, because unequal shoulders mean the neckline cannot be drawn',
+      ],
+      correct: 1,
+      reveal:
+        'No. The defining requirement is a head clearly taller than both surrounding peaks, with a neckline under the two troughs. The shoulders rarely match exactly in real charts. Reasonable asymmetry does not disqualify the shape — the neckline break is still what confirms it.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'candle-sprint',
       config: {},
@@ -160,6 +181,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader dismisses a head and shoulders because the right shoulder is noticeably taller than the left. Decide whether that reasoning is sound.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Sound — the shoulders must match for the pattern to be valid',
+              'Not sound — the core requirement is a taller head, and shoulder asymmetry alone does not disqualify it',
+              'Sound, but only on weekly charts',
+            ],
+            correct: 'Not sound — the core requirement is a taller head, and shoulder asymmetry alone does not disqualify it',
+          },
+          explanation:
+            'Not sound. A taller head between two lower peaks is the requirement, and the neckline break is still the confirmation. Minor asymmetry between the shoulders is ordinary.',
+        },
         {
           prompt:
             'A head and shoulders has its head at ₹2,240, its neckline at ₹2,080, and closes at ₹2,070 on the breakout. What is the measured-move target?',

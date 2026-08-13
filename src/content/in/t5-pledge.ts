@@ -48,6 +48,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'TwoDirectionShortfallExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The collateral shrinks and the requirement grows — both on the same afternoon.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Why a haircut exists',
@@ -111,6 +118,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You pledge shares as collateral, but you still own them economically. Do you still receive dividends declared on those shares while they are pledged?',
+      options: [
+        'No — dividends go to the lender or broker while shares are pledged',
+        'Yes — pledging does not transfer ownership, so dividends still credit to you',
+        'Only if you unpledge before the record date',
+      ],
+      correct: 1,
+      reveal:
+        'Yes, dividends still credit to you. Pledging is a lien, not a transfer of ownership. The shares stay in your demat account, marked as pledged, and you remain the beneficial owner. Corporate action benefits like dividends flow to you exactly as if the shares were unpledged. What changes is only your ability to sell them freely and the discounted value they contribute as collateral.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'circuit-breaker',
       config: {},
@@ -125,6 +146,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader believes pledging shares means giving up dividends until the shares are released. Decide whether that is correct.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Correct — pledged shares stop earning dividends',
+              'Incorrect — pledging is a lien, so dividends still go to the beneficial owner',
+              'Correct, but only for shares pledged for more than 30 days',
+            ],
+            correct: 'Incorrect — pledging is a lien, so dividends still go to the beneficial owner',
+          },
+          explanation:
+            'Incorrect. Pledging does not transfer ownership, so dividends and other corporate action benefits keep flowing to the pledger.',
+        },
         {
           prompt:
             'You pledge ₹6,00,000 of shares at a 25% haircut. What collateral value do you receive, in rupees?',

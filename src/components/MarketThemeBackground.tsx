@@ -81,19 +81,25 @@ function CandleTile({ offset }: { offset: number }) {
 
 export function MarketThemeBackground() {
   return (
-    <div aria-hidden className="market-bg" data-testid="market-bg">
-      <svg className="market-bg-ticker" viewBox="0 0 1600 120" preserveAspectRatio="none">
-        <DirectionalLine points={TICKER_TILE} strokeWidth={2.5} />
-        <DirectionalLine points={shiftPoints(TICKER_TILE, 800)} strokeWidth={2.5} />
-      </svg>
-      <svg className="market-bg-ticker market-bg-ticker--second" viewBox="0 0 1600 120" preserveAspectRatio="none">
-        <DirectionalLine points={TICKER_TILE_2} strokeWidth={2} />
-        <DirectionalLine points={shiftPoints(TICKER_TILE_2, 800)} strokeWidth={2} />
-      </svg>
-      <svg className="market-bg-candles" viewBox="0 0 800 120" preserveAspectRatio="none">
-        <CandleTile offset={0} />
-        <CandleTile offset={400} />
-      </svg>
-    </div>
+    <>
+      {/* A slow, low-opacity glow drifting behind the ticker lines — the
+          "live terminal" feel, kept well behind every real card so body text
+          never has to compete with it. */}
+      <div aria-hidden className="market-glow" />
+      <div aria-hidden className="market-bg" data-testid="market-bg">
+        <svg className="market-bg-ticker" viewBox="0 0 1600 120" preserveAspectRatio="none">
+          <DirectionalLine points={TICKER_TILE} strokeWidth={2.5} />
+          <DirectionalLine points={shiftPoints(TICKER_TILE, 800)} strokeWidth={2.5} />
+        </svg>
+        <svg className="market-bg-ticker market-bg-ticker--second" viewBox="0 0 1600 120" preserveAspectRatio="none">
+          <DirectionalLine points={TICKER_TILE_2} strokeWidth={2} />
+          <DirectionalLine points={shiftPoints(TICKER_TILE_2, 800)} strokeWidth={2} />
+        </svg>
+        <svg className="market-bg-candles" viewBox="0 0 800 120" preserveAspectRatio="none">
+          <CandleTile offset={0} />
+          <CandleTile offset={400} />
+        </svg>
+      </div>
+    </>
   );
 }

@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'PivotGridExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The whole grid exists before the market opens — nothing on it came from today.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'One formula, five levels',
@@ -115,6 +122,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Yesterday was a shortened trading session for a holiday, with an unusually narrow high-low range. Does today\'s pivot grid, computed from that day, behave differently from an ordinary grid?',
+      options: [
+        'No — the formula does not care about session length',
+        "Yes — a narrower range from the shortened session produces a tighter R1–S1 grid than an ordinary day's would",
+        'Yes — pivot points cannot be computed after a holiday at all',
+      ],
+      correct: 1,
+      reveal:
+        "Yes. The formula itself does not change, but a shortened session naturally builds a narrower high-low range. The resulting grid is tighter than an ordinary day's would be — an echo of the input day, not a new signal about today.",
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'candle-sprint',
       config: {},
@@ -129,6 +150,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "Yesterday was a shortened holiday-eve session with an unusually narrow range. Today's pivot grid comes out much tighter than usual. Decide what that tightness reflects.",
+          type: 'decision',
+          spec: {
+            options: [
+              'A genuine signal that today will be a quiet, low-volatility session',
+              "An artifact of yesterday's shortened range, not a fresh prediction about today",
+              'A sign the formula has been miscalculated',
+            ],
+            correct: "An artifact of yesterday's shortened range, not a fresh prediction about today",
+          },
+          explanation:
+            "An artifact of the input. The grid is arithmetic on yesterday's high, low and close, so a shortened session's narrower range mechanically produces a narrower grid.",
+        },
         {
           prompt: 'Yesterday: high ₹340, low ₹320, close ₹332. What is R1?',
           type: 'compute',

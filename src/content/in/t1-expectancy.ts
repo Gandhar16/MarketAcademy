@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'ExpectancyExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Watch both totals build before the net number appears — the win rate alone never tells you which column is bigger.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The only sum that matters',
@@ -105,6 +112,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A trader has three outcomes: a full win (+₹3,000, 30% of trades), a full loss (−₹1,500, 50% of trades), and a scratch of −₹300 (20% of trades). Does the expectancy formula still work with three outcomes instead of two?',
+      options: [
+        'No — expectancy only works with exactly a win and a loss',
+        'Yes — multiply each outcome by its own frequency and add them all together',
+        "Yes, but only if the third outcome is also called a 'loss'",
+      ],
+      correct: 1,
+      reveal:
+        'Yes. Expectancy is not restricted to two outcomes. It is the average of every possible result, each multiplied by how often it happens, all added together. Here: (0.30 × 3,000) + (0.50 × −1,500) + (0.20 × −300) = 900 − 750 − 60 = ₹90 per trade. The two-outcome version used earlier is just the simplest case, and the same idea scales to however many distinct outcomes a method actually has.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'risk-roulette',
       config: {},
@@ -119,6 +140,14 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader has three outcomes: a win at +₹2,000 (40% of trades), a full loss at −₹1,000 (40% of trades), and a scratch at −₹200 (20% of trades). What is the expectancy per trade, in rupees?',
+          type: 'compute',
+          spec: { metric: 'literal', value: 360, tolerance: 10, unit: '₹' },
+          explanation:
+            '(0.40 × 2,000) + (0.40 × −1,000) + (0.20 × −200) = 800 − 400 − 40 = ₹360. Adding a third outcome does not change the method, only the number of terms being added.',
+        },
         {
           prompt:
             'You win 40% of trades, averaging ₹3,000 on a win and ₹1,500 on a loss. What is your average result per trade, in rupees?',

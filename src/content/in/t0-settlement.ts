@@ -30,7 +30,7 @@ export const lesson: Lesson = {
   ],
   prerequisites: ['in-t0-who-does-what'],
   estimatedMinutes: 11,
-  introduces: ['t-plus-one', 'depository', 'delivery', 'share', 'broker', 'exchange'],
+  introduces: ['t-plus-one', 'delivery'],
   skills: ['foundations', 'settlement'],
   blocks: [
     {
@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       reveal:
         'You have a promise. The trade is agreed and binding, and the actual exchange of shares for money happens the next working day. India settles on what is called T+1 — trade day plus one. In between, your money is already committed and the shares are not yet in your account. This is not a technicality. It is why selling shares you bought yesterday behaves differently from selling shares held for a year. It is also why somebody failing to deliver is a problem the whole system plans for.',
       askWhy: true,
+    },
+    {
+      kind: 'widget',
+      component: 'SettlementExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Notice the gap in the middle — that dashed box is exactly the state you are in between trading and settling.',
     },
     {
       kind: 'callout',
@@ -121,8 +128,54 @@ export const lesson: Lesson = {
         'Somebody sold you shares. On settlement day they have to hand them over. Occasionally they cannot.\n\nThe exchange does not leave you holding nothing. It runs an **auction** to buy the shares from somewhere else and deliver them to you, and it charges the failing seller for the difference — usually a great deal.\n\nYou are protected here. But if you are ever the one who sold something you did not have, that penalty is yours, and it has its own lesson much later.',
     },
     {
+      kind: 'example',
+      title: 'A long weekend stretches the gap',
+      setup:
+        'You buy 100 shares at ₹1,400 on Thursday. Monday is a market holiday. Trace how many CALENDAR days pass before settlement, even though the RULE never changes from T+1.',
+      steps: [
+        { label: 'Thursday — the trade', detail: 'Matched at the exchange', compute: { fn: 'turnover', price: 1400, quantity: 100 } },
+        { label: 'Thursday evening — what you hold', detail: 'A claim only — nothing has reached the depository yet', value: '0 shares' },
+        { label: 'Friday', detail: 'The next working day after Thursday — this is when T+1 would normally land', value: 'Would settle here, on an ordinary week' },
+        { label: 'Saturday and Sunday', detail: 'Not working days — settlement does not move on weekends', value: 'No settlement activity' },
+        { label: 'Monday — a market holiday', detail: 'Also not a working day, so the gap stretches further still', value: 'Still no settlement activity' },
+        { label: 'Tuesday — settlement finally happens', detail: 'The first working day after Thursday, four calendar days later', value: '100 shares credited' },
+      ],
+      conclusion:
+        'T+1 never stopped meaning "one working day" — but one working day away from a Thursday, with a holiday in between, turned out to be four calendar days. The rule is fixed; the calendar decides what it costs you in real time.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'You buy 100 shares on Monday morning. That same Monday afternoon, you try to sell those exact 100 shares. Can you?',
+      options: [
+        'No — they have not settled into your account yet, so you have nothing to sell',
+        'Yes, using a special same-day buy-and-sell product designed for exactly this',
+        'Yes, as a normal delivery sell, since you already agreed to buy them',
+      ],
+      correct: 1,
+      reveal:
+        'Yes — but only through a special same-day buy-and-sell product built exactly for this, which closes itself out automatically before the day ends and never touches settlement at all. What you cannot safely do is sell those shares as an ordinary trade meant to be held before Monday\'s purchase has settled on Tuesday. You do not yet hold them at the depository. Promising shares you do not yet have is exactly the situation that causes a seller to fail on delivery, covered in full much later in this course. For now, the rule to keep is simple: buying and selling on the very same day uses that special same-day product. Anything held across a settlement day needs the shares to have actually arrived first.',
+      askWhy: true,
+    },
+    {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'You buy 200 shares on Tuesday morning as an ordinary delivery trade, intending to sell them as delivery shares on Wednesday. Decide whether that is safe.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Yes — you already own them, so selling the next day is no different from selling a year later',
+              'Risky — depending on timing, Tuesday\'s purchase may not have settled by the time Wednesday\'s sale is due to deliver',
+              'No — delivery shares can never be sold before a full year has passed',
+            ],
+            correct:
+              'Risky — depending on timing, Tuesday\'s purchase may not have settled by the time Wednesday\'s sale is due to deliver',
+          },
+          explanation:
+            'Risky. Tuesday\'s trade settles Wednesday, and selling on Wednesday itself can outrun that timing. This is precisely the innocent, easy-to-stumble-into route this lesson flags. It means trying to sell shares faster than settlement can keep up, not deliberately selling something you never intended to own.',
+        },
         {
           prompt:
             'You sell 100 shares at ₹1,400 that have been in your account for a year. What is the depository charge on that sale?',

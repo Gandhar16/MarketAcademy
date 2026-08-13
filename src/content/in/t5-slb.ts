@@ -47,6 +47,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'RecallForcedBuyExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. A ₹40,000 loss, forced — the recall chose the moment, not you.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Why anybody lends',
@@ -110,6 +117,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You are short a stock via a borrowed position when it goes ex-dividend. Does the dividend simply pass you by since you do not own the shares?',
+      options: [
+        'Yes — a dividend has nothing to do with a short seller',
+        'No — the short seller must compensate the lender for the dividend the lender would have received',
+        'No — the exchange pays the dividend to the lender directly, at no cost to the short seller',
+      ],
+      correct: 1,
+      reveal:
+        'No. The short seller pays the lender a substitute payment equal to the dividend. The lender gave up their shares expecting to be made whole on any dividend that would have been theirs. This compensation is part of the cost of the loan, not optional, and one more running cost that a short position accumulates while it is open.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'circuit-breaker',
       config: {},
@@ -124,6 +145,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A short seller assumes an ex-dividend date costs them nothing since they do not own the shares. Decide whether that is correct.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Correct — dividends do not apply to borrowed short positions',
+              'Incorrect — the short seller must compensate the lender for the dividend',
+              'Correct, but only for index constituents',
+            ],
+            correct: 'Incorrect — the short seller must compensate the lender for the dividend',
+          },
+          explanation:
+            'Incorrect. The lender is made whole for any dividend missed while the shares are on loan, and that cost falls on the short seller.',
+        },
         {
           prompt:
             'You short 400 shares at ₹600 and are recalled when the price is ₹690. What is the loss on the position, in rupees?',

@@ -35,6 +35,13 @@ export const lesson: Lesson = {
   blocks: [
     {
       kind: 'widget',
+      component: 'SlippageExplainer',
+      props: {},
+      takeaway:
+        'Step through it once, then try the real, draggable order book below — same idea, your own numbers.',
+    },
+    {
+      kind: 'widget',
       component: 'OrderBookLadder',
       props: { preset: 'liquid', defaultQuantity: 300, allowPresetSwitch: false },
       takeaway:
@@ -146,8 +153,59 @@ export const lesson: Lesson = {
         'Three parties, three different jobs, and beginners routinely confuse them.\n\nThe **broker** is your access to the exchange. The **exchange** matches orders and knows nothing about you. The **depository** — CDSL or NSDL — holds your shares in your name. If your broker goes under tomorrow, your shares are still yours, because they were never the broker’s to lose.',
     },
     {
+      kind: 'example',
+      title: 'The same 3,000-share order, two different books',
+      setup:
+        'Compare the identical market order — buy 3,000 shares — sent into two different stocks. One is heavily traded, the other thin. Nothing about your order changes; only the queue on the other side does.',
+      steps: [
+        { label: 'Liquid stock — resting at the touch', detail: 'A large, actively traded name, one-tick spread', value: '450 shares waiting at the best offer' },
+        {
+          label: 'Liquid stock — your fill',
+          detail: 'Comfortably absorbed within a level or two',
+          compute: { fn: 'bookWalkAverage', quantity: 3000, side: 'buy', mid: 1400, tickSize: 0.05, spreadTicks: 1, topQuantity: 450, depthGrowth: 1.35, levels: 10 },
+        },
+        { label: 'Illiquid stock — resting at the touch', detail: 'A thin, small-cap name, eight-tick spread', value: '25 shares waiting at the best offer' },
+        {
+          label: 'Illiquid stock — your fill',
+          detail: 'The same 3,000 shares now has to walk through most of the book',
+          compute: { fn: 'bookWalkAverage', quantity: 3000, side: 'buy', mid: 240, tickSize: 0.05, spreadTicks: 8, topQuantity: 25, depthGrowth: 1.1, levels: 10 },
+        },
+      ],
+      conclusion:
+        'You did not do anything differently in the two cases — you sent the same order both times. What changed the outcome entirely was how many shares somebody else was willing to sell you at that exact moment. That is the whole idea of liquidity in one comparison.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'You place a limit buy order for 100 shares at ₹1,350, when the market is trading around ₹1,400. Nobody is currently willing to sell at ₹1,350. What happens to your order?',
+      options: [
+        'It is rejected immediately, since it is far from the market price',
+        'It rests in the order book at ₹1,350, waiting, and shows up as depth for anybody looking at that price level',
+        'It automatically adjusts closer to the market price',
+      ],
+      correct: 1,
+      reveal:
+        'It rests in the book, exactly where you placed it, waiting for the price to come to you. It is not rejected — a limit order far from the market is still a completely valid instruction, it is just unlikely to fill soon. Anybody looking at the depth ladder at the ₹1,350 level would see your 100 shares sitting there, adding to whatever else is resting at that price. The order book holds everything anybody has placed, at any level, until it either fills or is cancelled — not only orders close to the current price.',
+      askWhy: true,
+    },
+    {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'You place a limit sell order for 50 shares at ₹1,500, well above the current price of ₹1,400. Decide what happens to it.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Rejected outright, since it is too far from the market',
+              'Rests in the book at ₹1,500 until the price reaches it or you cancel it',
+              'Fills immediately at ₹1,400, the current market price',
+            ],
+            correct: 'Rests in the book at ₹1,500 until the price reaches it or you cancel it',
+          },
+          explanation:
+            'It rests. A limit order sets a floor or ceiling on the price you will accept. It simply waits, however far from the current price, until somebody meets it or you cancel it.',
+        },
         {
           prompt:
             'The best offer is 450 shares at ₹1,400.05, then 608 at ₹1,400.10, then 820 at ₹1,400.15. You market-buy 1,000 shares. Decide whether your average fill is above, at, or below ₹1,400.05.',

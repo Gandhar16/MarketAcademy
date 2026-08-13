@@ -297,7 +297,7 @@ export function fillAgainstBar(
   if (quantity <= 0) {
     return none(
       'no_volume',
-      `This bar traded only ${bar.volume?.toLocaleString() ?? 'an unknown number of'} shares. ` +
+      `This bar traded only ${bar.volume?.toLocaleString('en-IN') ?? 'an unknown number of'} shares. ` +
         `Taking more than ${Math.round(cfg.maxParticipation * 100)}% of a bar's volume is not realistic, so nothing filled. ` +
         `Size down, or accept that this instrument cannot absorb you.`,
       triggered,
@@ -358,7 +358,7 @@ function buildExplanation(a: {
   impact: number;
 }): string {
   const parts: string[] = [];
-  parts.push(`Filled ${a.quantity.toLocaleString()} at ${a.price}.`);
+  parts.push(`Filled ${a.quantity.toLocaleString('en-IN')} at ${a.price}.`);
 
   if (a.gapComponent > 0.0001) {
     parts.push(
@@ -370,7 +370,7 @@ function buildExplanation(a: {
 
   if (a.partial) {
     parts.push(
-      `Only ${a.quantity.toLocaleString()} of ${a.remaining.toLocaleString()} filled — the bar did not have the volume ` +
+      `Only ${a.quantity.toLocaleString('en-IN')} of ${a.remaining.toLocaleString('en-IN')} filled — the bar did not have the volume ` +
         `for the rest. The remainder is still working.`,
     );
   }

@@ -47,6 +47,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'SizeFromStopExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The budget never changes — only the stop distance does, and the share count moves opposite to it.',
+    },
+    {
       kind: 'figure',
       figure: 'RiskRewardDiagram',
       props: { entry: 1400 },
@@ -113,8 +120,37 @@ export const lesson: Lesson = {
       askWhy: false,
     },
     {
+      kind: 'predict',
+      prompt:
+        'After five winning trades in a row, you feel confident and decide to risk 3% instead of your usual 1% on the next trade. What has actually changed about your edge?',
+      options: [
+        'Nothing has changed — five wins in a row happens by chance even to a mediocre method',
+        'The edge has proven itself, so a larger risk is now justified',
+        'Risking more after wins is how professionals compound faster',
+      ],
+      correct: 0,
+      reveal:
+        'Nothing has changed. Five wins in a row is a completely ordinary outcome even for a method with a modest edge. It carries almost no new information about whether that edge is real. Raising your risk percentage because of a recent streak means sizing off a feeling rather than off the stop distance and account this lesson is built on.',
+      askWhy: true,
+    },
+    {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'After five winning trades, you consider raising your risk per trade from 1% to 3% for the next one. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Raise it — the recent wins justify more confidence',
+              'Keep it at 1%, since a short winning streak tells you very little about the edge',
+              'Raise it only for one trade, then return to 1%',
+            ],
+            correct: 'Keep it at 1%, since a short winning streak tells you very little about the edge',
+          },
+          explanation:
+            'Keep it fixed. The risk percentage was chosen from the account and the method, not from the last few outcomes. Changing it after a streak, even for one trade, sizes off a feeling rather than off the arithmetic this lesson teaches.',
+        },
         {
           prompt:
             'Account ₹5,00,000, risking 0.5% per trade. Entry ₹850, stop ₹833. How many shares?',

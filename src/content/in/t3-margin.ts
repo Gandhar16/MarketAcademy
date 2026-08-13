@@ -56,6 +56,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'MarginGapExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. A quiet 4% day on the position becomes a 20% hit on the cash actually behind it.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'A deposit, not a loan',
@@ -108,6 +115,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Two shares both cost ₹500. Your broker asks for 20% margin on Share A, a large stable company, and 50% margin on Share B, a small volatile one. Why the difference?',
+      options: [
+        'A mistake — margin should be the same percentage for every share',
+        'The exchange sets a higher margin on shares that move more, so the deposit still covers a bad day',
+        'Share B must be a better investment, since it needs less borrowed money',
+      ],
+      correct: 1,
+      reveal:
+        'A bigger cushion for a bigger swing. Margin requirements are set higher on shares that move more day to day, so the deposit still covers a bad day. A volatile share can eat a thin margin in hours, so the exchange asks for more up front.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'BreakevenSlider',
       props: { market: 'IN', product: 'intraday', price: 500, minValue: 50_000, maxValue: 2_000_000 },
@@ -124,6 +145,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A broker requires 15% margin on a large stable stock and 60% margin on a small volatile one. Decide why the requirement differs so much.',
+          type: 'decision',
+          spec: {
+            options: [
+              "It shouldn't — the exchange has made an error",
+              'The volatile stock needs a bigger cushion, since a bigger daily swing could wipe out a thin deposit faster',
+              'Margin requirements are set randomly by each broker',
+            ],
+            correct:
+              'The volatile stock needs a bigger cushion, since a bigger daily swing could wipe out a thin deposit faster',
+          },
+          explanation:
+            'A bigger cushion for bigger swings. The requirement tracks how much a share typically moves, not how good an investment it is.',
+        },
         {
           prompt:
             'You have ₹2,00,000 of cash and hold a position worth ₹8,00,000. What percentage fall would wipe out your cash entirely?',

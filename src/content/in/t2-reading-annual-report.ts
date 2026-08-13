@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'ReportSectionsExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The block that shrinks in weight is four times the size of the one that grows.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Three sections, read in this order',
@@ -81,6 +88,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "A company's headline revenue grew 12%. Its segment-wise note shows one division grew 40% while its largest division shrank 5%. Does the headline number alone tell the full story?",
+      options: [
+        'Yes — the total growth is what matters for the company as a whole',
+        'No — the segment breakdown reveals growth that is concentrated and uneven, which the single headline number hides',
+        'No, because segment notes are usually inaccurate',
+      ],
+      correct: 1,
+      reveal:
+        "No. The headline 12% is real, but it is an average hiding a very different story underneath — one division covering for the company's largest division actually shrinking. A segment note is worth checking whenever growth looks unusually smooth.",
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'earnings-roulette',
       config: {},
@@ -95,6 +116,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "A company's total revenue grew 10%, but its segment note shows this came entirely from one small division while its two largest divisions were flat or declining. Decide how to read the headline figure.",
+          type: 'decision',
+          spec: {
+            options: [
+              'As solid, broad-based growth across the company',
+              'As concentrated in one segment, meaning the headline hides weakness in the core business',
+              'As meaningless, since segment data cannot be trusted',
+            ],
+            correct: 'As concentrated in one segment, meaning the headline hides weakness in the core business',
+          },
+          explanation:
+            'Concentrated, not broad-based. The segment note is exactly the kind of detail a single headline growth number cannot show.',
+        },
         {
           prompt: 'A related-party payment of ₹9 crore against total revenue of ₹450 crore. What is it as a percentage of revenue?',
           type: 'compute',

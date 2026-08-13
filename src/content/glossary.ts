@@ -106,6 +106,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     plain:
       'An exchange is the marketplace where buyers and sellers of shares are matched. In India the two big ones are the NSE and the BSE.',
     more: 'The exchange does not buy or sell anything itself. It runs the matching engine, publishes prices, sets trading hours, and enforces rules like circuit limits. Its revenue comes from transaction charges on the trades it matches.',
+    example: 'The NSE lists more than 2,000 companies and is, by number of trades, the largest stock exchange in the world. The BSE, across the road in Mumbai, is Asia\'s oldest, founded in 1875.',
     needs: ['share'],
   },
   {
@@ -117,6 +118,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     plain:
       'A broker is the company whose app you use to place orders. You cannot talk to an exchange directly — the broker is the licensed intermediary that passes your order on.',
     more: 'Brokers are members of the exchange and are regulated by SEBI in India. They hold your trading account, collect the statutory charges on the government\'s behalf, and charge their own brokerage on top.',
+    example: 'Zerodha, Groww and ICICI Direct are all Indian brokers. Each is a separate company from the NSE and the BSE — none of them is the exchange itself, all of them are licensed members of it.',
     needs: ['exchange', 'order'],
   },
   {
@@ -128,6 +130,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     plain:
       'A depository is where your shares actually live once you own them — an electronic record, like a bank holding your money. India has two: CDSL and NSDL.',
     more: 'Your broker and your depository are separate on purpose. If the broker fails, the shares in your demat account are still recorded as yours at the depository, which is the single most important structural protection an Indian retail investor has.',
+    example: 'Buy shares through Zerodha, Groww or any other Indian broker and they land in a demat account at CDSL or NSDL — never at the broker itself. Check either depository directly and your holdings show up the same way, broker app or not.',
     needs: ['share', 'broker'],
   },
   {
@@ -178,6 +181,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     plain:
       'The order book is the live list of everyone waiting to buy and everyone waiting to sell, with the price and quantity each is waiting at. It is what the market actually is, underneath the single number quoted as "the price".',
     more: 'Buyers are stacked highest-first, sellers lowest-first. A trade happens when someone crosses the gap between the two sides. Indian exchanges publish the best five levels of each side to retail platforms.',
+    example: 'Open the order book for HDFC Bank on any Indian broker app and you will see five rows of buyers stacked below five rows of sellers, each row showing a price and how many shares are waiting there.',
     needs: ['order', 'price'],
   },
   {
@@ -197,6 +201,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     category: 'orders',
     tier: 'T0',
     plain: 'The bid is the highest price anyone is currently willing to pay. It is the price you get if you sell right now.',
+    example: 'If Tata Motors\' best bid is ₹950, that means the highest price any buyer right now has committed to is ₹950 a share — sell instantly and that is what you get.',
     needs: ['order-book'],
   },
   {
@@ -209,6 +214,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     category: 'orders',
     tier: 'T0',
     plain: 'The ask is the lowest price anyone is currently willing to sell at. It is the price you pay if you buy right now.',
+    example: 'If Tata Motors\' best ask is ₹950.50, that means the lowest price any seller right now will accept is ₹950.50 a share — buy instantly and that is what you pay.',
     needs: ['order-book'],
   },
   {
@@ -231,6 +237,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     plain:
       'A market order says "buy now, whatever it costs". It is almost certain to be filled and gives you no control at all over the price.',
     more: 'It walks the book, consuming resting orders from the best price outward until the quantity is complete. In a liquid stock that is one tick of difference; in an illiquid one it can be several percent.',
+    example: 'A market order to buy 10 shares of Infosys fills almost instantly, at whatever price is available right now — you get certainty of execution, with no control over the exact price.',
     needs: ['order', 'order-book', 'fill'],
   },
   {
@@ -241,6 +248,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T1',
     plain:
       'A limit order says "buy, but not above this price". You control the price and give up the certainty of being filled — if the market never comes to your price, nothing happens.',
+    example: 'A limit order to buy Tata Motors at ₹950 will only fill at ₹950 or lower. If the price never drops that far, the order simply sits unfilled — you kept control of the price and gave up the guarantee of a trade.',
     needs: ['order', 'fill'],
   },
   {
@@ -271,6 +279,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T1',
     plain:
       'Slippage is the difference between the price you expected and the price you actually got. It is caused by the market moving, or by your own order being big enough to move it.',
+    example: 'The screen shows a small-cap stock at ₹240, but a market order for 3,000 shares has to walk through several price levels to fill completely — the average price paid ends up noticeably above ₹240. That gap is slippage.',
     needs: ['fill', 'order-book'],
   },
   {
@@ -298,6 +307,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T0',
     plain:
       'The price of a share is simply what the most recent trade happened at. It is a record of one past agreement between two people, not a valuation and not a promise about your next trade.',
+    example: 'Tata Consultancy Services quoted at ₹3,800 means exactly one thing: the last two people who traded it agreed on ₹3,800 a share. It says nothing about what the next trade will happen at.',
     needs: ['share'],
   },
   {
@@ -327,6 +337,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     category: 'charts',
     tier: 'T1',
     plain: 'Volume is the number of shares traded in a period. It says how much activity there was, not which direction it pushed.',
+    example: 'A stock that usually trades 20 lakh shares a day suddenly trading 2 crore is ten times its normal volume — a sign of unusually high interest, whichever way the price happened to move.',
     needs: ['share'],
   },
   {
@@ -442,7 +453,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T1',
     plain:
       'An 18% tax charged on the SERVICES involved in a trade — the brokerage, the exchange charge, the regulator\'s fee. It is not charged on STT or stamp duty, which are themselves taxes.',
-    needs: ['brokerage', 'stt', 'stamp-duty'],
+    needs: ['brokerage', 'stt', 'stamp-duty', 'regulator'],
   },
   {
     id: 'dp-charges',
@@ -562,6 +573,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T1',
     plain:
       'A delivery trade is one where you actually take the shares into your demat account and keep them. Higher STT than intraday, and a DP charge when you eventually sell.',
+    example: 'Buy 50 shares of ITC and choose to hold them past the trading day rather than sell before the close — that is a delivery trade, and those 50 shares land in your demat account.',
     needs: ['depository', 'stt', 'dp-charges', 'intraday', 'share'],
   },
   {
@@ -572,6 +584,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T0',
     plain:
       'Settlement is the day the shares and the money actually change hands, which is not the day you traded. India settles the next working day — trade on Monday, own the shares on Tuesday.',
+    example: 'Buy shares of Wipro on a Monday and, holidays aside, they show up in your demat account on Tuesday — that one-working-day gap is T+1 settlement.',
     needs: ['depository'],
   },
   {
@@ -813,6 +826,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     plain:
       'An index is a single number summarising a basket of shares, so people can talk about "the market" in one figure. The NIFTY 50 tracks 50 large Indian companies.',
     more: 'Membership changes over time. A company that performs badly enough is removed and replaced, which is why testing a strategy on today\'s members quietly excludes the failures.',
+    example: 'The NIFTY 50 tracks India\'s 50 largest listed companies by free-float market value; the SENSEX tracks 30. Neither list is fixed — both are reviewed periodically and their members changed.',
     needs: ['share'],
   },
   {
@@ -822,6 +836,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     category: 'structure',
     tier: 'T0',
     plain: 'The smallest price step allowed. On most Indian shares it is 5 paise, so a price of ₹1,200.03 simply cannot exist.',
+    example: 'With a 5-paise tick size, a stock can trade at ₹1,200.00, ₹1,200.05 or ₹1,200.10 — never ₹1,200.03. Every price the exchange will accept is a multiple of the tick.',
     needs: ['price', 'share'],
   },
   {
@@ -865,7 +880,8 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T0',
     plain:
       'A dividend is cash a company pays out to its shareholders from its profits. On the day it is paid the share price usually drops by roughly the same amount, which surprises people who expected it to be free money.',
-    needs: ['share', 'price'],
+    example: 'ITC and Infosys are both companies with a long record of paying shareholders a dividend most years — the amount is never fixed in advance, and is decided fresh by each company\'s board every time.',
+    needs: ['share', 'price', 'shareholder'],
   },
   {
     id: 'corporate-action',
@@ -1078,7 +1094,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T2',
     plain:
       'Return on equity measures how much profit a company makes for every rupee shareholders have invested in it. A company earning ₹18 for every ₹100 of shareholder money has a return on equity of 18%.',
-    needs: ['share'],
+    needs: ['share', 'shareholder'],
   },
   {
     id: 'roa',
@@ -1088,7 +1104,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T2',
     plain:
       'Return on assets measures profit generated per rupee of everything a company owns, regardless of whether that was funded by shareholders or by borrowing.',
-    needs: ['share'],
+    needs: ['share', 'shareholder'],
   },
   {
     id: 'roce',
@@ -1098,7 +1114,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T2',
     plain:
       'Return on capital employed measures profit generated per rupee of all the money funding a business, both what shareholders put in and what the company borrowed. It is a broader measure than return on equity: how well the whole capital base is used, not just the shareholders’ slice of it.',
-    needs: ['roe'],
+    needs: ['roe', 'shareholder'],
   },
   {
     id: 'debt-to-equity',
@@ -1108,7 +1124,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T2',
     plain:
       'Debt-to-equity compares how much a company has borrowed to how much shareholders have put in. A ratio of 1 means it has borrowed roughly as much as shareholders have invested.',
-    needs: ['share'],
+    needs: ['share', 'shareholder'],
   },
   {
     id: 'interest-coverage-ratio',
@@ -1219,6 +1235,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     tier: 'T2',
     plain:
       'In India, "promoters" are a company’s founders and their families, tracked separately from other shareholders and disclosed as a percentage of the company each quarter, because that stake is assumed to carry more information than an ordinary investor’s.',
+    needs: ['shareholder'],
   },
   {
     id: 'pledged-shares',
@@ -1230,6 +1247,97 @@ export const GLOSSARY: GlossaryEntry[] = [
     plain:
       'Pledged shares are shares posted as collateral against a loan, valued at a discount. A promoter can pledge their own shares the same way a trader can pledge holdings to borrow against them — the shares stay owned, but a large enough price fall can force them to be sold to cover the loan.',
     needs: ['promoter-shareholding'],
+  },
+  // ------------------------------------------------------- t0, ground floor
+  {
+    id: 'shareholder',
+    term: 'shareholder',
+    aliases: ['shareholders'],
+    category: 'basics',
+    tier: 'T0',
+    plain:
+      'A shareholder is anyone who owns at least one share of a company — a part owner, however small the slice.',
+    example: 'Buy even a single share of Reliance Industries, however you bought it, and you are legally a shareholder of Reliance Industries — the same status as an investor holding a million shares, just a far smaller slice.',
+    needs: ['share'],
+  },
+  {
+    id: 'investment-return',
+    term: 'return',
+    searchAliases: ['return', 'returns'],
+    noAutoLink: true,
+    category: 'basics',
+    tier: 'T0',
+    plain:
+      'A return is money a shareholder gains on a share, through a dividend, a rise in price, or both. It is never guaranteed in advance.',
+    example: 'Buy a share at ₹100, later sell it at ₹120 having also collected a ₹2 dividend along the way — the return is ₹22, or 22%, made up of two separate channels.',
+    needs: ['share', 'price', 'dividend', 'shareholder'],
+  },
+  {
+    id: 'investment-loss',
+    term: 'loss',
+    searchAliases: ['loss', 'losses'],
+    noAutoLink: true,
+    category: 'basics',
+    tier: 'T0',
+    plain:
+      'A loss is money a shareholder is down on a share, usually because the price fell below what they paid. It only becomes final if they sell at that lower price.',
+    example: 'Buy a share at ₹100 and watch it fall to ₹85 — that ₹15 is only a loss on paper until it is actually sold at ₹85; before that, the price could still recover.',
+    needs: ['share', 'price', 'shareholder'],
+  },
+  {
+    id: 'primary-market',
+    term: 'primary market',
+    aliases: ['primary market'],
+    category: 'structure',
+    tier: 'T0',
+    plain:
+      'The primary market is where a company itself sells new shares to raise money — an IPO is the best-known example. Money from that sale goes to the company.',
+    example: 'Reliance Industries has raised fresh capital directly from investors more than once since its own listing decades ago — each such sale of new shares is a primary-market transaction.',
+    needs: ['share', 'ipo'],
+  },
+  {
+    id: 'secondary-market',
+    term: 'secondary market',
+    aliases: ['secondary market'],
+    category: 'structure',
+    tier: 'T0',
+    plain:
+      'The secondary market is where existing shareholders buy and sell shares among themselves, on an exchange. Money from that trade goes to the seller, not the company.',
+    example: 'Buy Reliance Industries shares on the NSE today and you are buying from another investor, not from Reliance itself — almost every trade anyone places is exactly this, the secondary market.',
+    needs: ['share', 'exchange', 'shareholder'],
+  },
+  {
+    id: 'ipo',
+    term: 'IPO',
+    aliases: ['initial public offering'],
+    category: 'structure',
+    tier: 'T0',
+    plain:
+      'An IPO is the first time a company sells shares to the public, to raise money. The company itself receives that money, directly, in exchange for newly created shares.',
+    example: 'Zomato\'s 2021 IPO sold new shares directly to the public for the first time, raising money for the company itself — after that, every further trade in Zomato shares has been between investors, not with the company.',
+    needs: ['share'],
+  },
+  {
+    id: 'clearing-corporation',
+    term: 'clearing corporation',
+    aliases: ['clearing corporation', 'clearing house'],
+    category: 'structure',
+    tier: 'T0',
+    plain:
+      'A clearing corporation steps in as the counterparty to both sides of a matched trade, and guarantees it will go through. Neither investor has to trust the stranger on the other side of the trade at all.',
+    example: 'NSE Clearing Limited guarantees every matched trade on the NSE actually settles, even if the buyer or seller on the other side later fails to pay or deliver — you never have to trust the stranger on the other side yourself.',
+    needs: ['exchange'],
+  },
+  {
+    id: 'regulator',
+    term: 'regulator',
+    aliases: ['regulators'],
+    category: 'structure',
+    tier: 'T0',
+    plain:
+      'A regulator is the government body that sets and enforces the rules every exchange, broker and depository must follow. In India this is SEBI. It is not itself a party to any single trade.',
+    example: 'SEBI — the Securities and Exchange Board of India — licenses every broker, exchange and depository operating in the country, and investigates market manipulation and fraud.',
+    needs: ['exchange', 'broker', 'depository'],
   },
 ];
 

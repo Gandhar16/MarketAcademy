@@ -73,7 +73,7 @@ export function CostBreakdownTable(props: CostBreakdownTableProps) {
     <div className="rounded-xl border border-line bg-surface p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="text-sm text-ink-muted">
-          {quantity.toLocaleString()} units at {money(price, currency)} ={' '}
+          {quantity.toLocaleString('en-IN')} units at {money(price, currency)} ={' '}
           <span className="num text-ink">{money(price * quantity, currency)}</span>
         </div>
         <div className="text-[11px] uppercase tracking-wider text-ink-faint">{venue} · {product}</div>

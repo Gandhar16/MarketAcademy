@@ -45,6 +45,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'AdxDirectionExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The ADX line is drawn identically under both trends — that is the whole lesson in one shape.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'One more tool from the same 1978 book',
@@ -80,6 +87,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'ADX has sat below 15 for two months (a long chop) and has just turned up sharply to 22. Does the sharp rate of that turn tell you how big the eventual move will be?',
+      options: [
+        'Yes — a sharp ADX turn always means a huge move is coming',
+        'Not reliably — ADX confirms a trend has started strengthening, but carries no information about how far it will run',
+        'No — ADX turning up after a chop is meaningless noise',
+      ],
+      correct: 1,
+      reveal:
+        'Not reliably. ADX rising confirms that directional movement is currently dominating over chop, which is genuinely useful. It was never built to size the move ahead — a different question entirely, the same gap between "is this real" and "how far does it go" that runs through this stage.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'TCS.NS', interval: '1d', range: '1y' },
       mode: 'view',
@@ -96,6 +117,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'After two months of low, flat ADX, the reading turns up sharply. A trader assumes this guarantees an unusually large move is starting. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Reasonable — a sharp ADX turn is a size prediction',
+              'Not reasonable — ADX confirms a trend is strengthening, but says nothing about how large it will eventually be',
+              'Reasonable, but only above ADX 25',
+            ],
+            correct:
+              'Not reasonable — ADX confirms a trend is strengthening, but says nothing about how large it will eventually be',
+          },
+          explanation:
+            'Not reasonable. ADX answers whether directional movement currently dominates, not how large the eventual move will be.',
+        },
         {
           prompt: 'Yesterday\'s high was ₹640, low ₹620. Today\'s high is ₹655, low ₹610. Which side wins today\'s directional movement, and by how much?',
           type: 'compute',

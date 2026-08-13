@@ -50,6 +50,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'CorrelationSpikeExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Ten independent stories in the calm week collapse into one story in the panic week.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Why the number moves',
@@ -113,6 +120,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Even in an ordinary, calm month, two large private banks tend to move together more than two unrelated companies do. Does correlation only spike during a panic, or is some of it present in normal times too?',
+      options: [
+        'Correlation only exists during a panic; in calm times, all shares move independently',
+        'Some correlation is present in calm times between similar businesses — a panic pushes it toward its maximum across everything',
+        'Correlation is a fixed number that never changes at all',
+      ],
+      correct: 1,
+      reveal:
+        'Some correlation exists even in calm conditions between similar businesses, since they share real exposures: the same rates, the same customers, the same regulations. A panic does not invent correlation from nothing. It pushes an already-elevated number toward its maximum across everything, related or not.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'the-long-game',
       config: {},
@@ -127,6 +148,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'Two software exporters already show a moderate correlation in an ordinary, calm quarter, before any panic. Decide what this tells you.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Nothing — correlation is zero outside a panic by definition',
+              'They share real exposures, like currency and global demand, so some correlation exists even in calm conditions',
+              'The correlation must be a measurement error',
+            ],
+            correct:
+              'They share real exposures, like currency and global demand, so some correlation exists even in calm conditions',
+          },
+          explanation:
+            'They share real exposures. Similar businesses correlate somewhat even in calm markets; a panic raises that further rather than creating it from zero.',
+        },
         {
           prompt:
             'A ₹15,00,000 portfolio falls 18% in a panic week. What rise is needed to get back to where it started, in percent?',

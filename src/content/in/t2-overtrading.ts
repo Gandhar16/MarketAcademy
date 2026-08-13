@@ -45,6 +45,13 @@ export const lesson: Lesson = {
     },
     {
       kind: 'widget',
+      component: 'FrequencyDragExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The same multiplication that turns ₹288 into ₹57,600 turns −₹12 into a −₹2,400 bill.',
+    },
+    {
+      kind: 'widget',
       component: 'BreakevenSlider',
       props: { market: 'IN', product: 'intraday', price: 1400, minValue: 20_000, maxValue: 1_000_000 },
       takeaway:
@@ -103,6 +110,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "After a losing trade, a trader takes three more trades that same afternoon to 'make it back', none from their usual watchlist. On the cost arithmetic alone, what is the extra, guaranteed cost of that choice?",
+      options: [
+        'Nothing extra — the same costs apply whether trades are planned or not',
+        'Three more round trips of certain charges, on top of whatever edge those hurried trades may or may not have',
+        'It depends only on whether those three trades win or lose',
+      ],
+      correct: 1,
+      reveal:
+        'Three more round trips of certain charges, guaranteed, whatever happens next. Trades taken to chase a loss get no discount on costs. They simply add more certain charges on top of an edge nobody actually measured for this situation.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'cost-cutter',
       config: {},
@@ -117,6 +138,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "After a loss, a trader takes two extra, unplanned trades the same day 'to make it back'. Decide what the cost arithmetic here says about that choice, whether or not the two trades win.",
+          type: 'decision',
+          spec: {
+            options: [
+              'No extra cost, since the trades might win',
+              'Two more certain round-trip charges, added on top of an edge nobody actually measured for this situation',
+              'The costs are waived for trades taken to recover a loss',
+            ],
+            correct: 'Two more certain round-trip charges, added on top of an edge nobody actually measured for this situation',
+          },
+          explanation:
+            'Two more certain charges, guaranteed. Costs do not care why a trade was taken. Chasing a loss adds frequency, and frequency multiplies cost with total reliability.',
+        },
         {
           prompt:
             'You buy 71 shares at ₹1,400 intraday and close the same day. What is the round-trip cost as a percentage of turnover?',

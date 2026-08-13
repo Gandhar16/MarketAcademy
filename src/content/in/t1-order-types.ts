@@ -40,6 +40,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'StopGapExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Notice the SL order never moves from ₹1,345 — it is not late, it is simply waiting for a price that never comes.',
+    },
+    {
       kind: 'example',
       title: 'The same gap, two different stop orders',
       setup:
@@ -101,6 +108,20 @@ export const lesson: Lesson = {
       askWhy: false,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You place a LIMIT buy order at ₹1,380 while the stock trades at ₹1,400. Before it fills, you change your mind and want to cancel it. Can you?',
+      options: [
+        'No — once placed, an order cannot be withdrawn',
+        'Yes, as long as it has not already been filled',
+        'Only the broker can cancel it, not you',
+      ],
+      correct: 1,
+      reveal:
+        'Yes. Any order still resting, unfilled, in the book can be cancelled at any time before it executes. A limit order can sit for hours waiting for its price, and your view can change well before that happens. Once it fills, cancellation is no longer possible. You now hold a position, not an instruction.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'OrderBookLadder',
       props: { preset: 'illiquid', defaultQuantity: 200, allowPresetSwitch: true },
@@ -110,6 +131,20 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt: 'You place a limit sell order this morning. By afternoon it has not filled. Decide what you can do.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Nothing — you must wait for it to fill or expire',
+              'Cancel it yourself at any point before it fills',
+              'Only cancel it if the price has moved against you',
+            ],
+            correct: 'Cancel it yourself at any point before it fills',
+          },
+          explanation:
+            'Cancel it yourself, any time before it fills, with no condition attached. An unfilled order simply rests in the book, and whoever placed it can withdraw it whenever they choose.',
+        },
         {
           prompt:
             'News has just hit, you are long a large-cap with 4,000 shares at the touch, and you want out immediately at any reasonable price. Decide.',

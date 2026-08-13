@@ -4,12 +4,15 @@ import {
   SEQUENCE,
   SEQUENCE_BY_ID,
   SYLLABUS,
+  isStageComplete,
   nextBuilt,
   previousBuilt,
   resumeAt,
+  stageOf,
   stepOf,
 } from './syllabus';
 import { TIERS } from '@/lib/lesson/dsl';
+import { GAMES_BY_SLUG } from '@/lib/games/catalogue';
 
 describe('the syllabus is one ordered road', () => {
   it('numbers every topic exactly once, with no gaps', () => {
@@ -97,5 +100,38 @@ describe('moving along the road', () => {
       expect(t.stage.topics.some((x) => x.id === t.id), t.id).toBe(true);
       expect(SEQUENCE_BY_ID.get(t.id)).toBe(t);
     }
+  });
+});
+
+describe('course-completion game unlocks', () => {
+  it('only ever points at games that actually exist in the catalogue', () => {
+    for (const stage of SYLLABUS) {
+      for (const slug of stage.capstoneGames ?? []) {
+        expect(GAMES_BY_SLUG.has(slug), `${stage.id} -> ${slug}`).toBe(true);
+      }
+    }
+  });
+
+  it('treats a stage as complete only once every built topic in it is done', () => {
+    const stage = SYLLABUS.find((s) => s.topics.some((t) => t.built))!;
+    const built = stage.topics.filter((t) => t.built);
+    expect(isStageComplete(stage, new Set())).toBe(false);
+    expect(isStageComplete(stage, new Set(built.map((t) => t.id).slice(0, -1)))).toBe(false);
+    expect(isStageComplete(stage, new Set(built.map((t) => t.id)))).toBe(true);
+  });
+
+  it('never marks a stage with no built topics as complete', () => {
+    for (const stage of SYLLABUS) {
+      if (stage.topics.every((t) => !t.built)) {
+        expect(isStageComplete(stage, new Set(stage.topics.map((t) => t.id)))).toBe(false);
+      }
+    }
+  });
+
+  it('resolves a topic id back to the stage that owns it', () => {
+    for (const t of SEQUENCE) {
+      expect(stageOf(t.id)?.id).toBe(t.stage.id);
+    }
+    expect(stageOf('not-a-lesson')).toBeNull();
   });
 });

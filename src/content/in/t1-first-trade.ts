@@ -49,6 +49,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'TradeSequenceExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The habit runs one direction; the process runs the other — same eight steps, different order.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The eight steps, in order',
@@ -108,6 +115,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Following the process, you compute your size from a 1% risk budget of ₹1,000 and a stop distance of ₹1,200 per share. What size does the formula give you?',
+      options: [
+        '1 share, rounded up so you still have a position',
+        'Less than 1 share — this trade does not fit your risk budget at all',
+        'The formula does not work in this case',
+      ],
+      correct: 1,
+      reveal:
+        '₹1,000 ÷ ₹1,200 is a fraction, and a fraction of a share is not a real order. This is not a flaw in the method. It is correctly telling you the trade does not fit inside your risk budget as planned. Rounding up to force a whole share quietly breaks the very limit the sizing was meant to protect.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'order-gauntlet',
       config: {},
@@ -122,6 +143,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'Your 1% risk budget is ₹1,500 and your planned stop distance is ₹1,800 per share. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Round up to 1 share anyway, since it is close enough',
+              'Do not take the trade at this size, or use a tighter stop that fits the budget',
+              'Double the risk budget to make the trade fit',
+            ],
+            correct: 'Do not take the trade at this size, or use a tighter stop that fits the budget',
+          },
+          explanation:
+            'Do not force it. Rounding up to one share breaks the risk limit you set for a reason. Doubling the budget on the spot is the same mistake with extra steps — a limit decided after seeing it does not fit is not a limit.',
+        },
         {
           prompt:
             'You buy 41 shares at ₹1,400 and sell later at the same price. What did the round trip cost you, in rupees?',

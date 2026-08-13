@@ -64,6 +64,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'FourCausesExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Same starting price, three different single causes — only one of them was about direction.',
+    },
+    {
       kind: 'example',
       title: 'One day, four separate causes',
       setup:
@@ -120,6 +127,20 @@ export const lesson: Lesson = {
         'Seven days left and in the money. Drag the price back and forth across the level and watch delta swing violently — that swing is gamma.',
     },
     {
+      kind: 'predict',
+      prompt:
+        "You hold a call that is far out of the money with only 2 days left, worth almost nothing already. Is theta still 'working against you' in any meaningful sense?",
+      options: [
+        'Yes, exactly as much as always — theta is a fixed daily cost regardless of price',
+        'Barely — there is very little premium left to decay, so its rupee impact has shrunk',
+        'No — theta stops applying once an option is far out of the money',
+      ],
+      correct: 1,
+      reveal:
+        'Barely, in rupee terms. Theta is a real force throughout an option\'s life, but it can only take away what is still there. A contract already worth almost nothing has almost nothing left for theta to remove.',
+      askWhy: true,
+    },
+    {
       kind: 'callout',
       tone: 'warning',
       title: 'What a seller is holding',
@@ -140,6 +161,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'An option is far out of the money with 1 day left, worth ₹0.50. Decide how much further rupee damage theta can realistically do before expiry.',
+          type: 'decision',
+          spec: {
+            options: [
+              'A large amount, since theta is always a serious threat',
+              'Very little — there is only ₹0.50 of value left for theta to remove',
+              'None — theta has already stopped applying',
+            ],
+            correct: 'Very little — there is only ₹0.50 of value left for theta to remove',
+          },
+          explanation:
+            'Very little, in rupees. Theta is real, but it can only take away what remains, and almost nothing remains here.',
+        },
         {
           prompt:
             'A contract has a delta of 0.45. The underlying rises ₹20 and nothing else changes. Roughly how much does the contract gain, per unit?',

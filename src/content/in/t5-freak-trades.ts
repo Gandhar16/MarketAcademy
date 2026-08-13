@@ -43,6 +43,13 @@ export const lesson: Lesson = {
     },
     {
       kind: 'widget',
+      component: 'EmptyBookPrintExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. A ₹4 quote, a ₹37 average fill — the market order took the empty book literally.',
+    },
+    {
+      kind: 'widget',
       component: 'OrderBookLadder',
       props: {},
       takeaway:
@@ -105,6 +112,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You place a limit buy order at ₹6 on a contract quoted ₹4/₹4 with almost nothing resting in the book. Are you protected from ever being the one who prints an absurd freak trade?',
+      options: [
+        'Yes completely — a limit order guarantees you can never pay more than ₹6',
+        'Mostly, but it can still fill instantly at any price up to ₹6, so the limit caps the damage rather than guaranteeing a fair price',
+        'No — limit orders offer no protection at all against freak fills',
+      ],
+      correct: 1,
+      reveal:
+        'Mostly protected, with a real caveat. A limit order guarantees you never pay more than ₹6, ruling out the worst scenarios. But it can still fill instantly at anything up to ₹6 if that is what happens to be resting. The limit caps the damage, it does not guarantee a price near the quoted ₹4.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'order-gauntlet',
       config: {},
@@ -119,6 +140,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader places a limit buy at ₹10 on a contract quoted ₹4/₹4, reasoning they are now completely safe from any bad fill. Decide what is missing.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Nothing — a limit order guarantees a fair, reasonable fill price',
+              'The limit only caps the worst case at ₹10; the fill could still be far above the ₹4 quote',
+              'Limit orders do not work at all on illiquid contracts',
+            ],
+            correct: 'The limit only caps the worst case at ₹10; the fill could still be far above the ₹4 quote',
+          },
+          explanation:
+            'The limit caps the ceiling, nothing more. A fill anywhere up to ₹10 is possible even though the quote showed ₹4.',
+        },
         {
           prompt:
             'A contract is quoted at ₹5 and your market order for 8 lots averages ₹30. How many times the quoted price did you pay?',

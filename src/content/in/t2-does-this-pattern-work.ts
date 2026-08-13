@@ -49,6 +49,13 @@ export const lesson: Lesson = {
     },
     {
       kind: 'widget',
+      component: 'BaseRateExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The two bars are nearly identical — the entire finding is the sliver of daylight between them.',
+    },
+    {
+      kind: 'widget',
       component: 'PatternBaseRate',
       props: { pattern: 'bullish-engulfing', symbol: 'RELIANCE.NS' },
       takeaway:
@@ -118,6 +125,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A pattern shows a genuine, statistically significant edge on RELIANCE over 5 years, but tests to nothing on nine other large stocks over the same period. What is the most defensible conclusion?',
+      options: [
+        'The pattern is a real, tradeable edge specific to RELIANCE',
+        'Most likely a coincidence found by testing many stocks and keeping the one that looked good',
+        'It proves patterns work differently for every company',
+      ],
+      correct: 1,
+      reveal:
+        'Most likely a coincidence. Testing a pattern on ten different stocks is effectively ten separate tests, and by chance alone roughly one in twenty will look significant even with nothing real going on. A result that shows up on exactly one of ten stocks and nowhere else fits that description far better than it fits a genuine, company-specific mechanism.',
+      askWhy: true,
+    },
+    {
       kind: 'prose',
       md:
         'None of this makes chart reading useless. Patterns are a **vocabulary for describing what the market is doing** — a hammer really does tell you sellers were rejected at a level, and that is worth knowing.\n\nWhat it is not is a **predictive claim** you can trade without evidence. Use the shapes to describe; use base rates to decide.',
@@ -125,6 +146,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A pattern tests as significant on one stock out of twelve tested, with no obvious reason that stock should behave differently. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Trade it on that one stock, since the number is real',
+              'Treat it as most likely a chance result from testing twelve stocks and keeping the best one',
+              'Test it on twelve more stocks to be sure',
+            ],
+            correct:
+              'Treat it as most likely a chance result from testing twelve stocks and keeping the best one',
+          },
+          explanation:
+            'Treat it as likely chance. Testing many stocks and reporting the one that looked best is exactly the selection problem this lesson names. The more places you look, the lower the bar a lucky result has to clear.',
+        },
         {
           prompt:
             'A pattern shows a 61% hit rate over 22 occurrences, against a 53% base rate. Decide whether to trade it.',

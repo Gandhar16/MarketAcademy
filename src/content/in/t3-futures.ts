@@ -59,6 +59,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'MarkToMarketExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Two down evenings are enough to force a top-up — being eventually right does not undo a shortfall you could not fund.',
+    },
+    {
       kind: 'figure',
       figure: 'LongShortDiagram',
       props: {},
@@ -139,6 +146,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Normally a futures contract trades a little above the current price. Occasionally it trades BELOW it instead. Is that impossible?',
+      options: [
+        'Yes — the futures price can never sit below the spot price',
+        'No — it happens when a large dividend is expected before expiry, worth more than the usual cost of waiting',
+        'No, but it means the exchange has made a pricing error',
+      ],
+      correct: 1,
+      reveal:
+        'No, it happens. A future holder is not on the shareholder register, so a large expected dividend is missed entirely. When that missed dividend outweighs the usual cost of waiting, the future can trade below the spot price. Rare, and still just arithmetic, not a signal about direction.',
+      askWhy: true,
+    },
+    {
       kind: 'checkpoint',
       tasks: [
         {
@@ -148,6 +169,21 @@ export const lesson: Lesson = {
           spec: { metric: 'literal', value: 4500, tolerance: 1, unit: '₹' },
           explanation:
             '250 × ₹18 = ₹4,500. The habit worth building is doing this multiplication before the trade rather than after it. A move that sounds trivial in points is rarely trivial in rupees, and the lot size is what decides which. Every sizing decision in derivatives starts here.',
+        },
+        {
+          prompt:
+            'A futures contract is trading slightly below the current share price, ahead of a large expected dividend. Decide what this most likely reflects.',
+          type: 'decision',
+          spec: {
+            options: [
+              'A pricing error the exchange will correct',
+              'The dividend a future holder will miss, outweighing the usual cost of waiting',
+              'A signal that the market expects the price to fall',
+            ],
+            correct: 'The dividend a future holder will miss, outweighing the usual cost of waiting',
+          },
+          explanation:
+            'The missed dividend. A future never carries the right to a dividend, so a large enough one can pull the futures price below the spot price — arithmetic, not a forecast.',
         },
         {
           prompt:

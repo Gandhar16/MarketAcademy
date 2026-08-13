@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'OvernightMarginExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The company did nothing, the price did nothing — and ₹1,50,000 is due by evening.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Two frameworks, one idea',
@@ -109,6 +116,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A share exits surveillance after several months once its trading pattern normalises. Does the margin requirement drop back to normal immediately?',
+      options: [
+        'No — once a share has been under surveillance it can never return to normal margin requirements',
+        'Yes, typically — once removed from the list, the requirement generally reverts to the ordinary rate',
+        'It depends only on how long ago the company was founded',
+      ],
+      correct: 1,
+      reveal:
+        'Yes, typically. Surveillance measures are tied to the current trading pattern, not a permanent mark against the company. Once a share is removed from the list, the margin requirement generally reverts to whatever the ordinary rate is for a share of that kind.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'circuit-breaker',
       config: {},
@@ -123,6 +144,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A share is removed from a surveillance list after six months of calmer trading. Decide what most likely happens to its margin requirement.',
+          type: 'decision',
+          spec: {
+            options: [
+              'It stays at the surveillance-level requirement permanently',
+              'It generally reverts to the ordinary requirement for a share of that kind',
+              'It is set to zero as a reward for stabilising',
+            ],
+            correct: 'It generally reverts to the ordinary requirement for a share of that kind',
+          },
+          explanation:
+            'It generally reverts. The restriction is tied to the current trading pattern, not a permanent mark, so it eases once the share is removed from the list.',
+        },
         {
           prompt:
             'You hold ₹8,00,000 of a share at a 25% requirement. It moves to 100%. How much additional deposit is needed, in rupees?',

@@ -58,6 +58,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'CappedShapeExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The same open-ended loss line, closed by a single added leg above it.',
+    },
+    {
       kind: 'figure',
       figure: 'SpreadDiagram',
       props: {},
@@ -121,6 +128,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "You buy one 24,000 call, sell two 24,200 calls, and buy one 24,400 call — four contracts total. Using only the 'sum of legs' rule, is this position's maximum loss knowable before you enter?",
+      options: [
+        'No — positions with more than two legs are too complex to know the maximum loss in advance',
+        "Yes — the same rule applies regardless of leg count: add up what each leg is worth at every price and read off the worst point",
+        'Only with a formula specific to three-leg positions',
+      ],
+      correct: 1,
+      reveal:
+        "Yes. The 'sum of legs' rule does not care how many legs there are. The position's value at any price is each leg's value added together, and the worst point on that combined line is your maximum loss, knowable before you enter.",
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'payoff-builder',
       config: {},
@@ -135,6 +156,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "A position combines four separate option contracts across three different strikes. Decide whether the 'add up the legs' method used for a two-leg spread still applies.",
+          type: 'decision',
+          spec: {
+            options: [
+              'No — four-leg positions need an entirely different method',
+              "Yes — the method is the same regardless of leg count: sum each leg's value at every price",
+              'Only if all four legs share the same strike',
+            ],
+            correct: "Yes — the method is the same regardless of leg count: sum each leg's value at every price",
+          },
+          explanation:
+            'Yes, the same method. A position is always the sum of its legs, whether it has two of them or ten.',
+        },
         {
           prompt:
             'You buy a 1,400 call for ₹60 and sell a 1,500 call for ₹25. What is the most this position can make, per unit?',

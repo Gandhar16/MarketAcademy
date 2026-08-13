@@ -158,6 +158,22 @@ input[type='range'] {
   color: var(--color-ink);
 }
 
+/* Used by SceneExplainer (scene-explainer.tsx) to crossfade between steps of
+   every "video explainer" widget in the app — a small opacity+rise so a step
+   change never reads as an instant flicker. Frozen to effectively 0 by the
+   `prefers-reduced-motion` rule directly below, same as every other
+   animation in this file. */
+@keyframes scene-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Respect the setting. Several widgets animate price movement, and for anyone
    who has asked the OS to stop that, we stop. */
 @media (prefers-reduced-motion: reduce) {
@@ -168,6 +184,18 @@ input[type='range'] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Used where a horizontally-scrollable track has its own visible position
+   indicator (dots, prev/next buttons) — the native scrollbar would be a
+   second, redundant affordance. Scrolling itself is untouched; only the
+   browser's scrollbar chrome is hidden. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* ---------------------------------------------------------------------------
@@ -239,6 +267,45 @@ input[type='range'] {
   }
 }
 
+/* A slow radial glow, up-coloured on one side and down-coloured on the
+   other, breathing behind the ticker lines. Same visibility mechanism as
+   `.market-bg` — always in the DOM, `display: none` unless the market theme
+   is active — and frozen by `prefers-reduced-motion` via the same global
+   rule as every other animation on the page. */
+.market-glow {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(640px circle at 12% 15%, color-mix(in srgb, var(--color-up) 16%, transparent), transparent 60%),
+    radial-gradient(560px circle at 88% 80%, color-mix(in srgb, var(--color-down) 13%, transparent), transparent 60%);
+  animation: market-glow-breathe 12s ease-in-out infinite alternate;
+}
+
+:root[data-theme='market'] .market-glow {
+  display: block;
+}
+
+@keyframes market-glow-breathe {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Market theme: cards read as slightly more "live" — a faint accent-tinted
+   border on hover instead of the plain neutral one every other theme uses.
+   Opt-in via `.card-interactive` (course cards, game cards) rather than
+   every bordered box on the site, which would silently pick up a colour
+   change nobody asked for the moment market theme is active. */
+:root[data-theme='market'] .card-interactive:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-line-strong));
+}
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
@@ -287,7 +354,27 @@ input[type='range'] {
   transition:
     background-color 120ms ease,
     border-color 120ms ease,
-    opacity 120ms ease;
+    opacity 120ms ease,
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+/* A light lift-and-press, not a bounce — present on every button variant so
+   the whole app feels consistently responsive to a click, not just the
+   handful of surfaces that got a bespoke treatment. Skipped entirely for
+   `prefers-reduced-motion` via the global rule at the top of this file,
+   which zeroes `transition-duration` and makes these instant instead of
+   animated. */
+.btn-primary:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled),
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled),
+.btn-danger:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
 }
 
 .btn-primary {
@@ -297,6 +384,7 @@ input[type='range'] {
 
 .btn-primary:hover:not(:disabled) {
   background: #ffc542;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-accent) 35%, transparent);
 }
 
 .btn-secondary {

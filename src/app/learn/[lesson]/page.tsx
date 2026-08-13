@@ -24,12 +24,15 @@ export default async function LessonPage({ params }: { params: Promise<{ lesson:
           shared link is otherwise context-free, and "step 7 of 59" is the
           difference between a page and a course. */}
       <nav className="mx-auto flex w-full max-w-3xl flex-wrap items-baseline gap-x-3 gap-y-1 px-4 pt-6 text-sm sm:px-6 sm:pt-8">
-        <Link href="/learn" className="text-ink-faint transition-colors hover:text-ink">
-          ← The course
+        <Link
+          href={here ? `/learn/course/${here.stage.id}` : '/learn'}
+          className="text-ink-faint transition-colors hover:text-ink"
+        >
+          ← {here ? here.stage.courseTitle : 'The course'}
         </Link>
         {here && (
           <span className="num text-[11px] uppercase tracking-wider text-ink-faint">
-            Step {here.step} of {TOTAL_TOPICS} · {here.stage.name}
+            Step {here.step} of {TOTAL_TOPICS}
           </span>
         )}
       </nav>

@@ -49,6 +49,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'KellyAsymmetryExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Half Kelly gives up a quarter of the growth. Double Kelly gives up all of it.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The formula, and what it is optimising',
@@ -110,6 +117,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A strategy wins only 40% of the time but pays 3:1 when it wins. Is the Kelly fraction for this strategy positive, even though it loses more often than it wins?',
+      options: [
+        'No — Kelly can only be positive when the win rate is above 50%',
+        'Yes — Kelly depends on win rate AND payoff ratio together, and a big enough payoff can outweigh a sub-50% win rate',
+        'It cannot be computed without a 50% or higher win rate',
+      ],
+      correct: 1,
+      reveal:
+        'Yes, positive. Kelly combines win rate and payoff ratio: f = (b·p − q) ÷ b. Here, (3×0.40 − 0.60) ÷ 3 = 0.20, a genuine 20% fraction, despite losing three times out of five. A large enough payoff on the wins can comfortably outweigh a win rate under 50%.',
+      askWhy: true,
+    },
+    {
       kind: 'figure',
       figure: 'RiskRewardDiagram',
       props: { entry: 1400 },
@@ -126,6 +147,14 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A strategy wins 30% of the time and pays 4:1 on a win. Compute the Kelly fraction, in percent.',
+          type: 'compute',
+          spec: { metric: 'literal', value: 12.5, tolerance: 0.5, unit: '%' },
+          explanation:
+            '(4 × 0.30 − 0.70) ÷ 4 = 0.125, so 12.5%. A strategy that loses more often than it wins can still have a genuinely positive Kelly fraction when the payoff ratio is large enough.',
+        },
         {
           prompt:
             'A strategy wins 60% of the time at 1:1. What does the Kelly formula give as the optimal fraction, in percent?',

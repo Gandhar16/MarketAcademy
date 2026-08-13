@@ -56,6 +56,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'SettlementAverageExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Thirty minutes below the level outweighs a two-minute jump above it — the average barely moves.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'What the last day removes',
@@ -115,6 +122,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'India also lists WEEKLY expiry contracts, not just monthly ones. Does a weekly contract settle differently, say against the single closing price instead of an average?',
+      options: [
+        'Yes — weekly contracts use the closing tick since there is less time for manipulation',
+        'No — the same last-half-hour average applies to weekly expiries too, for the same reason',
+        'It depends on which index the contract is on',
+      ],
+      correct: 1,
+      reveal:
+        'No, the same average applies. Using an average rather than the closing tick stops anyone forcing a favourable settlement by trading the close. That reason applies just as much to a weekly contract as a monthly one, so the mechanism does not change with how often expiry comes around.',
+      askWhy: true,
+    },
+    {
       kind: 'callout',
       tone: 'warning',
       title: 'Pin risk: the level you do not want to sit on',
@@ -138,6 +159,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader assumes a weekly expiry settles against the single final traded price, since there is less time for anyone to manipulate it. Decide whether that assumption is correct.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Correct — weekly contracts use the closing tick',
+              'Incorrect — weekly contracts use the same last-half-hour average as monthly ones',
+              'It depends on the specific index',
+            ],
+            correct: 'Incorrect — weekly contracts use the same last-half-hour average as monthly ones',
+          },
+          explanation:
+            'Incorrect. The averaging mechanism protects against the same manipulation risk regardless of how often expiry occurs.',
+        },
         {
           prompt:
             'NIFTY settles at 23,860. You hold one lot of 75 of the 24,000 put. What do you receive, in rupees?',

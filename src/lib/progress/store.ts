@@ -10,6 +10,7 @@
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { isStageComplete, SEQUENCE, stageOf, type SyllabusStage } from '@/content/syllabus';
 import {
   currentRetention,
   isDue,
@@ -39,6 +40,12 @@ export interface Commitment {
   at: number;
 }
 
+export interface LessonCompletionResult {
+  xp: number;
+  /** Set only the moment a course transitions from incomplete to complete. */
+  unlockedStage: SyllabusStage | null;
+}
+
 interface ProgressState {
   version: number;
   xp: number;
@@ -46,11 +53,20 @@ interface ProgressState {
   lessons: Record<string, LessonProgress>;
   mastery: Record<string, SkillMastery>;
   commitments: Commitment[];
+  /** Stage id → when it first became complete. The unlock event fires once, here. */
+  completedCourses: Record<string, number>;
 
   commit: (c: Omit<Commitment, 'at'>) => void;
   commitmentFor: (lessonId: string, blockIndex: number) => Commitment | undefined;
   setBlockIndex: (lessonId: string, index: number) => void;
-  completeLesson: (args: { lessonId: string; tier: string; skills: string[]; score: number }) => number;
+  completeLesson: (args: {
+    lessonId: string;
+    tier: string;
+    skills: string[];
+    score: number;
+  }) => LessonCompletionResult;
+  /** Every game slug unlocked by a completed course, deduped. */
+  unlockedGames: () => string[];
   dueSkills: (now?: number) => SkillMastery[];
   retention: (skill: string, now?: number) => number;
   reset: () => void;
@@ -67,6 +83,7 @@ export const useProgress = create<ProgressState>()(
       lessons: {},
       mastery: {},
       commitments: [],
+      completedCourses: {},
 
       commit: (c) => {
         // A commitment is write-once. Re-answering after seeing the reveal
@@ -114,23 +131,51 @@ export const useProgress = create<ProgressState>()(
           mastery[skill] = review(existing, passed, Math.min(1, score / 100));
         }
 
+        const lessons = {
+          ...s.lessons,
+          [lessonId]: {
+            lessonId,
+            completedAt: Date.now(),
+            attempts: (prev?.attempts ?? 0) + 1,
+            bestScore: Math.max(prev?.bestScore ?? 0, score),
+            lastBlockIndex: prev?.lastBlockIndex ?? 0,
+          },
+        };
+
+        // A course "unlocks" its game the moment its last built lesson is
+        // completed. Checked only against the stage this lesson belongs to —
+        // completing one lesson can never finish a course it is not part of.
+        const stage = stageOf(lessonId);
+        const completedIds = new Set(Object.keys(lessons).filter((id) => lessons[id].completedAt != null));
+        const alreadyUnlocked = stage ? s.completedCourses[stage.id] != null : true;
+        const nowComplete = stage ? isStageComplete(stage, completedIds) : false;
+        const unlockedStage = stage && nowComplete && !alreadyUnlocked ? stage : null;
+
         set({
           xp: s.xp + earned,
           streak: recordActivity(s.streak),
           mastery,
-          lessons: {
-            ...s.lessons,
-            [lessonId]: {
-              lessonId,
-              completedAt: Date.now(),
-              attempts: (prev?.attempts ?? 0) + 1,
-              bestScore: Math.max(prev?.bestScore ?? 0, score),
-              lastBlockIndex: prev?.lastBlockIndex ?? 0,
-            },
-          },
+          lessons,
+          completedCourses: unlockedStage
+            ? { ...s.completedCourses, [unlockedStage.id]: Date.now() }
+            : s.completedCourses,
         });
 
-        return earned;
+        return { xp: earned, unlockedStage };
+      },
+
+      unlockedGames: () => {
+        const s = get();
+        const stages = new Set(Object.keys(s.completedCourses));
+        // Re-derive from SEQUENCE's stages rather than storing games directly,
+        // so a later edit to a course's capstoneGames takes effect for
+        // learners who already finished that course, not just new completions.
+        const games = new Set<string>();
+        for (const id of stages) {
+          const stage = SEQUENCE.find((t) => t.stage.id === id)?.stage;
+          stage?.capstoneGames?.forEach((g) => games.add(g));
+        }
+        return [...games];
       },
 
       dueSkills: (now = Date.now()) => Object.values(get().mastery).filter((m) => isDue(m, now)),
@@ -140,7 +185,8 @@ export const useProgress = create<ProgressState>()(
         return m ? currentRetention(m, now) : 0;
       },
 
-      reset: () => set({ xp: 0, streak: emptyStreak, lessons: {}, mastery: {}, commitments: [] }),
+      reset: () =>
+        set({ xp: 0, streak: emptyStreak, lessons: {}, mastery: {}, commitments: [], completedCourses: {} }),
     }),
     {
       name: 'market-academy-progress',

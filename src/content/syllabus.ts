@@ -52,31 +52,56 @@ export interface SyllabusStage {
   question: string;
   /** The short name, for the sidebar and the progress bar. */
   name: string;
+  /**
+   * The recognisable course title — "Technical Analysis", not "Reading a
+   * chart honestly". `name`/`question` do the job of orienting someone
+   * already reading through the stage in place; `courseTitle` does the job
+   * of letting someone glance at a grid of course cards and know which one
+   * to pick, the same way a learner would recognise "Technical Analysis" as
+   * a subject on any other platform.
+   */
+  courseTitle: string;
   /** Everything in a stage shares a tier, so the sequence is tier-monotonic. */
   tier: Tier;
   /** One sentence on why this stage comes where it does. */
   why: string;
   topics: SyllabusTopic[];
+  /**
+   * Games (by catalogue slug) that genuinely test what this course teaches —
+   * verified against each game's actual scoring mechanic, not its name or
+   * blurb. Absent where no game in the catalogue defensibly tests this
+   * course's material; several games double up across two courses where the
+   * mechanic honestly serves both. See docs/game-unlocks.md for the mapping
+   * rationale.
+   */
+  capstoneGames?: string[];
 }
 
 export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-1',
     name: 'Ground floor',
+    courseTitle: 'Basics of the Stock Market',
     question: 'What am I actually buying, and who sells it to me?',
     tier: 'T0',
     why: 'Nothing later makes sense until you know what a share is and which company holds it for you.',
     topics: [
       {
         id: 'in-t0-what-is-a-share',
-        title: 'What a share actually is',
-        covers: 'Ownership, why a company sells part of itself, and what you own the day after you buy.',
+        title: 'What did you actually buy?',
+        covers: 'Ownership, why a company sells part of itself, and what you own the day after you buy — and how that differs from lending money.',
+        built: true,
+      },
+      {
+        id: 'in-t0-where-does-money-go',
+        title: 'Where does your money go when you buy a share?',
+        covers: 'Primary market versus secondary market, what an IPO is, and why buying on the exchange usually pays another investor, not the company.',
         built: true,
       },
       {
         id: 'in-t0-who-does-what',
-        title: 'Exchange, broker, depository — who does what',
-        covers: 'Three different companies stand between you and a share. Knowing which one to blame is half of fixing a problem.',
+        title: 'Who keeps the market working?',
+        covers: 'Investor, broker, exchange, clearing corporation, depository and regulator — the roles behind an ordinary trade, and which familiar names are not actually one of them.',
         built: true,
       },
       {
@@ -93,8 +118,14 @@ export const SYLLABUS: SyllabusStage[] = [
       },
       {
         id: 'in-t0-what-moves-price',
-        title: 'What actually moves a price',
-        covers: 'Supply, demand, and why news you already read is usually already in the price.',
+        title: 'Why does the price move?',
+        covers: 'A price is the next agreed trade between a willing buyer and a willing seller — why good news can still come with a falling price, and why a move is not proof of quality.',
+        built: true,
+      },
+      {
+        id: 'in-t0-gambling-vs-investing',
+        title: 'Is this investing, trading, or gambling?',
+        covers: 'Investing, trading and gambling-like behaviour, told apart by process rather than by asset or outcome — and why a disciplined decision can still lose.',
         built: true,
       },
       {
@@ -108,9 +139,11 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-2',
     name: 'Placing a trade',
+    courseTitle: 'Placing a Trade',
     question: 'How do I buy something without getting a worse price than I expected?',
     tier: 'T1',
     why: 'The mechanics of a single order, and every rupee it costs, before any question of what to buy.',
+    capstoneGames: ['order-gauntlet', 'cost-cutter'],
     topics: [
       {
         id: 'in-t1-order-types',
@@ -147,9 +180,11 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-3',
     name: 'Staying alive',
+    courseTitle: 'Risk & Position Sizing',
     question: 'How do I make sure one bad trade does not end this?',
     tier: 'T1',
     why: 'Survival is taught before selection, because a good idea at the wrong size still bankrupts you.',
+    capstoneGames: ['chart-replay'],
     topics: [
       {
         id: 'in-t1-position-sizing',
@@ -180,9 +215,11 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-4',
     name: 'Owning for years',
+    courseTitle: 'Long-Term Investing',
     question: 'What if I do not want to trade at all?',
     tier: 'T1',
     why: 'Most people are better served by holding than by trading, and they deserve to hear that early.',
+    capstoneGames: ['the-long-game'],
     topics: [
       {
         id: 'in-t1-compounding',
@@ -213,9 +250,11 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-5',
     name: 'Reading a chart honestly',
+    courseTitle: 'Technical Analysis I: Charts & Patterns',
     question: 'Do the patterns everyone draws actually predict anything?',
     tier: 'T2',
     why: 'Charts come after risk, and every claim about them is checked against a base rate before it is taught.',
+    capstoneGames: ['candle-sprint'],
     topics: [
       {
         id: 'in-t2-chart-types',
@@ -264,6 +303,7 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-5b',
     name: "The technician's toolkit",
+    courseTitle: "Technical Analysis II: The Technician's Toolkit",
     question: 'How do traders actually mark up a chart — and which of those markings mean anything?',
     tier: 'T2',
     why: 'Stage 5 already established the habit of testing a claim before believing it. This stage aims that same scepticism at the tools people draw by hand.',
@@ -351,6 +391,7 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-6',
     name: 'Reading a business',
+    courseTitle: 'Fundamental Analysis I: Reading the Numbers',
     question: 'Is this company worth what it costs?',
     tier: 'T2',
     why: 'The other half of selection. A chart says what happened; the accounts say what the company did.',
@@ -390,6 +431,7 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-6b',
     name: 'Reading a business like an analyst',
+    courseTitle: 'Fundamental Analysis II: Analyst-Level Detail',
     question: 'A company looks fine on the surface. What would actually change your mind?',
     tier: 'T2',
     why: 'Stage 6 taught the three statements and a first valuation. This stage teaches the ratios analysts actually compute from them, and the specific things that make a good-looking number worth doubting.',
@@ -435,9 +477,11 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-7',
     name: 'Your own head',
+    courseTitle: 'Trading Psychology',
     question: 'Why do I keep doing the thing I promised myself I would not?',
     tier: 'T2',
     why: 'Placed after the first real decisions, because a bias you have already fallen for teaches more than one described in advance.',
+    capstoneGames: ['bias-buster'],
     topics: [
       {
         id: 'in-t2-loss-aversion',
@@ -462,9 +506,11 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-8',
     name: 'Leverage and derivatives',
+    courseTitle: 'Options & Derivatives',
     question: 'How do futures and options work, and why do they end so many accounts?',
     tier: 'T3',
     why: 'Borrowed money and time-limited contracts, taught only after sizing and stops are automatic — and built up from what a contract IS, not from a strategy name.',
+    capstoneGames: ['payoff-builder', 'earnings-roulette'],
     topics: [
       {
         id: 'in-t3-margin',
@@ -546,9 +592,11 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-9',
     name: 'Thinking like a professional',
+    courseTitle: 'Professional Risk & Portfolio Management',
     question: 'How do people who do this for a living decide anything?',
     tier: 'T4',
     why: 'Portfolio-level thinking, where the unit of analysis stops being the trade.',
+    capstoneGames: ['risk-roulette'],
     topics: [
       {
         id: 'in-t4-risk-of-ruin',
@@ -603,9 +651,11 @@ export const SYLLABUS: SyllabusStage[] = [
   {
     id: 'stage-10',
     name: 'The things that end accounts',
+    courseTitle: 'Market Edge Cases',
     question: 'What is going to happen that nobody warned me about?',
     tier: 'T5',
     why: 'Edge cases last, because each one only makes sense once the normal case is second nature.',
+    capstoneGames: ['circuit-breaker'],
     topics: [
       {
         id: 'in-t5-circuit-lock',
@@ -733,4 +783,15 @@ export function previousBuilt(topicId: string): SequencedTopic | null {
  */
 export function resumeAt(completed: ReadonlySet<string>): SequencedTopic | null {
   return SEQUENCE.find((t) => t.built && !completed.has(t.id)) ?? null;
+}
+
+/** True once every built topic in a stage is in the completed set. A stage with no built topics is never "complete". */
+export function isStageComplete(stage: SyllabusStage, completed: ReadonlySet<string>): boolean {
+  const built = stage.topics.filter((t) => t.built);
+  return built.length > 0 && built.every((t) => completed.has(t.id));
+}
+
+/** The stage a given (just-completed) topic belongs to, or null if unknown. */
+export function stageOf(topicId: string): SyllabusStage | null {
+  return SEQUENCE_BY_ID.get(topicId)?.stage ?? null;
 }

@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'AdjustedOrphanExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The value is preserved exactly. The buyer for it is not.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The principle: keep the value whole',
@@ -113,6 +120,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A company announces a rights issue, offering existing shareholders new shares at a discount. Does this trigger the same kind of strike and lot adjustment on outstanding options that a split does?',
+      options: [
+        'No — only splits and bonuses ever trigger an adjustment',
+        'Yes, if the rights issue is large enough to materially change the value per share',
+        'No — options are never affected by anything except splits',
+      ],
+      correct: 1,
+      reveal:
+        "Yes, if large enough. The same principle behind split and bonus adjustments applies to any corporate action that changes the value one share represents. The exchange reacts to whether value per share genuinely changed, not to the name of the action.",
+      askWhy: true,
+    },
+    {
       kind: 'figure',
       figure: 'SpreadDiagram',
       props: {},
@@ -129,6 +150,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A company announces a large rights issue at a steep discount to the market price. Decide whether outstanding options could see their strike and lot adjusted.',
+          type: 'decision',
+          spec: {
+            options: [
+              'No — only a stock split or bonus can ever trigger an adjustment',
+              'Yes, if the rights issue is large enough to materially change the value per share',
+              'No — options are never adjusted for any reason',
+            ],
+            correct: 'Yes, if the rights issue is large enough to materially change the value per share',
+          },
+          explanation:
+            'Yes, potentially. The exchange adjusts for any corporate action, not just splits and bonuses, when it materially changes the value one share represents.',
+        },
         {
           prompt:
             'You hold a ₹1,800 call with a lot size of 300. The company announces a 3-for-1 split. What is the new strike, in rupees?',

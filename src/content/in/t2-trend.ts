@@ -55,6 +55,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'HindsightExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The dashed line marks the right-hand edge — everything past it is exactly what a real trend rule cannot see yet.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'A rule, or it is not a definition',
@@ -118,6 +125,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Using your rule, a stock is in an uptrend on the daily chart and in a downtrend on the weekly chart, at the same moment. Which of the two is "the" real trend?',
+      options: [
+        'The weekly one, since it covers more time and should always take priority',
+        'The daily one, since it is more responsive to what is happening now',
+        'Neither is more real — trend is a property of the rule and the timeframe applied, not a single fact about the stock',
+      ],
+      correct: 2,
+      reveal:
+        'Neither is more real. A trend rule always answers a question about a specific timeframe, and the two timeframes can genuinely disagree. A daily rule and a weekly rule are looking at different windows of the same prices. There is no hidden "true" trend underneath both readings. The honest response is to say which timeframe you mean, every time, rather than asking which chart is right.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'RELIANCE.NS', interval: '1d', range: '1y' },
       mode: 'view',
@@ -139,6 +160,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader says a stock is "clearly in an uptrend" without mentioning a timeframe, while your own daily-chart rule says it is in a downtrend. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'They must be wrong, since your rule disagrees',
+              'Ask which timeframe they mean — both readings can be correct on their own chart',
+              'Average the two views and treat it as sideways',
+            ],
+            correct: 'Ask which timeframe they mean — both readings can be correct on their own chart',
+          },
+          explanation:
+            'Ask the timeframe. A trend statement with no stated timeframe is not yet a checkable claim, and two people can both be right if they are describing different windows of the same prices.',
+        },
         {
           prompt:
             'A move runs 500 points. Your rule enters 120 points after the bottom and exits 90 points before the top. What percentage of the move does it capture?',

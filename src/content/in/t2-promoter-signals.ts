@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'PledgeBaseExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Same 1.56cr shares, same disclosure — the number nearly doubles just by changing the denominator.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'A defined, disclosed category',
@@ -81,6 +88,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Promoter shareholding rises from 40% to 48% in a quarter. In case A, promoters bought shares on the open market, at the market price. In case B, the company gave promoters new shares below the market price. Read the same way?',
+      options: [
+        'Yes — shareholding went up in both cases, and that is all that matters',
+        'No — case A cost promoters real money at the fair price; case B can favour promoters over everyone else',
+        'No, because this kind of share issue is always illegal',
+      ],
+      correct: 1,
+      reveal:
+        'No, very different signals. In case A, promoters paid real money at the going price. In case B, cheap new shares raise promoter ownership while diluting everyone else. Same headline number, opposite meaning for other shareholders.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'earnings-roulette',
       config: {},
@@ -95,6 +116,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'Promoter shareholding rises 6 points this quarter, entirely through new shares priced below the market rate. Compare that with an open-market purchase of the same size.',
+          type: 'decision',
+          spec: {
+            options: [
+              'The same — a rise in promoter shareholding is always a good sign, however it happened',
+              'Different — cheap new shares can favour promoters over other shareholders, unlike a market-price purchase',
+              'As automatically fraudulent',
+            ],
+            correct:
+              'Different — cheap new shares can favour promoters over other shareholders, unlike a market-price purchase',
+          },
+          explanation:
+            'Different. The same headline number can mean two very different things. Paying full price with your own money is not the same signal as being handed cheap new shares.',
+        },
         {
           prompt: 'Promoters hold 6 crore of a company\'s 10 crore total shares. Of that, 1.8 crore are pledged. What percentage of the WHOLE company is pledged?',
           type: 'compute',

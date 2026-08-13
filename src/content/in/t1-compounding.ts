@@ -49,6 +49,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'TimeVsRateExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Bharat starts a third of the way along Asha\'s curve and never catches up — that gap is what ten years of compounding is worth.',
+    },
+    {
       kind: 'figure',
       figure: 'CompoundingCurve',
       props: {},
@@ -112,6 +119,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You can either double your monthly contribution for the next 30 years, or find an extra 2% of annual return with the same contribution. Which one is more reliable to actually achieve?',
+      options: [
+        'The extra 2% of return, since compounding rewards rate more than contribution',
+        'Doubling the contribution, since it is entirely within your control and does not depend on markets cooperating',
+        'They are equally reliable',
+      ],
+      correct: 1,
+      reveal:
+        'Doubling the contribution. Both can produce a similar final number, but only one of them is a decision you can simply make and keep. An extra 2% of annual return, sustained for 30 years, is not something you can order. It typically requires taking on real additional risk, and there is no guarantee it arrives at all. A larger monthly contribution is boring, and boring is exactly what makes it reliable.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'the-long-game',
       config: {},
@@ -126,6 +147,20 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt: 'You have 20 years to invest. Decide which is the more dependable way to grow the final outcome.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Searching for a fund promising 3% more return each year',
+              'Increasing your monthly contribution by a fixed, affordable amount',
+              'Both are equally dependable',
+            ],
+            correct: 'Increasing your monthly contribution by a fixed, affordable amount',
+          },
+          explanation:
+            'The contribution increase. A promised extra 3% of annual return usually comes bundled with extra risk and no guarantee. A larger contribution is simply a decision you make and keep — the same reliable lever this lesson identifies as the one nobody sells you.',
+        },
         {
           prompt:
             'You invest ₹5,00,000 at 10% a year and add nothing. What is it worth after 20 years, in rupees?',

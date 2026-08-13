@@ -145,8 +145,44 @@ export const lesson: Lesson = {
         'Asha risked ₹7,500 and could not lose a rupee more, however badly it went.\n\nBharat received ₹7,500 and that is the most he can ever make. If Reliance had gone to ₹2,000, he would have lost ₹1,25,000.\n\nBuying one of these has a floor. Selling one does not have a ceiling. Both are legitimate positions and they are not the same kind of risk.',
     },
     {
+      kind: 'predict',
+      prompt:
+        'Reliance is at ₹1,400. A 1450 call — the right to buy at ₹1,450, above the current price — trades at ₹8, even though using it right now would lose money. Why is anyone willing to pay ₹8 for it?',
+      options: [
+        'They are being overcharged — a strike above the current price should cost nothing',
+        'The premium reflects the chance the price rises above ₹1,450 before expiry, not what it is worth today',
+        'It is a mistake in the pricing',
+      ],
+      correct: 1,
+      reveal:
+        'The chance it becomes useful later. A strike above the current price is worthless if exercised today, but time remains before expiry for the price to rise past it. The ₹8 is the price of that possibility, not of anything the contract is worth right now.',
+      askWhy: true,
+    },
+    {
+      kind: 'widget',
+      component: 'AsymmetryExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Same run to ₹2,000 — Asha stays capped at −₹7,500, Bharat does not.',
+    },
+    {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "A call option's strike sits above the current share price, so using it today would lose money. It still trades at a small positive premium. Decide what that premium represents.",
+          type: 'decision',
+          spec: {
+            options: [
+              'A pricing mistake that will correct itself',
+              'The value of time left for the price to possibly rise above the strike before expiry',
+              'Proof the option is a bad contract to hold',
+            ],
+            correct: 'The value of time left for the price to possibly rise above the strike before expiry',
+          },
+          explanation:
+            'Time value. Even a strike currently out of reach has a premium, because expiry has not arrived and the price could still get there.',
+        },
         {
           prompt:
             'You hold a NIFTY 24000 put. NIFTY finishes at 23,600. Decide what the contract is worth per unit at expiry.',

@@ -50,6 +50,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'SpreadCostExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Buy at the ask, sell at the bid, and the full gap is gone — never on a contract note.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Impatience is the product being sold',
@@ -106,6 +113,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A large institutional buyer wants 50,000 shares but only shows 500 at a time in the order book, refreshing as each chunk fills. Why hide the true size?',
+      options: [
+        'It is not allowed — order size must always be fully visible',
+        'Showing the full size would signal a large buyer, and others could adjust prices before the order finishes',
+        'It has no effect — hiding size changes nothing about the price paid',
+      ],
+      correct: 1,
+      reveal:
+        'To avoid moving the price against themselves. If the book saw 50,000 shares of demand at once, others would raise their offers immediately, knowing a large buyer has to keep buying. Showing a small slice at a time is a real, common way large orders reduce how much they signal.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'order-gauntlet',
       config: {},
@@ -120,6 +141,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A large order shows only 300 shares at a time, refreshing repeatedly, rather than the full quantity at once. Decide why.',
+          type: 'decision',
+          spec: {
+            options: [
+              'A technical limitation of the exchange',
+              'To avoid signalling the full size, which could move prices against the order before it finishes',
+              'It makes no difference to execution',
+            ],
+            correct:
+              'To avoid signalling the full size, which could move prices against the order before it finishes',
+          },
+          explanation:
+            'To avoid signalling size. A visible large order invites others to move their prices first, so hiding the true quantity is a real, common execution tactic.',
+        },
         {
           prompt:
             'You buy 5,000 shares at market. What does the walk through the book cost you in total, in rupees?',

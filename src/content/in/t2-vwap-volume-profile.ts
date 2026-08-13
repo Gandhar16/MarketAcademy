@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'VwapBenchmarkExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The line barely moves for four ordinary trades, then jumps hard the moment size shows up.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'A benchmark, not a signal',
@@ -116,6 +123,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "A trader keeps yesterday's VWAP line on today's chart and treats today's price crossing it as meaningful. What is wrong with that?",
+      options: [
+        'Nothing — VWAP is a moving average and carries over naturally',
+        "VWAP is built to reset each session; yesterday's line describes trades that happened yesterday, not today",
+        'VWAP cannot be drawn on a daily chart at all',
+      ],
+      correct: 1,
+      reveal:
+        "It answers the wrong question. VWAP resets because it measures what today's participants have paid so far. Carrying yesterday's line forward compares today's price to a completely different day's average trade, which was never what the benchmark was built to do.",
+      askWhy: true,
+    },
+    {
       kind: 'callout',
       tone: 'myth',
       title: 'Price above VWAP is not a buy signal',
@@ -125,6 +146,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "A trader compares today's opening price against yesterday's closing VWAP value, treating it as a meaningful support level. Decide.",
+          type: 'decision',
+          spec: {
+            options: [
+              'Reasonable — VWAP behaves like any other level and can be tracked across days',
+              "Not reasonable — VWAP resets each session, so yesterday's value describes yesterday's trading, not today's",
+              'Reasonable, but only for large-cap stocks',
+            ],
+            correct: "Not reasonable — VWAP resets each session, so yesterday's value describes yesterday's trading, not today's",
+          },
+          explanation:
+            "Not reasonable. VWAP is deliberately session-specific. Yesterday's figure reports on yesterday's participants, and treating it as a live level today mixes two separate measurements.",
+        },
         {
           prompt: '300 shares trade at ₹200, then 700 shares trade at ₹204. What is the VWAP after both trades?',
           type: 'compute',

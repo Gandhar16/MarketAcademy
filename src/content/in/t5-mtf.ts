@@ -43,6 +43,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'DailyInterestExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The same loan turns a 6% gain into ₹17,000 kept — and a 6% fall into a 45% hit on your own capital.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Not the same as intraday leverage',
@@ -106,6 +113,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "Your margin shortfall on a broker-funded position is smaller than the whole position's value. Does the broker sell your entire holding, or just enough to fix the shortfall?",
+      options: [
+        'Always the entire holding, regardless of the size of the shortfall',
+        'Often just enough shares to restore the required margin, not necessarily the whole position',
+        'The broker never sells partial holdings under any circumstance',
+      ],
+      correct: 1,
+      reveal:
+        'Often just enough to restore the requirement. Brokers typically sell the minimum needed to bring the account back within the rules. A fast-moving fall can still force a larger sale if the shortfall keeps growing while the sale is happening.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'risk-roulette',
       config: {},
@@ -120,6 +141,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A margin shortfall is relatively small compared to the total position value. Decide what a broker is most likely to do.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Sell the entire position regardless of how small the shortfall is',
+              'Sell only enough shares to restore the required margin, if the situation is stable',
+              'Do nothing until the shortfall doubles',
+            ],
+            correct: 'Sell only enough shares to restore the required margin, if the situation is stable',
+          },
+          explanation:
+            'Often just enough to restore the margin. A stable, moderate shortfall typically triggers a partial sale, though a fast-falling price can still force more.',
+        },
         {
           prompt:
             'You borrow ₹6,00,000 at 18% a year and hold for 30 days. What is the interest, in rupees?',

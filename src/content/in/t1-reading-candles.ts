@@ -50,6 +50,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'CandlePathExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Two completely different paths, one identical candle — the candle genuinely cannot tell them apart.',
+    },
+    {
       kind: 'example',
       title: 'Two very different days, one identical candle',
       setup:
@@ -109,6 +116,20 @@ export const lesson: Lesson = {
       askWhy: false,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A candle opens at ₹200 and closes at ₹201 — almost unchanged — but its high is ₹215 and its low is ₹190, a huge range. What can you honestly say happened?',
+      options: [
+        'Nothing happened that day — it was a quiet session',
+        'The session opened and closed near the same level, but traded through a very wide range in between',
+        'Buyers and sellers agreed on ₹200 all day',
+      ],
+      correct: 1,
+      reveal:
+        'The second. Open and close sitting close together tells you almost nothing about how calm the session actually was. The ₹25 range shows large moves happened and simply cancelled out by the close. A small body on top of a huge range is one of the most misleading shapes to read casually.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'candle-sprint',
       config: {},
@@ -116,6 +137,14 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A candle opens at ₹500, closes at ₹502, highs at ₹540 and lows at ₹470. Compute the range as a percentage of the close.',
+          type: 'compute',
+          spec: { metric: 'literal', value: 13.94, tolerance: 0.3, unit: '%' },
+          explanation:
+            '(540 − 470) ÷ 502 ≈ 13.9%. A tiny body — open and close only ₹2 apart — sitting on top of a range this wide is exactly the shape this lesson warns about. A small body does not mean a quiet session.',
+        },
         {
           prompt:
             'A candle has a tiny body and a very long lower wick, appearing after a three-day decline. Decide what you can honestly state about it.',

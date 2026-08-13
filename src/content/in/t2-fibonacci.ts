@@ -47,6 +47,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'FibonacciSensitivityExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. A ten-rupee nudge to one anchor moves every level in the grid — the arithmetic is exact, the input was a guess.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Exactly two inputs',
@@ -156,6 +163,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A stock has one large 6-month rally and a smaller 3-week rally inside its final leg. Anchoring a retracement grid to the small rally instead of the full one changes what?',
+      options: [
+        'Nothing — both anchors describe the same trend',
+        'Every level in the grid, since the range and both anchor points are completely different',
+        'Only the 50% level, since that one is not from the sequence',
+      ],
+      correct: 1,
+      reveal:
+        'Every level. The formula is the same, but a smaller, more recent range produces a completely different set of prices than the full move does. Neither grid is more correct in any absolute sense. They are answers to two different questions, anchored to two different swings a person chose.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'TCS.NS', interval: '1d', range: '1y' },
       mode: 'view',
@@ -172,6 +193,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'Two traders both use Fibonacci on the same stock. One anchors to the full 6-month rally, the other to a smaller 3-week rally inside it. Their retracement levels differ by several rupees. Decide what that means.',
+          type: 'decision',
+          spec: {
+            options: [
+              'One of them is using the tool incorrectly',
+              'Both are valid uses of the tool, anchored to different swings, and neither range is the single correct one',
+              'The stock has too many trends for Fibonacci to apply',
+            ],
+            correct:
+              'Both are valid uses of the tool, anchored to different swings, and neither range is the single correct one',
+          },
+          explanation:
+            'Both are valid, anchored to different questions. Which swing to use is itself a judgement call, the same as choosing which two points make a trendline.',
+        },
         {
           prompt: "A stock's swing low is ₹500 and swing high is ₹700. Where does the 38.2% retracement sit?",
           type: 'compute',

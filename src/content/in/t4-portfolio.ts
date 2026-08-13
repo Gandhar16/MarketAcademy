@@ -47,6 +47,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'SameBetExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Eight positions, four real bets — the fifth bank does not add a fifth unit of independent risk.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Two different questions',
@@ -104,6 +111,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You are long 1% risk in a steel company and separately short 1% risk in a different, unrelated steel company. Does this pair add up to 2% of independent risk, like two unrelated long positions would?',
+      options: [
+        'Yes — two positions always sum to twice the risk of one',
+        "No — a long and a short in similar businesses often cancel much of each other's sector risk",
+        'No, because shorting is never allowed to offset a long position',
+      ],
+      correct: 1,
+      reveal:
+        'No, they largely offset. If steel as a sector rises or falls, the long gains what the short loses, and most of the shared sector risk cancels. What is left is the risk that these two specific companies diverge from each other, usually much smaller than either 1% position looked at alone.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'MarginLadder',
       props: {},
@@ -120,6 +141,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'An account holds a 1% long in one auto company and a 1% short in a different, similar auto company. Decide how much real, undiversified risk this pair carries.',
+          type: 'decision',
+          spec: {
+            options: [
+              '2%, the same as two unrelated long positions',
+              'Less than 2% — much of the shared sector risk cancels between the long and the short',
+              '0%, since a long and a short always cancel completely',
+            ],
+            correct: 'Less than 2% — much of the shared sector risk cancels between the long and the short',
+          },
+          explanation:
+            'Less than 2%. A long and a short in similar businesses cancel most of the shared sector risk, leaving mainly the risk that the two companies diverge from each other.',
+        },
         {
           prompt:
             'Account ₹8,00,000. You hold six positions each risking 1.5%. What is your total risk if every stop is hit, in rupees?',

@@ -55,6 +55,13 @@ export const lesson: Lesson = {
     },
     {
       kind: 'widget',
+      component: 'IvCrushExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The share moved 3%. The price of uncertainty fell further — that is what decided the outcome.',
+    },
+    {
+      kind: 'widget',
       component: 'GreeksExplorer',
       props: { strike: 24000, spot: 24000, days: 21, iv: 14, type: 'call' },
       takeaway:
@@ -113,6 +120,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'On the same expiry, a NIFTY put struck well below the current price shows a HIGHER implied volatility than an at-the-money put. Does that mean the market expects bigger moves specifically on the downside?',
+      options: [
+        'No — implied volatility must be identical across every strike on the same expiry',
+        'It often does reflect that — more demand for downside protection can push far-out put prices, and their IV, higher',
+        'Yes, but only because of a pricing error',
+      ],
+      correct: 1,
+      reveal:
+        'It often does. Demand for protection against a crash is usually stronger than demand for an equivalent upside bet, so far out-of-the-money puts can trade at a higher implied volatility than at-the-money contracts. This pattern has a name, volatility skew, and it is a real, persistent feature of pricing.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'earnings-roulette',
       config: {},
@@ -141,6 +162,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'Two NIFTY puts share the same expiry. The far out-of-the-money put has a noticeably higher implied volatility than the at-the-money put. Decide what this most likely reflects.',
+          type: 'decision',
+          spec: {
+            options: [
+              'A pricing error somewhere in the chain',
+              'Stronger demand for downside protection at that strike, a real and common pattern',
+              'Nothing — implied volatility is always identical across strikes',
+            ],
+            correct: 'Stronger demand for downside protection at that strike, a real and common pattern',
+          },
+          explanation:
+            'Stronger demand for protection. This is volatility skew — implied volatility genuinely varies by strike, and downside puts often carry more of it.',
+        },
         {
           prompt:
             'You pay ₹120 in total for a call and a put, both at a level of ₹2,000. At expiry, what is the lowest price at which you break even?',

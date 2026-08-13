@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'TriangleBreakoutExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Both arrows stay dashed until the breakout actually happens — the shape genuinely does not know which way it goes.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Two converging trendlines, and their cousins',
@@ -131,6 +138,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A symmetrical triangle usually resolves within a few weeks. This one has been narrowing for four months without breaking out. What does that unusually long duration most likely suggest?',
+      options: [
+        'Nothing — duration has no bearing on the pattern at all',
+        "The longer it drags on, the less certain anyone can be the original trend's momentum is still behind it",
+        'A longer pause always means a bigger eventual move',
+      ],
+      correct: 1,
+      reveal:
+        'A triangle is read as a rest inside a still-active move. The longer that rest stretches, the less confidently anyone can assume the same momentum is still waiting behind it — conditions may have already changed underneath the shape.',
+      askWhy: true,
+    },
+    {
       kind: 'callout',
       tone: 'myth',
       title: 'The trend does not have to resume',
@@ -140,6 +161,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A flag that normally resolves in a week or two has been consolidating for six weeks instead. Decide how to treat the usual "continuation" folklore here.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Trust it fully — a flag is a flag regardless of how long it takes',
+              'Weight it less — the unusually long pause weakens the assumption that the original momentum is still behind it',
+              'Assume it will now break in the opposite direction',
+            ],
+            correct:
+              'Weight it less — the unusually long pause weakens the assumption that the original momentum is still behind it',
+          },
+          explanation:
+            'Weight it less. The continuation read assumes a brief rest inside an ongoing move. A pause stretching far past the ordinary case weakens that assumption, even though the shape looks the same.',
+        },
         {
           prompt: 'A continuation pattern has a base height of ₹25 and breaks DOWN through the lower trendline at ₹410. What is the measured-move target?',
           type: 'compute',

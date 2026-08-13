@@ -45,6 +45,13 @@ export const lesson: Lesson = {
     },
     {
       kind: 'widget',
+      component: 'SupportZoneExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The line-based stop sits inside the same scatter that defines the zone — of course ordinary noise finds it first.',
+    },
+    {
+      kind: 'widget',
       component: 'OrderBookLadder',
       props: { preset: 'liquid', defaultQuantity: 800, allowPresetSwitch: true },
       takeaway:
@@ -114,8 +121,38 @@ export const lesson: Lesson = {
       askWhy: false,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A stock breaks above resistance at ₹500 and later pulls back to test ₹500 from above. Folklore says old resistance becomes new support. Is there an actual mechanism behind this?',
+      options: [
+        'Pure folklore — there is no real mechanism behind it at all',
+        'A real, if partial, mechanism — some buyers who missed the breakout may now place orders there',
+        'A guaranteed mechanism — the level will always hold on the retest',
+      ],
+      correct: 1,
+      reveal:
+        "A real but partial mechanism, not a guarantee. Some of the people who wanted to buy at ₹500 before the breakout, and missed it, may now place orders there on the pullback. That is genuine resting demand, the same mechanism that built the original level. But it is not automatic. The size behind it depends entirely on how many such orders actually exist. A level can still fail on the retest if that demand is thin or has already been used up.",
+      askWhy: true,
+    },
+    {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A stock breaks above ₹800 resistance and pulls back to retest it. Decide the most defensible read.',
+          type: 'decision',
+          spec: {
+            options: [
+              'The level is now guaranteed to hold, because broken resistance always becomes support',
+              'The level might hold if there is genuine resting demand, but it is not automatic — check the book rather than the saying',
+              'The retest proves the breakout has already failed',
+            ],
+            correct:
+              'The level might hold if there is genuine resting demand, but it is not automatic — check the book rather than the saying',
+          },
+          explanation:
+            "Check for genuine resting demand rather than trusting the saying alone. The mechanism behind 'old resistance becomes support' is real but partial, exactly as with any level — it is orders, not memory, and orders can be thin or absent.",
+        },
         {
           prompt:
             'You want to buy near a support zone spanning ₹1,196–₹1,203 on a stock whose ATR is ₹24. Decide where the stop goes.',

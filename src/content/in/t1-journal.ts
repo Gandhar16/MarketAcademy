@@ -48,6 +48,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'DecisionOutcomeGridExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The last box is the one worth sitting with — without a journal it looks identical to the first.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Four boxes, and none of them is a chart',
@@ -111,6 +118,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You see a setup, think it through, and decide not to take it because the reward-to-risk does not justify it. Is this worth a journal entry?',
+      options: [
+        'No — nothing happened, so there is nothing to record',
+        'Yes — a documented, reasoned pass is exactly as valuable a record as a documented trade',
+        'Only if the setup later turns out to have worked',
+      ],
+      correct: 1,
+      reveal:
+        'Yes. A reasoned decision not to trade is still a decision, and it is just as gradeable as one that resulted in an order. Writing down why you passed lets you check, months later, whether your reasons for saying no were actually good ones. It also shows whether you are passing on genuinely poor setups, or quietly avoiding anything that makes you nervous.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'chart-replay',
       config: {},
@@ -125,6 +146,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'You decide not to take a setup because the reward-to-risk was only 1:1, below what you require. Decide whether this belongs in your journal.',
+          type: 'decision',
+          spec: {
+            options: [
+              'No — only completed trades belong in a journal',
+              'Yes — the reasoning behind a pass is just as checkable, later, as the reasoning behind a trade',
+              'Only if you later regret not taking it',
+            ],
+            correct:
+              'Yes — the reasoning behind a pass is just as checkable, later, as the reasoning behind a trade',
+          },
+          explanation:
+            'Yes. A pass with a written reason lets you review, later, whether your standard is actually being applied consistently. It is the same discipline this lesson asks for entries, extended to the trades you chose not to take.',
+        },
         {
           prompt:
             'Account ₹4,00,000, risking 1%. Entry ₹500, the idea fails below ₹480. How many shares goes in the journal?',

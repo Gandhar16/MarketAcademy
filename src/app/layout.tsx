@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SessionProvider } from '@/components/auth/SessionProvider';
@@ -54,10 +55,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // instead of flashing "Sign in" and correcting itself a moment later.
   const user = await currentUser();
 
+  // suppressHydrationWarning below is scoped to this element's own attributes
+  // only (React does not propagate it to children) and is the standard fix
+  // for exactly this case: the blocking `theme-init` script sets `data-theme`
+  // on the real <html> element before React hydrates, which React would
+  // otherwise flag as a server/client mismatch every time a non-default theme
+  // is stored — an intentional difference, not a bug.
   return (
-    <html lang="en" className={`${inter.variable} ${mono.variable} h-full`}>
+    <html lang="en" className={`${inter.variable} ${mono.variable} h-full`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col">
         <MarketThemeBackground />

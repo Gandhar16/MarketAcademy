@@ -231,6 +231,20 @@ export function markToMarket(account: Account, marks: Record<string, number>): A
 }
 
 /**
+ * What fraction of a company a shareholding represents, as a percentage.
+ *
+ * Deliberately separate from `equity`/`unrealisedPnl` above: those price a
+ * POSITION, this describes an OWNERSHIP STAKE, and the two are easy to
+ * conflate at the beginner tier — a share's price moving does not touch this
+ * number at all, only a change in shares owned or shares outstanding does.
+ */
+export function ownershipPercent(sharesOwned: number, sharesOutstanding: number): number {
+  if (sharesOutstanding <= 0) throw new Error('sharesOutstanding must be positive');
+  if (sharesOwned < 0) throw new Error('sharesOwned cannot be negative');
+  return (sharesOwned / sharesOutstanding) * 100;
+}
+
+/**
  * Position size from a stop distance and a risk budget — the single most
  * useful calculation in retail trading, and the one most people never do.
  *

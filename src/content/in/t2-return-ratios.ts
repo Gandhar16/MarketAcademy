@@ -42,6 +42,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'RoeRoceGapExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The gap that opens up between the two bars is exactly what the borrowed money contributed — nothing else changed.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Three ratios, three different capital bases',
@@ -76,6 +83,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A company has ₹500 crore net profit, ₹2,000 crore shareholder equity, and ₹5,000 crore of total assets, much of it idle cash. Which ratio best reflects how efficiently ALL its assets are being used?',
+      options: [
+        'Return on equity, since shareholders are what matters most',
+        'Return on assets, since it divides profit by everything the company owns, cash included',
+        'Return on capital employed, since it excludes cash entirely',
+      ],
+      correct: 1,
+      reveal:
+        'Return on assets. It divides profit by everything the company owns, so a large pile of idle cash drags the ratio down, reflecting that those assets are not being put to work. ROE and ROCE can both look fine while a company sits on cash doing nothing.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'the-long-game',
       config: {},
@@ -90,6 +111,14 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'Net profit is ₹300 crore and total assets are ₹6,000 crore, much of it idle cash. What is return on assets, in percent?',
+          type: 'compute',
+          spec: { metric: 'literal', value: 5, tolerance: 0.3, unit: '%' },
+          explanation:
+            '₹300 ÷ ₹6,000 × 100 = 5%. A low ROA next to a healthy ROE is often exactly this pattern — assets, including cash, that are not being deployed productively.',
+        },
         {
           prompt: 'Net profit is ₹25 crore. Shareholder equity is ₹125 crore. What is return on equity?',
           type: 'compute',

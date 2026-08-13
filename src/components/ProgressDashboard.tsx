@@ -53,7 +53,7 @@ export function ProgressDashboard({
   return (
     <div className="space-y-8">
       <div className="grid gap-3 sm:grid-cols-3">
-        <Stat label="XP" value={xp.toLocaleString()} />
+        <Stat label="XP" value={xp.toLocaleString('en-IN')} />
         <Stat label="Streak" value={`${streak.current} day${streak.current === 1 ? '' : 's'}`} note={`Longest ${streak.longest}`} />
         <Stat label="Lessons completed" value={`${completed.length} of ${lessons.length}`} />
       </div>

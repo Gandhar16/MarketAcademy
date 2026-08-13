@@ -50,6 +50,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'SurvivorshipExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The failures do not shrink the database with a warning label — they simply vanish from it.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'A screen is a filter, not an opinion',
@@ -116,6 +123,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A screen uses only one loose condition and returns 3,800 of 4,000 listed companies. Is this screen doing useful work?',
+      options: [
+        'Yes — it is objectively filtering the market',
+        "Barely — a filter this loose has not meaningfully narrowed anything",
+        'Yes, because more results means more opportunities',
+      ],
+      correct: 1,
+      reveal:
+        'Barely. A filter that passes 95% of everything has not actually separated anything from anything else. It gives the comforting feeling of applying a rule, without turning thousands of companies into a shortlist actually worth reading.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'PatternScanner',
       props: { symbol: 'RELIANCE.NS' },
@@ -132,6 +153,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "A screen returns 3,900 of 4,000 companies. Decide what that tells you about the screen's usefulness.",
+          type: 'decision',
+          spec: {
+            options: [
+              'It is working well, since it captured almost the whole market',
+              "It has barely filtered anything, and calling the output a 'shortlist' is misleading",
+              'A larger result list is always more useful than a smaller one',
+            ],
+            correct: "It has barely filtered anything, and calling the output a 'shortlist' is misleading",
+          },
+          explanation:
+            'It has barely filtered anything. A screen exists to narrow attention. One that passes nearly everything has not done that job.',
+        },
         {
           prompt:
             'You test 60 different filters. If none of them work, roughly how many would you expect to look outstanding by chance at a 1-in-20 standard?',

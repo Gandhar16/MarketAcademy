@@ -50,6 +50,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'ThreeStatementsExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. All three numbers are correct at the same time — they are just answering different questions.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Three questions, one each',
@@ -64,6 +71,19 @@ export const lesson: Lesson = {
       correct: 2,
       reveal:
         'A hundred and fifty crore — what it owns minus what it owes. This is the whole balance sheet in one subtraction, and everything else on it is detail about the two sides. It is also why shareholders are last in line: lenders are owed the ₹350 crore first, and shareholders get whatever survives. A company whose debts grow faster than its assets is shrinking the shareholders’ share even while the business appears to be getting bigger.',
+      askWhy: true,
+    },
+    {
+      kind: 'predict',
+      prompt: 'A company owns ₹400 crore and owes ₹550 crore. What belongs to shareholders?',
+      options: [
+        '₹150 crore',
+        "Negative ₹150 crore — shareholders' stake has been wiped out on paper",
+        'Zero, since it cannot go below that',
+      ],
+      correct: 1,
+      reveal:
+        "Negative ₹150 crore. Shareholders' equity can genuinely go below zero when debts exceed assets. It is not a floor at zero. It means lenders now have a claim on more than the company owns, and shareholders' stake has been erased before lenders even take a loss.",
       askWhy: true,
     },
     {
@@ -128,6 +148,14 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A company owns ₹720 crore and owes ₹890 crore. What belongs to shareholders, in crore rupees (state the sign)?',
+          type: 'compute',
+          spec: { metric: 'literal', value: -170, tolerance: 5, unit: 'crore' },
+          explanation:
+            "₹720 − ₹890 = −₹170 crore. Negative shareholders' equity — the same subtraction as always, just with the answer on the other side of zero.",
+        },
         {
           prompt:
             'A company owns ₹1,200 crore and owes ₹850 crore. What belongs to shareholders, in crore rupees?',

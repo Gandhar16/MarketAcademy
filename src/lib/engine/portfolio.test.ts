@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyFill, equity, markToMarket, newAccount, sizeFromStop, unrealisedPnl } from './portfolio';
+import { applyFill, equity, markToMarket, newAccount, ownershipPercent, sizeFromStop, unrealisedPnl } from './portfolio';
 
 const acct = () => newAccount({ market: 'IN', venue: 'NSE', startingCash: 100_000 });
 
@@ -109,5 +109,27 @@ describe('position sizing from a stop', () => {
   it('warns that the realised risk can exceed the budget', () => {
     const r = sizeFromStop({ equity: 100_000, riskFraction: 0.01, entry: 1000, stop: 980 });
     expect(r.note).toMatch(/Slippage and gaps can make it worse/);
+  });
+});
+
+describe('ownershipPercent', () => {
+  it('divides shares owned by shares outstanding', () => {
+    expect(ownershipPercent(10, 1000)).toBeCloseTo(1, 10);
+    expect(ownershipPercent(10, 2000)).toBeCloseTo(0.5, 10);
+  });
+
+  it('is unaffected by anything but the two share counts — no price argument exists', () => {
+    // A price move must never change ownership; the surest way to guarantee
+    // that at the type level is a function that cannot accept a price at all.
+    expect(ownershipPercent(15, 3000)).toBeCloseTo(0.5, 10);
+  });
+
+  it('rejects a non-positive share count outstanding', () => {
+    expect(() => ownershipPercent(10, 0)).toThrow(/sharesOutstanding must be positive/);
+    expect(() => ownershipPercent(10, -5)).toThrow(/sharesOutstanding must be positive/);
+  });
+
+  it('rejects a negative holding', () => {
+    expect(() => ownershipPercent(-1, 1000)).toThrow(/sharesOwned cannot be negative/);
   });
 });

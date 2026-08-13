@@ -32,7 +32,7 @@ export const lesson: Lesson = {
   ],
   prerequisites: ['in-t0-what-is-a-share'],
   estimatedMinutes: 11,
-  introduces: ['index', 'share', 'exchange', 'volume'],
+  introduces: ['index', 'volume'],
   skills: ['foundations', 'index-construction'],
   blocks: [
     {
@@ -48,6 +48,13 @@ export const lesson: Lesson = {
       reveal:
         'Perfectly possible, and it happens regularly. NIFTY is weighted by company size, so the largest few members carry far more of it than the smallest. If two or three giants have a strong day, they can outweigh thirty ordinary companies having a mildly bad one. This is why "the market was up" and "most of my holdings fell" are often both true on the same afternoon. Anybody puzzled by that has simply not been told how the number is built.',
       askWhy: true,
+    },
+    {
+      kind: 'widget',
+      component: 'IndexWeightExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Watch how much of the final number comes from the single biggest block — that is the entire mechanism.',
     },
     {
       kind: 'callout',
@@ -116,8 +123,45 @@ export const lesson: Lesson = {
         'Companies leave an index when they shrink or fail, and are replaced by ones that have grown.\n\nSo the basket is not a fixed set of companies held forever. It is a rule that keeps the successful ones and drops the rest, automatically, without anybody having to make a call.\n\nThat is worth sitting with. A long-term chart of an index is not the record of fifty companies doing well — it is the record of a rule that removed the failures along the way.',
     },
     {
+      kind: 'example',
+      title: 'A single giant can hide forty-nine ordinary days',
+      setup:
+        'Same three-company index as before — Big Ltd 70%, Mid Ltd 20%, Small Ltd 10%. This time only Big moves at all; Mid and Small are both flat, unchanged all day.',
+      steps: [
+        { label: 'Big Ltd today', detail: 'Rises 3%, counted at its 70% weight', compute: { fn: 'percentOf', value: 3, percent: 70 } },
+        { label: 'Mid Ltd today', detail: 'Perfectly flat — 0% change, counted at 20% weight', compute: { fn: 'percentOf', value: 0, percent: 20 } },
+        { label: 'Small Ltd today', detail: 'Also perfectly flat — 0% change, counted at 10% weight', compute: { fn: 'percentOf', value: 0, percent: 10 } },
+        { label: 'The index move', detail: 'Add the three contributions together', compute: { fn: 'literal', value: 2.1 } },
+        { label: 'How many of the three companies actually did anything', detail: 'Two sat completely still all day', compute: { fn: 'literal', value: 1 } },
+      ],
+      conclusion:
+        'The index rose 2.1% on a day when two of its three members did not move at all. A single large member is often enough, on its own, to produce a headline number that reads as "the whole market moved" — when in fact only one company did.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'Big Ltd has 1,000 shares outstanding. The founding family holds 600 of them and has no plans to ever sell. Indices like NIFTY weight by FREE-FLOAT market value — shares realistically available to trade. How many of Big Ltd\'s shares actually count toward its index weight?',
+      options: [
+        'All 1,000 — total shares outstanding is what matters',
+        'Only the 400 not held by the founding family — free-float excludes locked-in founder holdings',
+        'None — a company with a majority founder holding cannot be in the index at all',
+      ],
+      correct: 1,
+      reveal:
+        'Only the 400. Free-float weighting deliberately excludes shares that are not realistically available to trade — founder holdings that are not coming to market chief among them. The logic is that an index is meant to represent what an ordinary investor could actually go out and buy, and 600 locked-away shares are not part of that. So two companies with identical total market value can carry very different index weights, if one has a much larger founder holding than the other. The smaller free float counts for less, not more.',
+      askWhy: true,
+    },
+    {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'Small Ltd has 2,000 shares outstanding at ₹100 each. Its founders hold 1,200 of them permanently. Using free-float weighting, what value actually counts toward its index weight?',
+          type: 'compute',
+          spec: { metric: 'literal', value: 80000, tolerance: 1000, unit: '₹' },
+          explanation:
+            '800 free-float shares × ₹100 = ₹80,000, not the full ₹2,00,000 of total market value. The 1,200 founder-held shares are excluded entirely, because they are not realistically available to be bought by anybody else. This is why total market value and index weight are not the same number, and why a company\'s headline size can overstate its actual pull on the index.',
+        },
         {
           prompt:
             'A company is 8% of an index and rises 5% today. How much does it add to the index, in percentage points?',

@@ -14,7 +14,7 @@ import { computeCost, roundTripCost } from '../engine/costs';
 import type { Market, Product, Venue } from '../engine/costs/types';
 import { blackScholesPrice, daysToYears, greeks, intrinsicValue, type OptionType } from '../engine/options';
 import { buildBook, walkBook, type BookShape } from '../analysis/orderbook';
-import { sizeFromStop } from '../engine/portfolio';
+import { ownershipPercent, sizeFromStop } from '../engine/portfolio';
 import { project } from '../games/compounding';
 
 export type ComputeSpec = Record<string, unknown>;
@@ -116,6 +116,8 @@ function evaluate(spec: ComputeSpec): string {
     }
     case 'riskAmount':
       return inr((num(spec.equity) * num(spec.riskPercent)) / 100, 0);
+    case 'ownershipPercent':
+      return pct(ownershipPercent(num(spec.sharesOwned), num(spec.sharesOutstanding)), num(spec.dp ?? 2));
     case 'compoundFinal': {
       const r = project({
         initial: num(spec.initial),

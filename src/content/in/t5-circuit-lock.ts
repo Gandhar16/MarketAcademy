@@ -43,6 +43,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'LockedQueueExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. A planned ₹16,000 loss becomes roughly ₹98,000, and no order type ever gets a fill.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'What a price band is',
@@ -106,6 +113,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A share with a 5% band locks down three days in a row. On the fourth day, the exchange applies a WIDER 10% band instead. Why would the band itself change?',
+      options: [
+        'It never changes — bands are permanently fixed per share',
+        'Exchanges sometimes widen the band after repeated locks, to let genuine price discovery happen',
+        'The exchange is punishing sellers by making the fall worse',
+      ],
+      correct: 1,
+      reveal:
+        'To let the price actually move. A share stuck at a locked band every day with a one-sided queue is not discovering a real price. It is delaying the same outcome one session at a time. Widening the band after repeated locks is a real mechanism that lets the queue actually clear.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'circuit-breaker',
       config: {},
@@ -120,6 +141,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A share has locked at its 5% lower circuit for three consecutive sessions with no trades clearing. Decide what is most likely to happen next.',
+          type: 'decision',
+          spec: {
+            options: [
+              'The band stays fixed at 5% forever, regardless of how many days it locks',
+              'The exchange may widen the band, letting the price actually move and the queue clear',
+              'Trading in the share is permanently suspended after three locks',
+            ],
+            correct: 'The exchange may widen the band, letting the price actually move and the queue clear',
+          },
+          explanation:
+            'The exchange may widen it. Repeated locks with no trades clearing is exactly the situation a wider band exists to resolve.',
+        },
         {
           prompt:
             'You hold ₹3,00,000 of a share with a 20% band. It locks down for two consecutive sessions. What is the holding worth?',

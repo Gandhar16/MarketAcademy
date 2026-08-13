@@ -47,6 +47,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'AnchorShiftExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The price never moves in this diagram — only the anchor does, and the feeling follows it.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The anchor does not have to be relevant',
@@ -108,6 +115,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'An analyst sets a target price of ₹1,500 for a stock now at ₹1,100. A year later it is still ₹1,100, and the target has quietly been cut to ₹1,150. What is the old ₹1,500 figure worth now?',
+      options: [
+        'Still a meaningful floor the stock is likely to reach eventually',
+        'An old anchor, already abandoned by the person who set it, that should carry no special weight',
+        'Proof the analyst was wrong, so all future targets from them should be ignored',
+      ],
+      correct: 1,
+      reveal:
+        'An abandoned anchor. Analyst targets get revised often, without much notice. An old number people still remember can keep shaping expectations long after the person who set it moved on. It says nothing about tomorrow.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'PatternBaseRate',
       props: { pattern: 'three-up-days', symbol: 'RELIANCE.NS' },
@@ -124,6 +145,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A stock has an old, well-remembered analyst target of ₹2,000 from two years ago, quietly cut to ₹1,300 since. Many investors still mention the ₹2,000 figure. Decide how much weight it deserves today.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Significant weight — analysts rarely publish targets without good reason',
+              'Very little — it is an old anchor the analyst themselves already abandoned',
+              'It should be averaged with the new target',
+            ],
+            correct: 'Very little — it is an old anchor the analyst themselves already abandoned',
+          },
+          explanation:
+            'Very little. A number the person who set it has already walked away from should carry no weight, however often it still gets repeated.',
+        },
         {
           prompt:
             'A fund was positive in 78 of the last 120 months. In how many months did it lose money?',

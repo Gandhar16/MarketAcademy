@@ -122,6 +122,11 @@ describe('sizing and arithmetic', () => {
       300000,
     );
   });
+
+  it('computes ownership as a percentage of shares outstanding', () => {
+    expect(evaluateExample({ fn: 'ownershipPercent', sharesOwned: 10, sharesOutstanding: 1000 })).toBe('1.00%');
+    expect(evaluateExample({ fn: 'ownershipPercent', sharesOwned: 10, sharesOutstanding: 2000, dp: 1 })).toBe('0.5%');
+  });
 });
 
 describe('failure handling', () => {

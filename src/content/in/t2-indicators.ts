@@ -60,6 +60,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'IndicatorLagExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The 50-day line is smoother and further behind — that trade-off has no setting that avoids it.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'What each one is, in one line',
@@ -154,6 +161,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A trader uses RSI, MACD and a 20-day moving average together, all pointing the same direction, and calls this "three confirming signals". Since all three are built from the same recent closing prices, how much genuinely independent information do they add up to?',
+      options: [
+        'Three independent confirmations, since they are three different calculations',
+        'Far less than three — they are different arithmetic on largely the same recent prices, so agreement is expected',
+        'Zero — using more than one indicator is always a mistake',
+      ],
+      correct: 1,
+      reveal:
+        'Far less than three. RSI, MACD and a moving average are all functions of the same recent closing prices, just combined differently. When the market has clearly been rising, it is unsurprising that several different calculations on that same rise all point up together. That is not three separate pieces of evidence agreeing — it is one underlying fact viewed through three lenses. None of them can see anything the others could not, because none of them has access to any input the others lack.',
+      askWhy: true,
+    },
+    {
       kind: 'callout',
       tone: 'myth',
       title: 'Overbought and oversold',
@@ -168,6 +189,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader counts RSI, MACD and a moving-average crossover all pointing upward as "three independent bullish signals". Decide what is wrong with that count.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Nothing — three agreeing indicators genuinely means three times the evidence',
+              'All three are computed from the same recent prices, so their agreement is expected rather than three separate discoveries',
+              'Indicators can never be used together under any circumstances',
+            ],
+            correct:
+              'All three are computed from the same recent prices, so their agreement is expected rather than three separate discoveries',
+          },
+          explanation:
+            'They share the same inputs. Counting agreeing indicators as independent confirmations overstates the evidence, because none of them had access to information the others lacked. They are re-presentations of the same recent prices, not separate observations.',
+        },
         {
           prompt:
             'You are using a 30-bar moving average. Roughly how many bars behind the price does it sit during a steady move?',

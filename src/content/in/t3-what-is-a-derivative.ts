@@ -53,6 +53,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'ObligationChoiceExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. One side is stuck at ₹40 either way. The other side paid ₹2 for the freedom not to be.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The whole idea, in one line',
@@ -128,6 +135,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "Exchange A lists NIFTY futures with a lot size of 75. A smaller 'mini' contract on the same NIFTY has a lot size of 25. Do both contracts track the same underlying?",
+      options: [
+        'No — different lot sizes mean different underlyings',
+        'Yes — the underlying is identical; only how many units count as one lot has changed',
+        'Yes, but the mini contract is a completely different kind of derivative',
+      ],
+      correct: 1,
+      reveal:
+        'Yes, identical underlying. The lot size is just the fixed bundle size the exchange chose for that contract. It changes how much one lot is worth, not what the contract is about. A mini contract simply lets someone take a smaller position in the same NIFTY.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'MarginLadder',
       props: {},
@@ -137,6 +158,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'An exchange lists a full-size and a mini futures contract on the same stock, with different lot sizes. Decide what actually differs between them.',
+          type: 'decision',
+          spec: {
+            options: [
+              'The underlying asset itself',
+              'Only the lot size, which changes the exposure one contract controls',
+              'The direction each contract can be traded in',
+            ],
+            correct: 'Only the lot size, which changes the exposure one contract controls',
+          },
+          explanation:
+            'Only the lot size. Both track the identical underlying. A smaller bundle simply lets someone take a smaller position in the same thing.',
+        },
         {
           prompt:
             'You hold a Reliance futures contract. Reliance pays a dividend. Decide what you receive.',

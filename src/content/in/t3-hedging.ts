@@ -54,6 +54,13 @@ export const lesson: Lesson = {
     },
     {
       kind: 'widget',
+      component: 'InsuranceCostExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. A decade of protection costs ₹4,80,000. One crash pays back ₹1,50,000 — you need roughly three of them to break even.',
+    },
+    {
+      kind: 'widget',
       component: 'PayoffChart',
       props: {
         centre: 24000,
@@ -120,6 +127,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Instead of buying a single put for protection, you buy a put 10% below the current level and sell another put 20% below it, reducing your cost. What have you given up in exchange?',
+      options: [
+        'Nothing — this is a strictly better version of the same protection',
+        'Protection below the 20% level — a crash deeper than that is no longer covered by this structure',
+        'The right to exercise the put you bought',
+      ],
+      correct: 1,
+      reveal:
+        'Protection below the 20% level. The sold put caps how much protection you are buying, the same trade-off the spreads lesson taught for any capped structure. It is cheaper because it covers less.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'PayoffChart',
       props: {
@@ -143,6 +164,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "An investor builds cheaper 'protection' by buying a put 10% out and selling one 25% out, then tells a friend they are fully hedged against any crash. Decide what is wrong with that claim.",
+          type: 'decision',
+          spec: {
+            options: [
+              'Nothing — the structure protects against any size of fall',
+              'The sold put caps the protection at 25% down; anything worse is not covered',
+              'Selling any put always cancels out the protection entirely',
+            ],
+            correct: 'The sold put caps the protection at 25% down; anything worse is not covered',
+          },
+          explanation:
+            'The protection is capped. Below the sold put\'s level, the two legs cancel and the holding is exposed again, exactly like any capped spread.',
+        },
         {
           prompt:
             'You hold ₹5,00,000 of a fund and pay 0.9% every quarter for protection. What does a full year cost, in rupees?',

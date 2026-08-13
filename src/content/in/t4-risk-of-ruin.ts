@@ -40,6 +40,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'GeometricRuinExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Six ordinary losses at 20% a bet leaves about a quarter of the account — needing a 280% gain just to get back.',
+    },
+    {
       kind: 'game',
       game: 'risk-roulette',
       config: {},
@@ -62,6 +69,20 @@ export const lesson: Lesson = {
       reveal:
         'Ruin becomes common. Kelly is optimal only if you know your edge exactly, and you never do. An edge measured on a few hundred trades has a wide confidence interval. Kelly is brutally asymmetric about overestimation. Betting twice the correct Kelly fraction has NEGATIVE expected growth even though each individual bet still has positive expectancy. This is why practitioners who use Kelly at all use a half or a quarter of it. You give up some growth. You buy a large reduction in the chance of not being around to compound at all.',
       askWhy: false,
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'A system with a genuinely larger edge — 65% win rate at 1:1 — is sized at 20% per trade, the same aggressive size as before. Does the larger edge meaningfully protect it from the same ruin risk?',
+      options: [
+        'Yes — a bigger edge makes 20% sizing safe',
+        'It helps, but a big enough losing streak still does severe damage at that size',
+        'No difference at all — edge size never matters',
+      ],
+      correct: 1,
+      reveal:
+        'It helps, but does not neutralise the risk. A stronger edge makes long losing streaks rarer. It does not change what a 20% bet size does once a streak happens. Six losses in a row at 20% each still cuts the account to roughly a quarter, whatever the win rate was going in.',
+      askWhy: true,
     },
     {
       kind: 'example',
@@ -131,6 +152,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader with a strong 65% win rate sizes at 20% per trade, reasoning the edge is large enough to make aggressive sizing safe. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Reasonable — a strong enough edge makes any bet size safe',
+              'Not fully reasonable — a losing streak is rarer but still just as damaging in size when it happens',
+              'Unreasonable — win rate has no bearing on ruin risk at all',
+            ],
+            correct:
+              'Not fully reasonable — a losing streak is rarer but still just as damaging in size when it happens',
+          },
+          explanation:
+            'Not fully reasonable. A stronger edge lowers the chance of a bad streak but does not change what a 20% bet size does to the account once one occurs.',
+        },
         {
           prompt:
             'Your account is ₹2,00,000 and you will risk 1% on a trade. Entry is ₹1,400 and your stop is ₹1,380. How many shares?',

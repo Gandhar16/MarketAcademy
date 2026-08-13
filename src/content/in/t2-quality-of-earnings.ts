@@ -43,6 +43,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'QualityChecklistExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Any single checked box is a question. All four together is what actually earns a second look.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The checklist',
@@ -74,6 +81,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "A company's profit jumps 40% this year, driven almost entirely by a one-time gain from selling a factory it no longer needs. Should that 40% be treated like ordinary operating growth?",
+      options: [
+        'Yes — profit is profit, however it was earned',
+        'No — a one-off gain will not repeat next year, so the underlying operating trend is much weaker',
+        'No, because asset sales are always a sign of financial distress',
+      ],
+      correct: 1,
+      reveal:
+        "No. A one-time gain genuinely adds to this year's profit and will not be there next year, so the 40% headline overstates the ongoing business. The useful check is operating profit excluding one-off items, which strips out exactly this distortion.",
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'earnings-roulette',
       config: {},
@@ -88,6 +109,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A company reports 35% profit growth, almost entirely from a one-time insurance settlement rather than ordinary business. Decide how to treat that growth rate.',
+          type: 'decision',
+          spec: {
+            options: [
+              'As a genuine, repeatable improvement in the business',
+              'As inflated by a one-off item, with the underlying operating trend much weaker than the headline suggests',
+              'As irrelevant, since one-off gains should always be ignored entirely',
+            ],
+            correct:
+              'As inflated by a one-off item, with the underlying operating trend much weaker than the headline suggests',
+          },
+          explanation:
+            'Inflated by the one-off. The settlement is real money, but it will not repeat, so the ongoing business is growing far slower than the headline 35% implies.',
+        },
         {
           prompt: 'Revenue is ₹600 crore. Trade receivables are ₹150 crore. What are receivable days, using a 365-day year?',
           type: 'compute',

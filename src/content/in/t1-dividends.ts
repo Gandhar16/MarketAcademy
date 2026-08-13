@@ -51,6 +51,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'CorporateActionExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Watch for the one scene where a slice actually leaves the box — that is the only one that put money in your pocket.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'One question tells you which is which',
@@ -114,6 +121,19 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt: 'A company pays a ₹20-per-share dividend. In India, is that ₹20 received completely tax-free?',
+      options: [
+        'Yes — dividends are always tax-free income',
+        'No — dividends are taxable income in the hands of the person receiving them',
+        'Only if the shares were held for over a year',
+      ],
+      correct: 1,
+      reveal:
+        'No. Dividends are taxable income for the person receiving them, added to their other income and taxed accordingly. This is on top of the arithmetic already covered: the share price falls by roughly the dividend amount, and now some of that cash is owed in tax too. A ₹20 dividend does not leave you ₹20 richer even before considering what it does to the share price.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'CostBreakdownTable',
       props: { market: 'IN', venue: 'NSE', product: 'delivery', side: 'buy', price: 1000, quantity: 100 },
@@ -130,6 +150,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'An investor calculates that a dividend strategy earned them 3% in cash payouts over a year and calls this pure extra return on top of the share price. Decide what is missing.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Nothing — 3% in dividends is 3% of extra return',
+              'The dividend is taxable income, and the share price already fell by roughly the amount paid out',
+              'Dividends are never worth counting at all',
+            ],
+            correct:
+              'The dividend is taxable income, and the share price already fell by roughly the amount paid out',
+          },
+          explanation:
+            'The dividend is taxable, and the share price already dropped by about the same amount on the ex-date. Counting the payout as pure extra return double-counts money that was already reflected, once as a lower share price and once as a tax bill.',
+        },
         {
           prompt:
             'You hold 400 shares at ₹250. The company announces a 1-for-1 bonus. What is your holding worth afterwards, in rupees?',

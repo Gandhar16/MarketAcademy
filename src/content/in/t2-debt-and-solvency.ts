@@ -43,6 +43,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'InterestCoverageExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The left gauge never moves — the warning shows up entirely on the right.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Three ratios, three different questions',
@@ -72,6 +79,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A company raises fresh money by issuing new shares and uses all of it to pay off debt. Debt-to-equity improves sharply. Is this an unambiguous improvement for existing shareholders?',
+      options: [
+        'Yes — lower debt is always better for shareholders',
+        'Not unambiguous — existing shareholders now own a smaller slice of the company, a cost debt-to-equity alone does not show',
+        'No — issuing new shares always destroys value',
+      ],
+      correct: 1,
+      reveal:
+        'Not unambiguous. Debt-to-equity looks better because the equity side grew and the debt side shrank. But existing shareholders now own a smaller percentage of the same business, a real dilution cost the ratio alone does not show.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'TATAMOTORS.NS', interval: '1d', range: '1y' },
       mode: 'view',
@@ -87,6 +108,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A company halves its debt-to-equity ratio by issuing new shares to existing debt holders. Decide whether existing shareholders are automatically better off.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Yes — a lower debt-to-equity ratio is always good for shareholders',
+              'Not automatically — existing shareholders now own a smaller slice of the company, a cost the ratio does not capture',
+              'No — issuing shares to pay debt is never a reasonable choice',
+            ],
+            correct:
+              'Not automatically — existing shareholders now own a smaller slice of the company, a cost the ratio does not capture',
+          },
+          explanation:
+            'Not automatically. The balance sheet got safer and existing owners got diluted at the same time — two separate facts the debt-to-equity number alone cannot distinguish.',
+        },
         {
           prompt: 'A company has operating profit of ₹80 crore and annual interest expense of ₹20 crore. What is its interest coverage ratio?',
           type: 'compute',

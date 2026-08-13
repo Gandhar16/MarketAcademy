@@ -48,6 +48,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'ReceivablesTrendExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. No single bar is alarming on its own — it is the climb across all three that is the finding.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Where the gap comes from',
@@ -114,6 +121,19 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt: 'Sales grow 15% this year. Unsold stock on the shelf grows 60%. What does that most likely suggest?',
+      options: [
+        'The company is preparing for even faster growth ahead',
+        'Products may not be selling as expected, and cash is tied up in unsold stock',
+        'Nothing — stock and sales are unrelated',
+      ],
+      correct: 1,
+      reveal:
+        'A warning sign, not preparation. Unsold stock growing far faster than sales usually means what was made is not selling as planned, or the company is over-ordering. Either way it consumes cash the same way slow-paying customers do.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'TCS.NS', interval: '1mo', range: '5y' },
       mode: 'view',
@@ -130,6 +150,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "A company's unsold stock grows 55% while sales grow only 12%. Decide what this deserves.",
+          type: 'decision',
+          spec: {
+            options: [
+              'Nothing — inventory growth is always healthy',
+              'A question — stock rising much faster than sales often means slower-than-expected demand',
+              'Immediate concern that the company is committing fraud',
+            ],
+            correct: 'A question — stock rising much faster than sales often means slower-than-expected demand',
+          },
+          explanation:
+            'A question, not an accusation. This is the inventory version of the receivables check — a mismatch worth asking about, not proof of anything by itself.',
+        },
         {
           prompt:
             'Sales are ₹900 crore and customers owe ₹180 crore. How many days of sales is that? Use 365 days.',

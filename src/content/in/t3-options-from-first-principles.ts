@@ -50,6 +50,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'TimeDecayExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Spot never moves — the premium still dissolves to zero, and faster near the end.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The two components, and only two',
@@ -113,6 +120,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Two calls have 30 days left. One is deeply in the money. The other is exactly at the money. Which has more TIME VALUE in its price?',
+      options: [
+        'The deep in-the-money call, since it is worth more overall',
+        "The at-the-money call — a deep in-the-money option's price is mostly intrinsic value, with much less time value",
+        'Both have identical time value, since both have 30 days left',
+      ],
+      correct: 1,
+      reveal:
+        "The at-the-money call has more time value. A deep in-the-money option behaves almost like the share itself, so there is little uncertainty left to price. An at-the-money option's outcome is genuinely uncertain, so nearly its entire price is time value.",
+      askWhy: true,
+    },
+    {
       kind: 'prose',
       md:
         'The greeks are not extra machinery. They are just the answers to "what happens if one thing changes":\n\n**Delta** — if spot moves ₹1. **Gamma** — how fast delta itself changes, which is why short options are calm right up until they are not. **Theta** — what a day costs you. **Vega** — what a 1% change in implied volatility does.\n\nYou do not need the formulas. You need to know which one is about to hurt you.',
@@ -131,6 +152,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'An option is far out of the money with 1 day left, worth ₹0.50. Decide how much further rupee damage theta can realistically do before expiry.',
+          type: 'decision',
+          spec: {
+            options: [
+              'A large amount, since theta is always a serious threat',
+              'Very little — there is only ₹0.50 of value left for theta to remove',
+              'None — theta has already stopped applying',
+            ],
+            correct: 'Very little — there is only ₹0.50 of value left for theta to remove',
+          },
+          explanation:
+            'Very little, in rupees. Theta is real, but it can only take away what remains, and almost nothing remains here.',
+        },
         {
           prompt:
             'You are long a 30-day at-the-money option. Which greek is guaranteed to work against you every single day, regardless of what the underlying does?',

@@ -119,6 +119,26 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt: "NIFTY trades at 24,420. The grid lists strikes every 50 points, including 24,400 and 24,450. Which strike is treated as at the money?",
+      options: [
+        'Neither — there is no at-the-money strike unless spot lands exactly on the grid',
+        '24,400, the nearer of the two listed strikes to the current price',
+        '24,450, since strikes are always rounded up',
+      ],
+      correct: 1,
+      reveal:
+        'The nearer listed strike. Spot moves continuously and the grid does not, so "at the money" in practice means the closest listed row. Here 24,400 sits 20 points away against 24,450\'s 30, so 24,400 is treated as at the money.',
+      askWhy: true,
+    },
+    {
+      kind: 'widget',
+      component: 'IntrinsicVsHopeExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The cheapest row is cheap because it is worth nothing today — a different bet, not a better price.',
+    },
+    {
       kind: 'figure',
       figure: 'SpreadDiagram',
       props: {},
@@ -139,6 +159,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'Two options both have 20 days left. One is deep in the money, one is at the money. Decide which has more time value in its price.',
+          type: 'decision',
+          spec: {
+            options: [
+              'The deep in-the-money option, since its total price is higher',
+              "The at-the-money option, since its outcome is genuinely uncertain while the deep option's is nearly settled",
+              'They are always identical if the days left match',
+            ],
+            correct:
+              "The at-the-money option, since its outcome is genuinely uncertain while the deep option's is nearly settled",
+          },
+          explanation:
+            'The at-the-money option. Time value prices uncertainty, and a deep in-the-money option has very little left, however many days remain.',
+        },
         {
           prompt:
             'RELIANCE is at ₹1,450. You hold a ₹1,400 call. How much of its price is value it already has, per share?',

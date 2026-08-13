@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'AuctionPenaltyExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Fixing it yourself costs ₹8,000. Letting the auction do it costs ₹18,000 — for the same shortfall.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'What the exchange does about it',
@@ -109,6 +116,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A trader fails to deliver shares on three separate occasions within a few months. Beyond each individual auction penalty, is there any additional consequence for a repeated pattern?',
+      options: [
+        'No — each failure is treated completely independently with no memory of past ones',
+        'Yes — a repeated pattern can lead to tighter scrutiny or restrictions on that trading account',
+        'Yes, but only if the total value exceeds ₹1 crore',
+      ],
+      correct: 1,
+      reveal:
+        'Yes. A single failure is an accident with a real cost attached. A repeated pattern suggests systematic risk in how trades are placed, and brokers and exchanges can respond with tighter scrutiny or account-level restrictions.',
+      askWhy: true,
+    },
+    {
       kind: 'figure',
       figure: 'SettlementTimeline',
       props: {},
@@ -125,6 +146,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trading account has failed to deliver shares on time three separate times in two months. Decide whether this is likely treated the same as three unrelated first-time incidents.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Yes — every failure is assessed completely independently with no pattern recognition',
+              'No — a repeated pattern can draw additional scrutiny or restrictions beyond the individual penalties',
+              'No — only a fourth failure triggers any additional consequence',
+            ],
+            correct: 'No — a repeated pattern can draw additional scrutiny or restrictions beyond the individual penalties',
+          },
+          explanation:
+            'No, not treated identically. A repeated pattern signals systematic risk in how trades are placed, and can draw scrutiny beyond each individual penalty.',
+        },
         {
           prompt:
             'You sold 300 shares at ₹500 and failed to deliver. The auction fills at ₹580. What are you charged for the shortfall, in rupees?',

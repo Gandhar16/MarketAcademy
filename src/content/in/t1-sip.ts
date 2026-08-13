@@ -50,6 +50,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'RupeeCostExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The middle month buys twice the units for the same money — that is the entire mechanism, nothing more.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Fixed rupees, not fixed units',
@@ -113,6 +120,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Two investors each start a SIP of ₹10,000 a month. Investor A keeps it fixed for 20 years. Investor B increases it by 10% every year as their income grows. Which one ends up investing meaningfully more in total?',
+      options: [
+        'Investor A, since the monthly base amount is what matters',
+        'Investor B — a fixed amount stays flat while an income grows, so a growing contribution captures far more of it',
+        'Both invest the same, since the starting amount was identical',
+      ],
+      correct: 1,
+      reveal:
+        'Investor B, by a wide amount over 20 years. A fixed ₹10,000 stays fixed even as salaries typically rise, so a growing contribution captures a consistent share of a growing income instead of a shrinking one. This is sometimes called a step-up SIP, and it does not require any new decision each year beyond the one made at the start. It is the contribution lever from the compounding lesson, applied gradually rather than all at once.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'the-long-game',
       config: {},
@@ -127,6 +148,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'You start a SIP at ₹8,000 a month. Your salary rises steadily over the years. Decide the more effective long-term habit.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Keep the SIP fixed at ₹8,000 indefinitely, since consistency is what matters',
+              'Increase the SIP amount periodically as your income grows, so it keeps pace rather than shrinking as a share of what you earn',
+              'Switch to a lump sum once a year instead',
+            ],
+            correct:
+              'Increase the SIP amount periodically as your income grows, so it keeps pace rather than shrinking as a share of what you earn',
+          },
+          explanation:
+            'Increase it periodically. A fixed contribution effectively shrinks relative to a growing income and a growing cost of living. Raising it as income allows is simply the contribution lever from the compounding lesson, applied every year instead of once.',
+        },
         {
           prompt:
             'You invest ₹6,000 a month for three months at prices of ₹200, ₹100 and ₹150. What is your average cost per unit, in rupees?',

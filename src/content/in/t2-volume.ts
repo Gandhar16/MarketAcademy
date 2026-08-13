@@ -51,6 +51,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'VolumeMythExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Every single trade pairs one buyer with one seller — the count never differs, whichever way the price moved.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'What the number is',
@@ -114,6 +121,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A share trades only 90,000 shares today, well below its usual 3,00,000 — but today was a shortened session for a public holiday eve. Should you still compare 90,000 directly against the usual full-day baseline?',
+      options: [
+        'Yes — the ratio is the ratio regardless of session length',
+        'No — a shortened session has fewer hours to trade in, making it look artificially quiet',
+        'It does not matter, since volume never varies by session length',
+      ],
+      correct: 1,
+      reveal:
+        'No, not directly. A shortened session simply has less time in which trading can happen, so its volume is naturally lower even on a completely ordinary day. Comparing it straight against a full-day baseline exaggerates how quiet the day looks. The honest comparison is against other shortened sessions, or a baseline scaled down to match the hours actually traded.',
+      askWhy: true,
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'The Indian figure worth knowing',
@@ -137,6 +158,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "Today's session was cut short by two hours for a public holiday eve, and volume came in at 60% of the usual full-day average. Decide how to read this.",
+          type: 'decision',
+          spec: {
+            options: [
+              'Today was clearly a quiet, low-participation day',
+              'The shorter session likely explains most of the gap — compare against other shortened sessions instead',
+              'The comparison is meaningless and volume should be ignored today',
+            ],
+            correct:
+              'The shorter session likely explains most of the gap — compare against other shortened sessions instead',
+          },
+          explanation:
+            'The shortened hours likely explain most of the shortfall. A baseline built from full sessions is the wrong yardstick for a session with fewer hours in it — the fix is comparing like with like, not abandoning the comparison.',
+        },
         {
           prompt:
             'A share averages 3,00,000 shares a day. Today it trades 7,50,000. How many times its ordinary activity is that?',

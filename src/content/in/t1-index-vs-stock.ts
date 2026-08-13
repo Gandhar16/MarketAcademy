@@ -53,6 +53,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'TwoRisksExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The grid survives the fraud almost unscathed — and falls exactly as hard as the single block once the whole market turns.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Two risks, only one of which is free to remove',
@@ -116,6 +123,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You hold 10 companies, but 7 of them are banks. Have you actually diversified against company-specific risk the way owning 10 unrelated companies would?',
+      options: [
+        'Yes — 10 companies is 10 companies, regardless of what they do',
+        'Not really — the 7 banks tend to be hit by the same events, so they behave more like one large position than seven',
+        'It depends only on how much each one costs',
+      ],
+      correct: 1,
+      reveal:
+        'Not really. Diversification works by spreading across risks that are genuinely independent of each other. Seven banks tend to be hit by the same interest-rate and credit conditions, so a problem for one often means a problem for all seven at once. Ten holdings that are really three or four independent bets diversify far less than the count alone suggests.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'the-long-game',
       config: {},
@@ -130,6 +151,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'You hold 12 companies. 8 of them are software exporters, all sensitive to the same currency and global-demand conditions. Decide how well-diversified you actually are against company-specific risk.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Well-diversified, since 12 is a healthy number of holdings',
+              'Less diversified than the count suggests, since the 8 software exporters tend to move together',
+              'Diversification does not depend on what the companies do',
+            ],
+            correct: 'Less diversified than the count suggests, since the 8 software exporters tend to move together',
+          },
+          explanation:
+            'Less diversified. A count of holdings is not the same as a count of independent risks. Eight companies exposed to the same conditions behave more like one concentrated bet than eight separate ones, even though each is a different company on paper.',
+        },
         {
           prompt:
             'You hold ₹8,00,000 spread equally across 16 companies. One goes to zero. What percentage of your money have you lost?',

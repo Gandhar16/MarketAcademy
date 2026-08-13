@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'BarCompressionExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The same 375 minutes of trading, collapsing into fewer and fewer bars — that is the entire idea of an interval.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'What one bar contains, by interval',
@@ -81,6 +88,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A hollow (unfilled) candle and a standard filled candle both show the same open, high, low and close for a session. What extra fact does hollow-vs-filled usually encode that plain red/green does not?',
+      options: [
+        "Whether the close is higher than the PREVIOUS candle's close, not just this candle's own open",
+        'Nothing extra — hollow candles are purely a colour preference',
+        'The trading volume for that session',
+      ],
+      correct: 0,
+      reveal:
+        "Hollow-candle charts typically colour a candle by comparing its close against the PREVIOUS candle's close, on top of the usual open-versus-close colouring. A candle can close higher than its own open (usually green) and still close lower than the prior candle's close. Hollow-candle styles are built to surface that second comparison, which an ordinary candlestick does not show at all.",
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'TCS.NS', interval: '1d', range: '1y' },
       mode: 'view',
@@ -96,6 +117,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "A candle closes above its own open, but below where the previous candle closed. On a standard candlestick chart, how is this typically coloured?",
+          type: 'decision',
+          spec: {
+            options: [
+              'As an up (green) candle, since close is above open — the comparison to the prior candle is not shown',
+              'As a down (red) candle, since it closed lower than the prior close',
+              'It cannot be drawn on a standard candlestick chart at all',
+            ],
+            correct:
+              'As an up (green) candle, since close is above open — the comparison to the prior candle is not shown',
+          },
+          explanation:
+            "A standard candlestick only compares a session's own open and close. The comparison against the prior candle's close, which a hollow-candle style makes visible, is simply invisible on the ordinary version, not contradicted by it.",
+        },
         {
           prompt: 'An NSE session runs 375 minutes. How many 5-minute candles make up one full session?',
           type: 'compute',

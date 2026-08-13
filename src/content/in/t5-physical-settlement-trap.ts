@@ -65,6 +65,13 @@ export const lesson: Lesson = {
     },
     {
       kind: 'widget',
+      component: 'PhysicalObligationExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. ₹2,000 at risk, ₹3,37,500 to fund — selling in the market realises the same profit and none of the obligation.',
+    },
+    {
+      kind: 'widget',
       component: 'PhysicalSettlementCalculator',
       props: { strike: 1350, spot: 1400, lotSize: 250, premium: 8 },
       takeaway:
@@ -139,8 +146,37 @@ export const lesson: Lesson = {
       askWhy: false,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A RELIANCE 1,350 call is only ₹2 in the money at expiry, barely worth anything. Does it still trigger the same physical delivery obligation as a ₹50-in-the-money contract?',
+      options: [
+        'No — a contract only barely in the money is cash settled instead',
+        'Yes — any in-the-money amount, however small, still triggers delivery of the full 250 shares at the strike',
+        'No — contracts under ₹5 in the money are automatically allowed to lapse',
+      ],
+      correct: 1,
+      reveal:
+        'Yes, the full obligation still applies. Physical settlement does not scale with how far in the money a contract finished. Even ₹2 in the money means the full 250 shares must be delivered at the ₹1,350 strike, funding the entire ₹3,37,500 position.',
+      askWhy: true,
+    },
+    {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A stock call finishes just ₹1 in the money at expiry. Decide whether this small margin changes the physical settlement obligation.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Yes — a contract barely in the money settles in cash instead',
+              'No — any amount in the money, however small, still triggers full delivery of the shares at the strike',
+              'Yes — contracts under ₹5 in the money are voided automatically',
+            ],
+            correct: 'No — any amount in the money, however small, still triggers full delivery of the shares at the strike',
+          },
+          explanation:
+            'No change. Physical settlement triggers on any in-the-money amount at all, however small.',
+        },
         {
           prompt:
             'One lot of 250 shares is physically settled at a strike of ₹1,350. What is the physical delivery charge at 0.25% of the settled value, in rupees?',

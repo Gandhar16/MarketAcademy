@@ -42,6 +42,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'GapJumpExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. A planned 1% loss becomes 4.6% — with every rule followed exactly.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Why a gap is not a fast move',
@@ -105,6 +112,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You hold no position in any single company with news pending, just a diversified portfolio of unrelated shares. Does that make you immune to gap risk?',
+      options: [
+        'Yes — gap risk is only ever about single-company news',
+        'No — a market-wide shock can gap the whole market at once, regardless of which shares you hold',
+        'No, but only index funds are exposed to this',
+      ],
+      correct: 1,
+      reveal:
+        'No, you are not immune. Company-specific news is the easiest example, but the closed-market problem is bigger than that. A market-wide shock, a war, a sudden interest-rate move, can gap every share down together at the reopen. Diversification across ordinary shares does nothing to prevent it, because it is the same nothing-traded-in-between mechanism applied to the whole market instead of one company.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'circuit-breaker',
       config: {},
@@ -119,6 +140,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader holds a diversified portfolio with no company-specific news pending and assumes they face no gap risk. Decide whether that is correct.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Correct — gap risk requires company-specific news',
+              'Incorrect — a market-wide shock can gap the entire market together, regardless of diversification',
+              'Correct, as long as they hold fewer than ten shares',
+            ],
+            correct: 'Incorrect — a market-wide shock can gap the entire market together, regardless of diversification',
+          },
+          explanation:
+            'Incorrect. A macro shock arriving while the market is closed can gap every share at once; diversification does not fix a closed-market problem.',
+        },
         {
           prompt:
             'You hold 200 shares bought at ₹900 with a stop at ₹870. It gaps open at ₹790. What is the actual loss, in rupees?',

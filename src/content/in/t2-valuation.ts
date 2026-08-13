@@ -45,6 +45,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'MultipleOverTimeExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The two multiples start identical and end nowhere near each other — same price, same starting earnings, different growth.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'What the number literally is',
@@ -111,6 +118,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A US technology company and an Indian consumer-goods company both trade at 40 times earnings. Does the identical multiple mean the market expects identical things from both?',
+      options: [
+        'Yes — the same multiple always means the same expectation',
+        'Not necessarily — different markets can price growth, risk and interest rates differently',
+        'No — multiples cannot be compared across countries at all',
+      ],
+      correct: 1,
+      reveal:
+        "Not necessarily. What a multiple 'deserves' depends on the growth expected, the risk involved, and prevailing interest rates in that market — all of which can differ between countries. The same 40 can be reasonable in one context and stretched in another.",
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: '^NSEI', interval: '1mo', range: '10y' },
       mode: 'view',
@@ -127,6 +148,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'An investor concludes two companies are equally valued because both trade at 25 times earnings, one in India and one in a slower-growing developed market. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Correct — identical multiples always mean identical valuation',
+              'Not necessarily correct — the same multiple can reflect very different growth and risk assumptions in different markets',
+              'The comparison is meaningless because multiples cannot cross borders',
+            ],
+            correct:
+              'Not necessarily correct — the same multiple can reflect very different growth and risk assumptions in different markets',
+          },
+          explanation:
+            'Not necessarily. The number is identical; what it is a sentence about is not. Growth expectations and prevailing rates differ by market.',
+        },
         {
           prompt:
             'A share trades at ₹840 and the company earns ₹42 a share. What is its price-to-earnings ratio?',

@@ -50,6 +50,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'VixScaleExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Divide by √12 before you picture the range — the annual figure and the monthly one are very different numbers.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Where the number comes from',
@@ -136,8 +143,37 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'India VIX has fallen to an unusually low reading compared with its own recent history. What does that most directly imply about buying options right now?',
+      options: [
+        'Nothing — VIX never affects whether buying or selling options is more attractively priced',
+        'Options are relatively cheap to buy, since the market is charging less for uncertainty than usual',
+        'Options are relatively expensive to buy, since low readings always precede a spike',
+      ],
+      correct: 1,
+      reveal:
+        'Relatively cheap. A low VIX means the market is charging less than usual for the uncertainty options are built from, so buyers pay less per contract. That says nothing about which way price moves next — only that the price of uncertainty itself is currently low.',
+      askWhy: true,
+    },
+    {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'India VIX sits well below its typical range for this stock. Decide what this most directly means for someone about to buy options.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Options are currently priced richer than usual, a bad time to buy',
+              "Options are currently priced cheaper than usual relative to the market's own history",
+              'VIX level has no bearing on how options are priced',
+            ],
+            correct: "Options are currently priced cheaper than usual relative to the market's own history",
+          },
+          explanation:
+            'Cheaper than usual. A low VIX reading directly means less is being charged for uncertainty, whatever that implies about future direction.',
+        },
         {
           prompt:
             'India VIX is at 21 and NIFTY is at 20,000. Compute the approximate move, in index points, that the market is pricing for the coming month.',

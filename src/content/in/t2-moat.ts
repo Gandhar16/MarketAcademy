@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'MoatCompoundExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Both companies grow identically — the entire ₹208cr gap in year 10 comes from whether the margin held.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Four concrete sources, not a vibe',
@@ -81,6 +88,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "A company has genuinely held a 25% margin for a decade through a strong brand — a real moat by this lesson's own measures. A new government price cap then forces margins down to 10% overnight. Did the moat fail?",
+      options: [
+        'Yes — a margin that falls this fast proves the moat was never real',
+        'No — the moat is still intact; an external regulatory action, not competition, changed the economics',
+        'It is impossible to say without more information',
+      ],
+      correct: 1,
+      reveal:
+        'No, the moat itself did not fail. A moat is specifically about protection from COMPETITORS copying an advantage. Nothing in the four sources protects against a government changing the rules. The brand is still there; regulation is a different kind of risk entirely.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'earnings-roulette',
       config: {},
@@ -95,6 +116,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "A company with a genuine decade-long moat sees its margin cut in half overnight by a new regulatory price cap, unrelated to any competitor's actions. Decide whether this disproves the moat.",
+          type: 'decision',
+          spec: {
+            options: [
+              'Yes — any sudden margin drop disproves a moat claim',
+              'No — the moat protects against competitors copying an advantage, not against regulatory or political risk',
+              'It depends only on how large the margin drop was',
+            ],
+            correct:
+              'No — the moat protects against competitors copying an advantage, not against regulatory or political risk',
+          },
+          explanation:
+            'No. A moat is specifically about competitive protection. Regulatory risk is real and worth tracking separately, but it is not what the four sources in this lesson claim to guard against.',
+        },
         {
           prompt: 'A company holds a 30% operating margin for twelve consecutive years despite three well-funded competitors entering its market. What does that duration most honestly suggest?',
           type: 'decision',

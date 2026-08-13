@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { LiveTicker } from '@/components/LiveTicker';
 import { CostRealityCheck } from '@/components/CostRealityCheck';
 import { TIER_LABELS, TIERS } from '@/lib/lesson/dsl';
+import { Reveal } from '@/components/motion/Reveal';
+import { StaggerContainer, StaggerItem } from '@/components/motion/Stagger';
 
 const TIER_BLURBS: Record<string, string> = {
   T0: 'What a share is, who is on the other side of your trade, and how settlement actually works.',
@@ -42,7 +44,7 @@ const FIXES = [
 export default function Home() {
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 sm:py-16 md:py-24">
-      <section>
+      <Reveal as="section">
         <p className="text-[11px] uppercase tracking-[0.2em] text-accent">India-first · NSE &amp; BSE · US pack</p>
         <h1 className="mt-4 text-4xl font-semibold leading-[1.1] tracking-tight md:text-6xl">
           Learn the market by
@@ -59,24 +61,24 @@ export default function Home() {
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
             href="/learn"
-            className="rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis transition-opacity hover:opacity-90"
+            className="rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis transition-all duration-200 hover:scale-[1.03] hover:opacity-90 active:scale-[0.98]"
           >
             Start at the beginning
           </Link>
           <Link
             href="/play"
-            className="rounded-lg border border-line-strong px-5 py-2.5 text-ink-muted transition-colors hover:text-ink"
+            className="rounded-lg border border-line-strong px-5 py-2.5 text-ink-muted transition-all duration-200 hover:scale-[1.03] hover:text-ink active:scale-[0.98]"
           >
             Play a game
           </Link>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mt-16">
+      <Reveal as="section" className="mt-16" delay={0.1}>
         <LiveTicker />
-      </section>
+      </Reveal>
 
-      <section className="mt-24">
+      <Reveal as="section" className="mt-24">
         <h2 className="text-2xl font-semibold tracking-tight">Most people have never seen what a trade costs</h2>
         <p className="mt-3 max-w-2xl text-ink-muted">
           &ldquo;Zero brokerage&rdquo; is not zero. Move the slider and watch what the market actually charges you to
@@ -85,40 +87,50 @@ export default function Home() {
         <div className="mt-8">
           <CostRealityCheck />
         </div>
-      </section>
+      </Reveal>
 
       <section className="mt-24">
-        <h2 className="text-2xl font-semibold tracking-tight">Six things every other platform gets wrong</h2>
-        <div className="mt-8 grid gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-2">
+        <Reveal>
+          <h2 className="text-2xl font-semibold tracking-tight">Six things every other platform gets wrong</h2>
+        </Reveal>
+        <StaggerContainer className="mt-8 grid gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-2">
           {FIXES.map((f) => (
-            <div key={f.problem} className="bg-surface p-6">
-              <p className="text-[13px] font-medium text-down">{f.problem}</p>
-              <p className="mt-2 text-sm leading-relaxed text-ink-muted">{f.fix}</p>
-            </div>
+            <StaggerItem key={f.problem}>
+              <div className="h-full bg-surface p-6 transition-colors duration-200 hover:bg-surface-2">
+                <p className="text-[13px] font-medium text-down">{f.problem}</p>
+                <p className="mt-2 text-sm leading-relaxed text-ink-muted">{f.fix}</p>
+              </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </section>
 
       <section className="mt-24">
-        <h2 className="text-2xl font-semibold tracking-tight">Six tiers, and it gets harder on purpose</h2>
-        <div className="mt-8 space-y-px overflow-hidden rounded-xl border border-line bg-line">
+        <Reveal>
+          <h2 className="text-2xl font-semibold tracking-tight">Six tiers, and it gets harder on purpose</h2>
+        </Reveal>
+        <StaggerContainer className="mt-8 space-y-px overflow-hidden rounded-xl border border-line bg-line">
           {TIERS.map((t) => (
-            <div key={t} className="flex flex-col gap-1 bg-surface p-5 md:flex-row md:items-baseline md:gap-6">
-              <div className="num w-10 shrink-0 text-accent">{t}</div>
-              <div className="w-44 shrink-0 font-medium">{TIER_LABELS[t]}</div>
-              <div className="text-sm text-ink-muted">{TIER_BLURBS[t]}</div>
-            </div>
+            <StaggerItem key={t}>
+              <div className="flex flex-col gap-1 bg-surface p-5 transition-colors duration-200 hover:bg-surface-2 md:flex-row md:items-baseline md:gap-6">
+                <div className="num w-10 shrink-0 text-accent">{t}</div>
+                <div className="w-44 shrink-0 font-medium">{TIER_LABELS[t]}</div>
+                <div className="text-sm text-ink-muted">{TIER_BLURBS[t]}</div>
+              </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </section>
 
-      <footer className="mt-24 border-t border-line pt-8 text-[13px] text-ink-faint">
-        <p>
-          Market Academy teaches mechanics and reasoning. It never tells you what to buy, and it is not investment
-          advice. Simulated performance is not indicative of real results — which is precisely why the fills here are
-          modelled honestly rather than generously.
-        </p>
-      </footer>
+      <Reveal as="section" className="mt-24">
+        <footer className="border-t border-line pt-8 text-[13px] text-ink-faint">
+          <p>
+            Market Academy teaches mechanics and reasoning. It never tells you what to buy, and it is not investment
+            advice. Simulated performance is not indicative of real results — which is precisely why the fills here are
+            modelled honestly rather than generously.
+          </p>
+        </footer>
+      </Reveal>
     </main>
   );
 }

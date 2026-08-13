@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'DivergenceExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The RSI bar only turns green once both values are actually computed — not because the second low merely looked gentler.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Two kinds of disagreement',
@@ -83,6 +90,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Price makes a HIGHER low than its previous swing low, in an uptrend, while RSI makes a LOWER low at the same two points. This is hidden bullish divergence. Is it read the same way as ordinary bullish divergence?',
+      options: [
+        'Yes, identically — any price/RSI disagreement means the same thing',
+        'No — ordinary divergence is a possible reversal signal; hidden divergence is read as the existing trend possibly continuing',
+        'No — hidden divergence cannot be computed from RSI at all',
+      ],
+      correct: 1,
+      reveal:
+        'No, the reverse read. Ordinary bullish divergence (price lower low, RSI higher low) is watched near the bottom of a decline as a possible reversal. Hidden bullish divergence shows up during an uptrend\'s pullback and is read as momentum resetting without the trend weakening — continuation, not reversal.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'HDFCBANK.NS', interval: '1d', range: '1y' },
       mode: 'view',
@@ -99,6 +120,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'During an established uptrend, a pullback prints a higher low in price but a lower low in RSI at the same two points. Decide what this hidden divergence is traditionally read as.',
+          type: 'decision',
+          spec: {
+            options: [
+              'A reversal warning, exactly like ordinary bullish divergence',
+              'A sign the uptrend may be resetting and continuing, not reversing',
+              'Meaningless, since hidden divergence has no real definition',
+            ],
+            correct: 'A sign the uptrend may be resetting and continuing, not reversing',
+          },
+          explanation:
+            'Continuation, not reversal. Hidden divergence during an established trend is read the opposite way from ordinary divergence at a trend\'s extreme.',
+        },
         {
           prompt: 'Over 5 days a stock moves +₹1, −₹4, −₹3, +₹2, −₹2. What is the RSI at this swing point?',
           type: 'compute',

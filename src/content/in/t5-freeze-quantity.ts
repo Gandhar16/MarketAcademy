@@ -46,6 +46,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'OrderSplitExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The rule is easy to work around. The book still charges for every order in the sequence.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'A cap on one order, not on your position',
@@ -109,6 +116,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "A trader assumes the freeze quantity for a stock's near-month futures contract is the same as its far-month contract, since they share an underlying. Is that safe?",
+      options: [
+        'Yes — freeze quantity is always identical across all expiries of the same underlying',
+        'Not necessarily — exchanges can set different freeze quantities for different contract months',
+        'No — only the nearest expiry has a freeze quantity at all',
+      ],
+      correct: 1,
+      reveal:
+        'Not necessarily safe. Freeze quantity is published per contract, and different expiry months on the same underlying can carry different limits. Assuming they match without checking produces a rejected order at the worst moment.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'order-gauntlet',
       config: {},
@@ -123,6 +144,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "A trader assumes the freeze quantity is identical for a stock's near-month and far-month futures contracts, without checking either figure. Decide whether that is safe.",
+          type: 'decision',
+          spec: {
+            options: [
+              'Safe — freeze quantity is always the same across expiries of the same underlying',
+              'Not safe — different contract months can carry different published limits',
+              'Safe, but only for index contracts',
+            ],
+            correct: 'Not safe — different contract months can carry different published limits',
+          },
+          explanation:
+            'Not safe. Freeze quantity is published per contract, and different expiries on the same underlying are not guaranteed to match.',
+        },
         {
           prompt:
             'A contract has a lot size of 75 and a freeze quantity of 25 lots. How many units is that in one order?',

@@ -48,6 +48,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'WaveCountExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The price path never changes between readings A and B — only the numbers written on top of it do.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Five and three, at every scale',
@@ -131,6 +138,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A guideline called alternation says wave 2 and wave 4 tend to look different from each other in shape and speed. Is this a hard rule like the no-overlap check?',
+      options: [
+        'Yes — a count that violates alternation is illegal',
+        'No — it is a common tendency, not one of the three hard rules that can invalidate a count',
+        'Yes, but only for waves 3 and 5',
+      ],
+      correct: 1,
+      reveal:
+        'No. Alternation is a widely observed tendency, useful for judging which of several LEGAL counts looks more typical. It is not one of the three hard rules that can throw a count out entirely. A count that fails to alternate is unusual, not illegal.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'INFY.NS', interval: '1d', range: '1y' },
       mode: 'view',
@@ -147,6 +168,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A proposed wave count has wave 2 and wave 4 looking nearly identical in shape and duration, breaking the alternation guideline. Decide whether this makes the count illegal.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Illegal — alternation is one of the three hard rules',
+              'Not illegal — alternation is a tendency, not a hard rule, so the count can still stand',
+              'Illegal only if wave 3 is also affected',
+            ],
+            correct: 'Not illegal — alternation is a tendency, not a hard rule, so the count can still stand',
+          },
+          explanation:
+            'Not illegal. Only the wave-2, wave-4 and wave-3-relative-size checks can invalidate a count outright. Alternation failing makes the count merely less typical.',
+        },
         {
           prompt: 'Wave 1 runs from ₹300 to ₹360. Under the wave-2 rule, what is the lowest price wave 2 is allowed to reach before the count is invalidated?',
           type: 'compute',

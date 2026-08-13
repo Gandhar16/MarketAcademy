@@ -65,6 +65,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'SampleSizeExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Same 7-point edge both times — the only thing that changed is whether you should believe it.',
+    },
+    {
       kind: 'figure',
       figure: 'CandleAnatomy',
       props: {},
@@ -142,6 +149,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A hammer and a gap-up both fire on the same day. Somebody claims this "double signal" is twice as reliable as either pattern alone. Is that right?',
+      options: [
+        'Yes — two confirming patterns firing together always doubles the reliability',
+        'Not necessarily — unless the combination is itself tested and measured, stacking names is not stacking evidence',
+        'No — combining any two patterns always cancels out any edge',
+      ],
+      correct: 1,
+      reveal:
+        "Not necessarily. Two named patterns firing on the same day feels like double confirmation, but that feeling is not itself a measurement. Unless someone has actually counted how often THIS specific combination was followed by a move, and compared it against the ordinary base rate, that claim is inventing a number never tested. The combination needs its own count, just like a single pattern does.",
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'candle-sprint',
       config: {},
@@ -156,6 +177,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'Two patterns each individually show a small, real edge on their own. Someone claims that when both fire on the same day, the edge simply adds together. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Trust the addition — edges from independent signals always sum',
+              'Test the combination separately, since two real edges do not automatically combine predictably',
+              'The combination can be ignored, since neither pattern alone was very strong',
+            ],
+            correct: 'Test the combination separately, since two real edges do not automatically combine predictably',
+          },
+          explanation:
+            'Test it separately. Two patterns can be correlated with each other in ways that make their combination weaker, stronger, or no different from either alone. The only way to know is to count the combined occurrences directly, the same discipline this lesson applies to a single pattern.',
+        },
         {
           prompt:
             'A pattern is followed by a rise 58% of the time. Ordinary days on the same symbol rise 54% of the time. What is the edge, in percentage points?',

@@ -313,7 +313,7 @@ know why their order filled at a worse price than the screen showed.
 
 | # | Stage | Question | Tier | Steps |
 |---|---|---|---|---|
-| 1 | Ground floor | What am I actually buying, and who sells it to me? | T0 | 6 |
+| 1 | Ground floor | What am I actually buying, and who sells it to me? | T0 | 8 |
 | 2 | Placing a trade | How do I buy without getting a worse price than I expected? | T1 | 5 |
 | 3 | Staying alive | How do I make sure one bad trade does not end this? | T1 | 4 |
 | 4 | Owning for years | What if I do not want to trade at all? | T1 | 4 |
@@ -339,7 +339,7 @@ Every numeric claim in prose is covered by `claims.test.ts`. **1,122 tests pass.
   for teaches more than one described in advance, so stage 7 follows the stages
   where the learner has actually chosen something.
 - **Edge cases last.** Each one only makes sense once the normal case is second
-  nature, and the final step is the assumption all 64 others rest on.
+  nature, and the final step is the assumption all 66 others rest on.
 
 ##### The through-line
 

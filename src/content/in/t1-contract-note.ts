@@ -47,6 +47,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'ContractNoteExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The app and the note are not the same document, even when the numbers agree.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Four sections, in this order',
@@ -110,6 +117,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Your contract note lists a trade as INTRADAY, but you intended to hold it as delivery and never squared it off. Why does this matter?',
+      options: [
+        'It does not — the charges are the same either way',
+        'Intraday and delivery are charged completely different rates, so the wrong product means the wrong charges',
+        'It only matters for tax purposes, not for the charges',
+      ],
+      correct: 1,
+      reveal:
+        'It matters a great deal. Intraday and delivery are charged at different statutory rates, so a trade booked under the wrong product type has the wrong charges on it, not just the wrong label. This is why the note\'s first section, what you traded and under which product, has to be checked before trusting anything below it.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'BrokerComparator',
       props: { market: 'IN', product: 'delivery', price: 1400, quantity: 100 },
@@ -126,6 +147,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A note lists 50 shares as intraday, but you recall placing them as a delivery order you intended to hold. Decide what to check first.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Whether the total amount looks roughly right',
+              'Whether the product type on the note actually matches what you intended to place',
+              'Nothing — the broker\'s system decides this automatically and correctly',
+            ],
+            correct: 'Whether the product type on the note actually matches what you intended to place',
+          },
+          explanation:
+            'Check the product type first. Every charge on the note is computed from it, so a mismatch here means everything below is computed against the wrong rate.',
+        },
         {
           prompt:
             'A note shows a delivery buy of 100 shares at ₹1,400. What should the securities transaction tax line say?',

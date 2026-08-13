@@ -48,6 +48,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'PatternRarityExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Seven hammer matches against two morning-star matches, from the same twenty candles — that gap is exactly why sample size matters more here.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Six more patterns, same method',
@@ -141,6 +148,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A three-candle pattern fires exactly 30 times over five years — right at the floor this course treats as a minimum. Does reaching exactly 30 occurrences guarantee the edge is real?',
+      options: [
+        'Yes — 30 is the threshold, so anything at or above it is proven',
+        "No — 30 is a floor below which no verdict is given, not a guarantee above it; the edge still has to clear its own significance check",
+        'No — 30 occurrences is never enough for any pattern',
+      ],
+      correct: 1,
+      reveal:
+        'No. Thirty is the point below which this course refuses to give a verdict at all, not a magic number that proves an edge once crossed. Above the floor, the actual test is still the statistical significance check. A small edge at exactly 30 occurrences can easily fail that check even though the sample-size requirement is technically met.',
+      askWhy: true,
+    },
+    {
       kind: 'callout',
       tone: 'myth',
       title: 'Rare does not mean special',
@@ -150,6 +171,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A pattern fires exactly 30 times with a small 2-point edge over the base rate. Decide whether crossing the 30-occurrence floor is enough on its own to trust it.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Yes — 30 occurrences is the bar, and it has been met',
+              "No — the floor only removes an automatic 'noise' label; the edge still has to clear its own significance check",
+              'No — 30 occurrences is never sufficient regardless of the edge',
+            ],
+            correct:
+              "No — the floor only removes an automatic 'noise' label; the edge still has to clear its own significance check",
+          },
+          explanation:
+            'No, not automatically. Reaching the floor stops the count from being dismissed outright. A small edge still needs to clear its own statistical bar, which 30 occurrences and a 2-point gap may not do.',
+        },
         {
           prompt:
             'A pattern fires 40 times and is followed by a rise 62% of the time. Ordinary days on the same symbol rise 55% of the time. What is the edge, in percentage points?',

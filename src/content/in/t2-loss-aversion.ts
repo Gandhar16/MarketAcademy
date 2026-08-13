@@ -43,6 +43,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'DispositionEffectExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Same 60% win rate — the habit turns it into −₹60,000, the plan turns it into +₹50,000.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'A loss hurts about twice as much as the same gain pleases',
@@ -104,6 +111,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You bought a stock expecting it to double in two years. It is up 20% after two months, right on plan. You feel a strong urge to sell now and lock in the gain. Is that urge a good reason to sell?',
+      options: [
+        'Yes — a bird in hand is worth more than one in the bush',
+        'No — if the original reason for holding is still true, this urge is the same bias, just aimed the other way',
+        'Yes, because 20% in two months is unusually fast',
+      ],
+      correct: 1,
+      reveal:
+        'No. If the plan is still true, the urge to sell early is not really about the stock. It is loss aversion again, just protecting a small gain instead of avoiding a loss. The test is the same one already given: would you buy it today, at this price, knowing what you know now?',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'PatternBaseRate',
       props: { pattern: 'three-down-days', symbol: 'RELIANCE.NS' },
@@ -120,6 +141,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A stock is up 15% after one month, exactly matching the plan you wrote down before buying it. You feel an urge to sell now and bank the gain. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Sell — a gain in hand beats waiting for more',
+              'Check whether your original reason for holding is still true before deciding anything',
+              'Sell half to feel safe either way',
+            ],
+            correct: 'Check whether your original reason for holding is still true before deciding anything',
+          },
+          explanation:
+            'Check the reason first. An urge to lock in a gain early is not itself a reason — it is the same comfort-seeking bias this lesson names, just running the other way.',
+        },
         {
           prompt:
             'Twelve winners at ₹3,000 and eight losers at ₹12,000. What is the net result, in rupees?',

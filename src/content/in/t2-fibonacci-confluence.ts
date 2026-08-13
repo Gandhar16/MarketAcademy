@@ -47,6 +47,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'ConfluenceExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The last scene is the whole lesson — one observer drew both lines on the same chart.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Confluence, and which levels get watched',
@@ -79,6 +86,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A trader combines a Fibonacci level, a candlestick reversal shape, AND a round-number price, calling it "triple confluence". Does stacking a third signal make the independence problem better or worse?',
+      options: [
+        'Better — three agreeing signals are always stronger evidence than two',
+        'No different in kind — a round number is also chosen by a human looking at the same chart',
+        'Worse — three signals disagreeing is now more likely',
+      ],
+      correct: 1,
+      reveal:
+        'No different in kind. A round number, like a Fibonacci level and a candle shape, is something a human eye picked out on the same chart. A third eye-chosen signal adds more attention concentrating at that price, which is real, but still not a third independent source of evidence.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'INFY.NS', interval: '1d', range: '1y' },
       mode: 'view',
@@ -95,6 +116,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader calls a setup "triple confluence" because a Fibonacci level, a candlestick shape, and a round number all sit near the same price. Decide what that combination actually proves.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Three times the statistical confidence of a single signal',
+              'More concentrated attention at that price, not three independent pieces of evidence',
+              'Nothing at all — confluence never matters',
+            ],
+            correct: 'More concentrated attention at that price, not three independent pieces of evidence',
+          },
+          explanation:
+            'More attention, not more independent proof. All three were chosen by the same person looking at the same chart, so stacking them multiplies how many eyes are on the price, not how certain the outcome is.',
+        },
         {
           prompt: 'A rally runs from ₹1,500 to ₹1,700. Where does the 61.8% retracement sit?',
           type: 'compute',

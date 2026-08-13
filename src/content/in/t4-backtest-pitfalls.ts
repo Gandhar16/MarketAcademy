@@ -45,6 +45,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'LookaheadBiasExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The honest fix is not a detail — the fill has to move to the next bar, every time.',
+    },
+    {
       kind: 'example',
       title: 'What is left after costs',
       setup:
@@ -104,6 +111,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A researcher develops a strategy on seven years of data, then tests it, unchanged, on three fresh years it has never seen. It performs worse there but is still profitable. Is that result more or less trustworthy than testing and tuning on all ten years at once?',
+      options: [
+        'Less trustworthy — a shorter test period is always a weaker test',
+        'More trustworthy — the strategy was never allowed to adapt to the final three years',
+        'Equally trustworthy either way',
+      ],
+      correct: 1,
+      reveal:
+        'More trustworthy. Performance on data the strategy was never tuned against is the honest test this lesson calls for. It usually looks worse than the in-sample result, and that drop shows roughly how much of the original result was fitting to noise.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'chart-replay',
       config: {},
@@ -111,6 +132,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A strategy returns 40% annually when tested and tuned on the same ten years of data. Held unchanged, it returns 12% annually on three fresh years it never saw. Decide which number is more trustworthy.',
+          type: 'decision',
+          spec: {
+            options: [
+              'The 40%, since it covers more years of data',
+              'The 12%, since it comes from data the strategy was never tuned against',
+              'Neither — both numbers are equally reliable',
+            ],
+            correct: 'The 12%, since it comes from data the strategy was never tuned against',
+          },
+          explanation:
+            'The 12%. Performance on unseen data has not been contaminated by the search that produced the strategy.',
+        },
         {
           prompt:
             'A rule says: "Sell when the day\'s high is more than 3% above the open." Decide whether this is implementable.',

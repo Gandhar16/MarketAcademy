@@ -18,12 +18,17 @@
  * questions are only meaningful if you were forced to decide first.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { Block, Lesson } from '@/lib/lesson/dsl';
+import type { SyllabusStage } from '@/content/syllabus';
+import { GAMES_BY_SLUG } from '@/lib/games/catalogue';
 import { renderWidget } from '@/components/widgets/registry';
 import { renderGame } from '@/components/games/registry';
 import { useProgress } from '@/lib/progress/store';
 import { Checkpoint } from './Checkpoint';
 import { WorkedExample } from './WorkedExample';
+import { TermPrimer } from './TermPrimer';
 import { renderFigure } from '@/components/visuals/registry';
 import { annotateLesson, annotateReveal, renderProse } from '@/lib/lesson/annotate';
 import { GlossaryPopover } from './GlossaryPopover';
@@ -57,6 +62,9 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
 
   const [unlocked, setUnlocked] = useState(0);
   const [checkpointResult, setCheckpointResult] = useState<{ score: number; xp: number } | null>(null);
+  const [unlockedStage, setUnlockedStage] = useState<SyllabusStage | null>(null);
+  const reduceMotion = useReducedMotion();
+  const blockInitial = reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 };
   /** Answers fetched from the server, keyed by block index. Never present before commitment. */
   const [reveals, setReveals] = useState<Record<number, { correct: number; reveal: string }>>({});
 
@@ -128,32 +136,39 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
         </div>
       </header>
 
+      <TermPrimer termIds={lesson.introduces} />
+
       <ProgressRail current={unlocked} total={lesson.blocks.length} />
 
       <div className="mt-8 space-y-8">
         {visible.map((block, i) => (
-          <BlockView
-            key={i}
-            block={block}
-            index={i}
-            lessonId={lesson.id}
-            isCurrent={i === unlocked}
-            commitment={commitmentFor(lesson.id, i)}
-            reveal={reveals[i]}
-            onCommit={(choice, why) => {
-              commit({ lessonId: lesson.id, blockIndex: i, choice, why });
-              void fetchReveal(i);
-            }}
-            onCheckpointDone={(score) => {
-              const xp = completeLesson({
-                lessonId: lesson.id,
-                tier: lesson.tier,
-                skills: lesson.skills,
-                score,
-              });
-              setCheckpointResult({ score, xp });
-            }}
-          />
+          // `initial` only matters at first mount — a block already on screen
+          // never remounts just because a later one is appended, so earlier
+          // blocks are not re-animated every time the learner advances.
+          <motion.div key={i} initial={blockInitial} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
+            <BlockView
+              block={block}
+              index={i}
+              lessonId={lesson.id}
+              isCurrent={i === unlocked}
+              commitment={commitmentFor(lesson.id, i)}
+              reveal={reveals[i]}
+              onCommit={(choice, why) => {
+                commit({ lessonId: lesson.id, blockIndex: i, choice, why });
+                void fetchReveal(i);
+              }}
+              onCheckpointDone={(score) => {
+                const { xp, unlockedStage: newlyUnlocked } = completeLesson({
+                  lessonId: lesson.id,
+                  tier: lesson.tier,
+                  skills: lesson.skills,
+                  score,
+                });
+                setCheckpointResult({ score, xp });
+                setUnlockedStage(newlyUnlocked);
+              }}
+            />
+          </motion.div>
         ))}
       </div>
 
@@ -166,14 +181,49 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
       )}
 
       {checkpointResult && (
-        <div className="mt-10 rounded-xl border border-accent-dim/50 bg-accent-dim/10 p-6">
+        <motion.div
+          initial={blockInitial}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-10 rounded-xl border border-accent-dim/50 bg-accent-dim/10 p-6"
+        >
           <div className="text-[11px] uppercase tracking-wider text-accent">Lesson complete</div>
           <div className="num mt-2 text-3xl">{checkpointResult.score}%</div>
           <p className="mt-2 text-sm text-ink-muted">
             +{checkpointResult.xp} XP. Mastery recorded for {lesson.skills.join(', ')} — these will fade over the next
             few weeks and resurface for review before they are gone.
           </p>
-        </div>
+        </motion.div>
+      )}
+
+      {unlockedStage && unlockedStage.capstoneGames && unlockedStage.capstoneGames.length > 0 && (
+        <motion.div
+          initial={blockInitial}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-6 rounded-xl border border-up/40 bg-up/5 p-6"
+        >
+          <div className="text-[11px] uppercase tracking-wider text-up">Course complete — {unlockedStage.courseTitle}</div>
+          <p className="mt-2 text-sm text-ink-muted">
+            Time to test it for real. {unlockedStage.capstoneGames.length > 1 ? 'These games put' : 'This game puts'}{' '}
+            what you just learnt in front of a decision that actually counts.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {unlockedStage.capstoneGames.map((slug) => {
+              const entry = GAMES_BY_SLUG.get(slug);
+              if (!entry) return null;
+              return (
+                <Link
+                  key={slug}
+                  href={`/play/${slug}`}
+                  className="rounded-lg bg-up/15 px-4 py-2 text-sm font-medium text-up transition-colors hover:bg-up/25"
+                >
+                  Play {entry.name} →
+                </Link>
+              );
+            })}
+          </div>
+        </motion.div>
       )}
         </article>
       </GlossaryPopover>

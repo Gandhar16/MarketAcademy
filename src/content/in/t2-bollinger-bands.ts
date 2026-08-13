@@ -45,6 +45,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'BollingerSqueezeExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Once the bands expand again, both directions stay equally plausible — that ambiguity is the whole point.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'One moving average, two rails',
@@ -101,6 +108,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "Stock A's Bollinger Bands are 6% wide. Stock B's are 2% wide, at the same moment. Does that mean Stock B is currently in a tighter squeeze than Stock A?",
+      options: [
+        'Yes — 2% is a smaller number than 6%, so B is squeezed tighter',
+        'Not necessarily — each stock has to be compared against its OWN typical width, not against a different stock\'s',
+        'Yes, always — band width is directly comparable across any two stocks',
+      ],
+      correct: 1,
+      reveal:
+        "Not necessarily. A structurally volatile stock might normally run 8% wide, making its 6% reading a genuine squeeze. A normally calm stock might typically run 2.5% wide, making its 2% reading almost ordinary. Band width has to be compared against that same stock's own history, not against a different company's number.",
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'candle-sprint',
       config: {},
@@ -115,6 +136,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'Stock A typically trades with 7% wide Bollinger Bands and is currently at 5%. Stock B typically trades with 2% wide bands and is currently at 1.8%. Decide which is in the tighter squeeze, relative to its own normal range.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Stock A, since 5% is a bigger absolute number',
+              "Stock A, since its current width is a larger drop below its own typical range than Stock B's is",
+              'Stock B, since 1.8% is the smaller absolute number',
+            ],
+            correct: "Stock A, since its current width is a larger drop below its own typical range than Stock B's is",
+          },
+          explanation:
+            'Stock A. Its width has fallen from a typical 7% to 5%, a meaningful contraction relative to its own history. Stock B has barely moved off its own normal 2%.',
+        },
         {
           prompt: 'A 20-day average is ₹1,200 with a standard deviation of ₹18. What is the upper band?',
           type: 'compute',

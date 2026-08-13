@@ -47,6 +47,13 @@ export const lesson: Lesson = {
     },
     {
       kind: 'widget',
+      component: 'CostReceiptExplainer',
+      props: {},
+      takeaway:
+        'Step through it once, then use the real, live-computed breakdown below for your own numbers.',
+    },
+    {
+      kind: 'widget',
       component: 'CostBreakdownTable',
       props: {
         market: 'IN',
@@ -135,6 +142,20 @@ export const lesson: Lesson = {
       askWhy: false,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You buy ₹50,000 of a stock for delivery and it falls 5% before you sell. Do you still owe brokerage and statutory charges on top of the loss?',
+      options: [
+        'No — charges only apply when you make a profit',
+        'Yes — every charge applies to the value traded, regardless of profit or loss',
+        'Only STT is waived on a losing trade',
+      ],
+      correct: 1,
+      reveal:
+        'Yes, every charge applies. STT, stamp duty, exchange fees and brokerage are computed from the value you traded, not from your profit or loss. A losing trade pays the same round-trip costs as a winning one of the same size. The charges are a toll on turnover, not a share of the gain.',
+      askWhy: true,
+    },
+    {
       kind: 'widget',
       component: 'BreakevenSlider',
       props: { market: 'IN', product: 'intraday', price: 1400, minValue: 5_000, maxValue: 1_000_000 },
@@ -151,6 +172,23 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'You buy 50 shares at ₹1,000 for delivery and sell at ₹950 after the price fell. Ignoring the loss on the shares themselves, roughly what percentage of the turnover goes to round-trip charges?',
+          type: 'compute',
+          spec: {
+            metric: 'roundTripCostPercent',
+            market: 'IN',
+            venue: 'NSE',
+            product: 'delivery',
+            price: 1000,
+            quantity: 50,
+            tolerance: 0.03,
+            unit: '%',
+          },
+          explanation:
+            'The round-trip charges apply to the turnover on both legs regardless of the loss on the shares. They are added on top of whatever the price did. A losing trade is never cheaper to execute than a winning one of the same size.',
+        },
         {
           prompt:
             'You plan 4 intraday round trips a day in ₹50,000 clips, targeting 0.3% per trade. Decide whether this is viable, and justify it with the breakeven number.',

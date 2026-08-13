@@ -53,6 +53,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'HoldingPeriodExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Two extra months of patience, same trade, same gain — ₹15,000 kept, with no skill required.',
+    },
+    {
       kind: 'callout',
       tone: 'warning',
       title: 'Rates change. Check them.',
@@ -116,6 +123,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A holding is down 30% on paper, but you have not sold it. Does this unrealised loss reduce your tax bill for the year in any way?',
+      options: [
+        'Yes — a loss is a loss, whether or not you sold',
+        'No — only a REALISED loss, from an actual sale, can be set off against gains; a paper loss does nothing until you sell',
+        'Yes, but only if you report it as a note on your return',
+      ],
+      correct: 1,
+      reveal:
+        'No, not until it is realised. Tax treats a loss as real only once you have actually sold and locked it in. A holding down 30% on paper is a loss on your screen, not yet a loss on your return.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'cost-cutter',
       config: {},
@@ -130,6 +151,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'An investor has a holding down 25% on paper and reasons this will already reduce this year\'s tax bill, without selling anything. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Correct — any loss, realised or not, reduces taxable gains',
+              'Incorrect — only a realised loss, from an actual sale, can be set off against gains',
+              'Correct, but only for losses over 20%',
+            ],
+            correct: 'Incorrect — only a realised loss, from an actual sale, can be set off against gains',
+          },
+          explanation:
+            'Incorrect. A paper loss does nothing for a tax bill until it is realised by actually selling.',
+        },
         {
           prompt:
             'You realise ₹4,00,000 of gains and book ₹1,50,000 of losses in the same year. At a 20% rate, what tax is due on the net, in rupees?',

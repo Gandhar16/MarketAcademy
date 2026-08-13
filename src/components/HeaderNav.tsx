@@ -24,6 +24,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ThemeToggle } from './ThemeToggle';
 
 export interface NavItem {
@@ -55,6 +56,7 @@ export function HeaderNav({ items, displayName }: { items: NavItem[]; displayNam
   }, [open]);
 
   const isCurrent = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const reduceMotion = useReducedMotion();
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-ground/85 backdrop-blur">
@@ -67,18 +69,29 @@ export function HeaderNav({ items, displayName }: { items: NavItem[]; displayNam
 
         {/* Wide screens: everything inline. */}
         <div className="hidden items-center gap-5 text-sm lg:flex">
-          {items.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              aria-current={isCurrent(n.href) ? 'page' : undefined}
-              className={
-                isCurrent(n.href) ? 'text-ink' : 'text-ink-muted transition-colors hover:text-ink'
-              }
-            >
-              {n.label}
-            </Link>
-          ))}
+          {items.map((n) => {
+            const current = isCurrent(n.href);
+            return (
+              <Link
+                key={n.href}
+                href={n.href}
+                aria-current={current ? 'page' : undefined}
+                className={[
+                  'relative py-1 transition-colors',
+                  current ? 'text-ink' : 'text-ink-muted hover:text-ink',
+                ].join(' ')}
+              >
+                {n.label}
+                {current && (
+                  <motion.span
+                    layoutId="nav-underline"
+                    className="absolute -bottom-[1px] left-0 right-0 h-[2px] rounded-full bg-accent"
+                    transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-3 text-sm">

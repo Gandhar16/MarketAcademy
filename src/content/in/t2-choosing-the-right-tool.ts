@@ -44,6 +44,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'ConvergenceCapstoneExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The cluster of three tools fades and the position-size box takes its place — that hand-off is the point of the whole stage.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'A map, not a ranking',
@@ -76,6 +83,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'A trader checks all nine tools from this stage before every single trade, reasoning that more tools checked means a better-informed decision. Is that reasoning sound?',
+      options: [
+        'Yes — checking more tools can only add information',
+        'Not necessarily — most of these tools are drawn from the same chart by the same eyes, so nine checks are not nine independent opinions',
+        'No — using more than one tool at a time is never appropriate',
+      ],
+      correct: 1,
+      reveal:
+        'Not necessarily. Nine tools applied to the same chart by the same person are not nine independent judgements. Many of them are variations on the same underlying price action, viewed through different lenses. Checking more of them can build false confidence rather than real information.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'RELIANCE.NS', interval: '1d', range: '1y' },
       mode: 'view',
@@ -96,6 +117,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader insists on checking all nine tools from this stage before every trade, believing this produces a uniquely well-informed decision. Decide what is missing from that reasoning.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Nothing — thoroughness like this is always an improvement',
+              'The tools are not independent of each other, so checking more of them does not add proportionally more real information',
+              'Nine tools is too few; a trader should check even more',
+            ],
+            correct:
+              'The tools are not independent of each other, so checking more of them does not add proportionally more real information',
+          },
+          explanation:
+            'They are not independent. Most of these tools are drawn from the same chart, by the same person, and often reduce to variations on the same price action.',
+        },
         {
           prompt: 'A drawn support zone, a Fibonacci level and a pivot S1 all sit within ₹4 of each other near ₹500. How many independent methods have converged on that price?',
           type: 'compute',

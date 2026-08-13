@@ -45,6 +45,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'TrendlineConfirmExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The line does not change colour until that third point actually arrives and respects it.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Two points always make a line',
@@ -160,6 +167,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Price gaps down overnight, opening well below a rising trendline with no candle actually touching the line on the way through. Has the trendline been broken?',
+      options: [
+        'No — a break requires price to touch the line first',
+        'Yes — the close is what matters, and it closed below the line regardless of how it got there',
+        'It depends on the size of the gap',
+      ],
+      correct: 1,
+      reveal:
+        'Yes. What confirms a break is where price closes relative to the line, not the path it took to get there. A gap straight through is still a close below it, whether price crossed slowly or jumped clean over the line overnight.',
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'candle-sprint',
       config: {},
@@ -174,6 +195,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A falling trendline sits at ₹450. The stock gaps up and opens at ₹470, never touching ₹450 on the way. Decide whether the line has been broken.',
+          type: 'decision',
+          spec: {
+            options: [
+              'No — price never touched the line',
+              'Yes — the close is above the line, which is what a break is measured against',
+              'The line needs to be redrawn before it can break',
+            ],
+            correct: 'Yes — the close is above the line, which is what a break is measured against',
+          },
+          explanation:
+            'Yes. A break is read from where price closes relative to the line. A gap through it still counts, exactly as it would for a slow grind through the same level.',
+        },
         {
           prompt: 'A trendline sits at ₹640 today and rises ₹1.20 a day. Where does it sit 10 trading days from now?',
           type: 'compute',

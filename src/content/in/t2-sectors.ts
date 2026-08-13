@@ -51,6 +51,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'SectorRatioExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. All three companies are healthy — the bar heights are telling you what industry each one is in, not how safe it is.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'What differs between industries',
@@ -121,6 +128,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        "An investor compares an Indian IT services company's margins against a US retail chain's, concluding the IT company is 'far more profitable, so clearly the better business'. What is wrong with that?",
+      options: [
+        'Nothing — a margin is a margin regardless of the business',
+        'Retail and IT services have completely different cost structures by nature, so their margins are never on the same scale',
+        'The comparison is fine as long as both are large companies',
+      ],
+      correct: 1,
+      reveal:
+        'Retail sells physical goods at thin markups on huge volume; IT services sells expertise with far lower physical costs. Their typical margins differ by design, not by which is the better-run business.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: '^NSEI', interval: '1mo', range: '10y' },
       mode: 'view',
@@ -137,6 +158,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            "A screener flags a software company as 'higher quality' than a supermarket chain purely because its profit margin is five times higher. Decide.",
+          type: 'decision',
+          spec: {
+            options: [
+              'A fair conclusion — higher margin always means higher quality',
+              'Not fair — software and retail have structurally different margins by nature, so this measures industry, not quality',
+              'Fair only if both companies are the same size',
+            ],
+            correct:
+              'Not fair — software and retail have structurally different margins by nature, so this measures industry, not quality',
+          },
+          explanation:
+            'Not fair. The margin gap reflects what kind of business each one is, the same shape-of-business trap this lesson names for debt ratios.',
+        },
         {
           prompt:
             'A cyclical company earned ₹200 crore last year and ₹25 crore this year, at an unchanged price of ₹1,000 crore. What is its multiple now?',

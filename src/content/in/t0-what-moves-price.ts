@@ -21,20 +21,20 @@ export const lesson: Lesson = {
   id: 'in-t0-what-moves-price',
   tier: 'T0',
   market: 'IN',
-  title: 'What actually moves a price',
+  title: 'Why does the price move?',
   summary:
     'Not good news — news better than expected. Everything you have already read is in the price, which is why a great result can be followed by a fall.',
   plainSummary:
-    'Prices move when reality differs from what people were expecting. This explains why good news does not always push a price up.',
+    'Prices move when reality differs from what people were expecting. This explains why good news does not always push a price up, and why a price move is not proof a company is good or bad.',
   objectives: [
     'Explain why a price moves on the difference from expectation, not on the news itself',
     'Say what it means for information to be already in the price',
-    'Describe why an ordinary buyer is rarely first to any public information',
-    'Decide whether a given piece of information could still be an advantage',
+    'Explain how genuinely good news can still come with a falling price',
+    'Say why a price move is not proof of a company\'s quality',
   ],
   prerequisites: ['in-t0-what-is-a-share'],
   estimatedMinutes: 11,
-  introduces: ['price', 'liquidity', 'order-book', 'bid', 'ask', 'volume'],
+  introduces: [],
   skills: ['foundations', 'price-formation'],
   blocks: [
     {
@@ -52,11 +52,25 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'ExpectationGapExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The exact same 20% result drives the price in opposite directions — watch what actually changes between the two runs.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'A price is a meeting point, not a fact',
       md:
-        'A **price** is simply the level at which somebody willing to buy met somebody willing to sell, most recently.\n\nIt is not a measurement of what a company is worth. Nobody computed it. It is the outcome of the last argument between two people, and it changes when the balance of willingness changes.\n\nSo "why did it move" is always one question: **what changed about what people are willing to do**. The usual answer is that they learnt something they were not expecting.',
+        'The quoted **price** is the price at which the NEXT willing buyer and willing seller agree to trade. Every completed trade has exactly one buyer and one seller — never a headcount of one side against the other, and never "more buyers than sellers".\n\nA price is not a measurement of what a company is worth. Nobody computed it. It is the outcome of the last agreement between two people, and it changes only when what somebody is willing to pay or accept changes.\n\nSo "why did it move" is always one question: **what changed about what people are willing to do**. The usual answer is that they learnt something they were not expecting.',
+    },
+    {
+      kind: 'callout',
+      tone: 'myth',
+      title: 'A rising price is not a verdict on the company',
+      md:
+        'It is tempting to read a rising price as proof a company is good, and a falling one as proof it is bad. Neither follows. A price moves on the gap between REALITY and EXPECTATION. Expectation can be wrong in either direction for reasons that have nothing to do with quality — a rumour, a fund needing cash, a sector-wide mood.\n\nA genuinely excellent company can see its price fall on a merely-good result, and a mediocre one can rally on a result that was merely less bad than feared. The price tells you what people currently expect. It does not tell you who is right.',
     },
     {
       kind: 'widget',
@@ -129,8 +143,66 @@ export const lesson: Lesson = {
         'By the time news is news, it is public. Public information is in the price, because thousands of people with faster access already acted on it.\n\nThis is not a claim that the price is always right. It is the much smaller claim that **you are not going to be first**, and a strategy whose only edge is reacting to headlines is one where being late is fatal.\n\nWhat is genuinely useful is having a view BEFORE the announcement, and being prepared to be wrong about it.',
     },
     {
+      kind: 'example',
+      title: 'Same result, two different reactions — because the starting expectation differed',
+      setup:
+        'Two fictional companies, Mango Motors and Papaya Textiles, both report profit up 10% on the same morning. Their prices react in opposite directions, because the crowd was expecting something different from each of them.',
+      steps: [
+        { label: 'Mango Motors — result vs expectation, in points', detail: 'Reported +10%, crowd expected +4%', compute: { fn: 'literal', value: '+6 points ahead of expectation' } },
+        { label: 'Mango Motors — price reaction', detail: 'A genuine beat, better than the crowd priced in', value: 'Price rises' },
+        { label: 'Papaya Textiles — result vs expectation, in points', detail: 'Reported +10%, crowd expected +18%', compute: { fn: 'literal', value: '−8 points behind expectation' } },
+        { label: 'Papaya Textiles — price reaction', detail: 'A genuine miss against expectation, despite the same 10% headline', value: 'Price falls' },
+      ],
+      conclusion:
+        'The identical headline number produced opposite price moves, because "10% profit growth" was not what either price was actually reacting to. Each price was reacting to how that 10% compared with what had already been priced in — and that comparison is different for every company, every time.',
+    },
+    {
+      kind: 'predict',
+      prompt:
+        'A well-run company\'s share falls 5% on a day with no company-specific news at all — but every other company in its sector also fell 4–6% that day. What is the most likely explanation?',
+      options: [
+        'The company must be hiding bad news',
+        'Something sector-wide changed what people expect from the whole group, and this company moved with it',
+        'The fall is definitely a pricing error that will correct itself',
+      ],
+      correct: 1,
+      reveal:
+        'Something changed for the whole sector — a regulatory signal, a change in input costs, a shift in how investors are pricing risk for the group generally. When a company moves in step with its peers on a day with no company-specific news, the explanation usually is not about that one company at all. It is the same mechanism as always. What changed is what people are willing to pay, and here that change applied to a whole group at once, not to one name.',
+      askWhy: true,
+    },
+    {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A share falls 6% on a day every company in its industry falls between 4% and 7%, with no news specific to any one of them. Decide the most defensible read.',
+          type: 'decision',
+          spec: {
+            options: [
+              'The company did something wrong that has not been disclosed yet',
+              'Something changed sector-wide in what investors expect, and this company moved with the group',
+              'The move is meaningless and can be ignored entirely',
+            ],
+            correct: 'Something changed sector-wide in what investors expect, and this company moved with the group',
+          },
+          explanation:
+            'A group-wide move on a day with no company-specific news points to a sector-wide cause, not a company-specific one. That does not mean the move should be ignored. It means the explanation to look for is one level up, in whatever changed for the whole group, not in this one company\'s disclosures.',
+        },
+        {
+          prompt:
+            'Mango Motors, a fictional company, reports profit up 15% — genuinely good news. Its price falls 4% that morning. Explain how both of those can be true at once.',
+          type: 'decision',
+          spec: {
+            options: [
+              'They cannot both be true — one of the two numbers must be wrong',
+              'The 15% was below what people were already expecting, so relative to that expectation it was disappointing',
+              'The price fall proves the 15% figure was misleading or false',
+            ],
+            correct: 'The 15% was below what people were already expecting, so relative to that expectation it was disappointing',
+          },
+          explanation:
+            'The first option assumes a contradiction that is not there. A real 15% gain and a falling price are simply two different measurements — one against last year, one against what buyers and sellers had already priced in. The third treats the price move as evidence about the company\'s honesty, which is the exact "price movement proves something about quality" error this lesson exists to correct. What actually happened: the price already contained a guess higher than 15%. A genuinely good result still came in below that guess, so the next willing buyer and seller agreed to trade at a lower number.',
+        },
         {
           prompt:
             'You buy 100 shares at ₹1,400 on a headline and sell three days later at the same price. What have those charges cost you, in rupees?',

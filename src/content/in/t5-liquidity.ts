@@ -49,6 +49,13 @@ export const lesson: Lesson = {
     },
     {
       kind: 'widget',
+      component: 'SpreadExplosionExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. The exit that costs ₹1,750 on an ordinary Tuesday costs roughly ₹25,000 on the day you actually need it.',
+    },
+    {
+      kind: 'widget',
       component: 'OrderBookLadder',
       props: {},
       takeaway:
@@ -111,6 +118,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'Does a liquidity event like this only threaten small, thinly traded shares, leaving large well-known index constituents unaffected?',
+      options: [
+        'Yes — large index shares always keep a normal spread and full depth',
+        'No — spreads can widen and depth can thin even in large shares during a severe event, just by less than in small caps',
+        'No, large shares are affected identically to small ones',
+      ],
+      correct: 1,
+      reveal:
+        "No. Large, liquid shares fare far better than small ones, and better is not the same as unaffected. In a genuine crisis even index constituents see wider spreads and thinner books than on an ordinary day, because market makers everywhere are pulling back at once. Liquidity is a matter of degree that gets worse for everyone in a crisis, not a switch that only turns off for small companies.",
+      askWhy: true,
+    },
+    {
       kind: 'game',
       game: 'circuit-breaker',
       config: {},
@@ -125,6 +146,21 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'A trader holds only large, well-known index shares and assumes they are fully immune to any liquidity event. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              'Correct — large shares never see the book thin out',
+              'Incorrect — large shares are affected less severely, but not immune',
+              'Correct, as long as the company is profitable',
+            ],
+            correct: 'Incorrect — large shares are affected less severely, but not immune',
+          },
+          explanation:
+            'Incorrect. Large shares hold up better, but spreads still widen and books still thin for everyone in a genuine crisis.',
+        },
         {
           prompt:
             'You must sell 5,000 shares at ₹1,400 into a crisis where the spread costs ₹4 a share. What does the spread alone cost, in rupees?',

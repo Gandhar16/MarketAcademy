@@ -51,6 +51,13 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'widget',
+      component: 'TriggerFillExplainer',
+      props: {},
+      takeaway:
+        'Step through it once. Nothing failed here — the order did exactly what it was told; the market simply was not at ₹1,350 that morning.',
+    },
+    {
       kind: 'callout',
       tone: 'insight',
       title: 'Two prices, not one',
@@ -114,6 +121,20 @@ export const lesson: Lesson = {
       askWhy: true,
     },
     {
+      kind: 'predict',
+      prompt:
+        'You place your stop at exactly ₹1,400 — a round number many other traders also use as a level. What is the practical risk of this, beyond the stop itself?',
+      options: [
+        'None — a stop at a round number works exactly the same as any other level',
+        'Round numbers often have many other stops clustered at the same price, which can worsen the fill when they all trigger together',
+        'Round numbers are always safer, since more people are watching them',
+      ],
+      correct: 1,
+      reveal:
+        'Round numbers attract clusters of stops from many different traders, not just yours. When the price reaches that level, a wave of sell orders can trigger at once, temporarily overwhelming the buyers resting there. It is the same mechanism as a thin book, produced by crowding rather than by low volume. A stop placed just beyond the round number, rather than exactly on it, avoids being caught in that particular crowd.',
+      askWhy: true,
+    },
+    {
       kind: 'chart',
       source: { type: 'live', symbol: 'RELIANCE.NS', interval: '1d', range: '6mo' },
       mode: 'view',
@@ -130,6 +151,22 @@ export const lesson: Lesson = {
     {
       kind: 'checkpoint',
       tasks: [
+        {
+          prompt:
+            'You are choosing between a stop at exactly ₹1,000 and a stop at ₹995, both roughly equally valid for where your idea is disproved. Decide.',
+          type: 'decision',
+          spec: {
+            options: [
+              '₹1,000, since round numbers are easier to remember',
+              '₹995, since a stop clustered at a round number risks a worse fill when many other stops trigger together',
+              'It makes no difference either way',
+            ],
+            correct:
+              '₹995, since a stop clustered at a round number risks a worse fill when many other stops trigger together',
+          },
+          explanation:
+            '₹995. When the level itself is genuinely ambiguous, avoiding the exact round number sidesteps the crowding effect this lesson describes — a small, free choice once you know to make it.',
+        },
         {
           prompt:
             'Account ₹3,00,000, risking 1%. Entry ₹800, the idea fails below ₹770. How many shares?',

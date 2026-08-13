@@ -11,21 +11,18 @@
  */
 import { useState } from 'react';
 import { BIAS_SCENARIOS } from '@/lib/games/scenarios';
+import { useSequentialScenarios } from '@/lib/hooks/useSequentialScenarios';
 
 export function BiasBuster() {
-  const [index, setIndex] = useState(0);
-  const [picked, setPicked] = useState<number | null>(null);
   const [trapped, setTrapped] = useState<string[]>([]);
   const [correct, setCorrect] = useState<string[]>([]);
-
-  const scenario = BIAS_SCENARIOS[index];
-  const finished = index >= BIAS_SCENARIOS.length;
+  const { index, picked, current, finished, total, choose: pick, next, reset } = useSequentialScenarios(BIAS_SCENARIOS);
 
   const choose = (i: number) => {
-    if (picked !== null) return;
-    setPicked(i);
-    if (i === scenario.correctIndex) setCorrect((c) => [...c, scenario.id]);
-    else if (i === scenario.trapIndex) setTrapped((t) => [...t, scenario.bias]);
+    pick(i, (choiceIndex, item) => {
+      if (choiceIndex === item.correctIndex) setCorrect((c) => [...c, item.id]);
+      else if (choiceIndex === item.trapIndex) setTrapped((t) => [...t, item.bias]);
+    });
   };
 
   if (finished) {
@@ -35,7 +32,7 @@ export function BiasBuster() {
           <div className="text-[11px] uppercase tracking-wider text-accent">Results</div>
           <div className="num mt-2 text-3xl">
             {correct.length}
-            <span className="text-lg text-ink-faint">/{BIAS_SCENARIOS.length}</span>
+            <span className="text-lg text-ink-faint">/{total}</span>
           </div>
           {trapped.length > 0 ? (
             <p className="mt-3 text-sm leading-relaxed text-ink-muted">
@@ -53,8 +50,7 @@ export function BiasBuster() {
         </div>
         <button
           onClick={() => {
-            setIndex(0);
-            setPicked(null);
+            reset();
             setTrapped([]);
             setCorrect([]);
           }}
@@ -65,6 +61,8 @@ export function BiasBuster() {
       </div>
     );
   }
+
+  const scenario = current as (typeof BIAS_SCENARIOS)[number];
 
   return (
     <div className="space-y-4">
@@ -116,13 +114,10 @@ export function BiasBuster() {
             <div className="text-[11px] uppercase tracking-wider text-accent">{scenario.bias}</div>
             <p className="mt-2 leading-relaxed text-ink-muted">{scenario.reveal}</p>
             <button
-              onClick={() => {
-                setIndex((n) => n + 1);
-                setPicked(null);
-              }}
+              onClick={next}
               className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis"
             >
-              {index === BIAS_SCENARIOS.length - 1 ? 'See results' : 'Next'}
+              {index === total - 1 ? 'See results' : 'Next'}
             </button>
           </div>
         )}
