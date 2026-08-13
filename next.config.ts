@@ -1,22 +1,40 @@
 import type { NextConfig } from "next";
 
 /**
- * The one inline script on the page — the blocking theme-init script in
- * `app/layout.tsx` that reads `localStorage` before paint to avoid a flash of
- * the wrong theme. Its exact source is hashed here so the CSP can allow only
- * this literal script and nothing else, without falling back to
- * `'unsafe-inline'` and without switching the app to nonce-based CSP (which
- * would force every one of its ~119 static pages into dynamic rendering).
- * If that script's source ever changes, this hash must be regenerated:
- *   node -e "console.log('sha256-' + require('crypto').createHash('sha256').update(SCRIPT_SOURCE, 'utf8').digest('base64'))"
+ * CORRECTION (see commit history): this used to hash-pin the one
+ * developer-authored inline script (theme-init) and rely on that alone for
+ * script-src. That broke every page in production. Two things were wrong
+ * with the assumption behind it:
+ *
+ *  1. Next's <Script strategy="beforeInteractive"> does not emit the raw
+ *     script text as the element's content — it wraps it in a runtime call
+ *     (`self.__next_s.push([...])`), so the hash of the bare source never
+ *     matched what was actually served.
+ *  2. Next.js App Router itself injects further inline <script> tags on
+ *     EVERY page to stream RSC "flight" data to the client
+ *     (`self.__next_f.push(...)`) — this is how hydration receives
+ *     server-rendered data at all, it is not something this app's code
+ *     controls or can enumerate hashes for, and it changes per page and per
+ *     build. A CSP that blocks it blocks hydration everywhere, which is
+ *     what happened.
+ *
+ * The fix is Next's own documented default for apps not using a nonce-based
+ * CSP: `'unsafe-inline'` on script-src. See
+ * node_modules/next/dist/docs/01-app/02-guides/content-security-policy.md,
+ * "Without Nonces". This still blocks any *externally hosted* script
+ * (script-src has no third-party origins in it), which is the injection
+ * vector that actually matters here — the two dangerouslySetInnerHTML sites
+ * in this app are a static developer-authored string and an
+ * HTML-escaped-then-markdown-subset renderer, neither of which is live user
+ * input. A genuine defence against inline-script injection would need
+ * nonce-based CSP via proxy.ts, which is a larger change than a hotfix
+ * warrants — worth revisiting, not worth rushing.
  */
-const THEME_INIT_SCRIPT_HASH = "sha256-7aN+fbKypNNZzhDJXeiiVjZoYxJoDnOVEb4QMdPt4G0=";
-
 const isDev = process.env.NODE_ENV === "development";
 
 const CSP = [
   "default-src 'self'",
-  `script-src 'self' '${THEME_INIT_SCRIPT_HASH}'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   // Tailwind v4 and several widgets emit inline `style` attributes/CSS-in-JS at
   // runtime (e.g. progress bars, gradient positions) — an inline-style CSP that
   // still blocks arbitrary *script* injection is the practical tradeoff here.
