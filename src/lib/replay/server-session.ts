@@ -19,6 +19,31 @@ import type { Candle } from '../market/types';
 import { getHistory } from '../market/service';
 import { MarketDataError } from '../market/types';
 
+/**
+ * A round-trip the server itself watched happen: opened at a price it dealt,
+ * closed at a price it dealt, everything else derived from those two numbers
+ * — not accepted as an assertion from the browser. See `openPosition` and
+ * `closePosition` for why this exists and what it deliberately does not cover.
+ */
+export interface RecordedTrade {
+  pnl: number;
+  stoppedOut: boolean;
+  plannedRR: number | null;
+  preCommitted: boolean;
+  riskFraction: number;
+  sizedFromStop: true;
+}
+
+export interface OpenPosition {
+  id: string;
+  side: 'buy' | 'sell';
+  entryPrice: number;
+  entryIndex: number;
+  stopPrice: number;
+  targetPrice: number | null;
+  hasThesis: boolean;
+}
+
 export interface ServerReplaySession {
   id: string;
   symbol: string;
@@ -30,6 +55,10 @@ export interface ServerReplaySession {
   tickSize: number;
   createdAt: number;
   lastTouchedAt: number;
+  /** At most one position at a time — this game never lets you hold two. */
+  open: OpenPosition | null;
+  /** Every round-trip closed in this session, in the order it happened. */
+  positions: RecordedTrade[];
 }
 
 const SESSIONS = new Map<string, ServerReplaySession>();
@@ -111,6 +140,8 @@ export async function startReplay(opts: { symbol?: string; seed?: number } = {})
     tickSize: 0.05,
     createdAt: now,
     lastTouchedAt: now,
+    open: null,
+    positions: [],
   };
   SESSIONS.set(session.id, session);
 
@@ -180,6 +211,116 @@ function averageVolumeAt(s: ServerReplaySession, cursor: number): number | null 
   const vols = s.candles.slice(start, cursor + 1).map((c) => c.volume).filter((v): v is number => v != null);
   if (vols.length === 0) return null;
   return vols.reduce((a, b) => a + b, 0) / vols.length;
+}
+
+/**
+ * The stop, as a percentage of entry. Mirrors the 0.5–10% range the
+ * ChartReplay slider actually offers — enforced here too, so a client that
+ * skips the slider and calls this endpoint directly cannot declare a stop a
+ * tick away from entry to manufacture a near-zero `riskFraction`.
+ */
+const MIN_STOP_PCT = 0.5;
+const MAX_STOP_PCT = 10;
+/** Mirrors the target slider's 0.5–20% range. */
+const MIN_TARGET_PCT = 0.5;
+const MAX_TARGET_PCT = 20;
+/** Position sizing here is always "half the account, sized from the stop" — see ChartReplay.tsx. */
+const FIXED_RISK_SIZING = 0.5;
+
+/**
+ * Open a position at the CURRENT bar's close — the same number the client is
+ * already showing as "Last", since that is exactly what `s.candles[s.cursor]`
+ * is. There is no separate "declare a price" step for a hostile client to lie
+ * about: the price used here is the one the server itself just dealt.
+ */
+export function openPosition(
+  sessionId: string,
+  opts: { side: 'buy' | 'sell'; stopPct: number; targetPct: number | null; hasThesis: boolean },
+): OpenPosition {
+  const s = SESSIONS.get(sessionId);
+  if (!s) throw new MarketDataError('Replay session not found or expired. Start a new replay.', 404);
+  if (s.open) throw new MarketDataError('A position is already open in this session.', 409);
+  if (!Number.isFinite(opts.stopPct) || opts.stopPct < MIN_STOP_PCT || opts.stopPct > MAX_STOP_PCT) {
+    throw new MarketDataError(`Stop must be between ${MIN_STOP_PCT}% and ${MAX_STOP_PCT}%.`, 400);
+  }
+  if (
+    opts.targetPct != null &&
+    (!Number.isFinite(opts.targetPct) || opts.targetPct < MIN_TARGET_PCT || opts.targetPct > MAX_TARGET_PCT)
+  ) {
+    throw new MarketDataError(`Target must be between ${MIN_TARGET_PCT}% and ${MAX_TARGET_PCT}%.`, 400);
+  }
+
+  s.lastTouchedAt = Date.now();
+  const entryPrice = s.candles[s.cursor].close;
+  const stopPrice = opts.side === 'buy' ? entryPrice * (1 - opts.stopPct / 100) : entryPrice * (1 + opts.stopPct / 100);
+  const targetPrice =
+    opts.targetPct == null
+      ? null
+      : opts.side === 'buy'
+        ? entryPrice * (1 + opts.targetPct / 100)
+        : entryPrice * (1 - opts.targetPct / 100);
+
+  const open: OpenPosition = {
+    id: `${sessionId}-${s.positions.length}`,
+    side: opts.side,
+    entryPrice,
+    entryIndex: s.cursor,
+    stopPrice,
+    targetPrice,
+    hasThesis: opts.hasThesis === true,
+  };
+  s.open = open;
+  return open;
+}
+
+/**
+ * Close the open position at the CURRENT bar's close and record the trade.
+ *
+ * `pnl`, `stoppedOut`, `plannedRR`, `preCommitted`, `riskFraction` and
+ * `sizedFromStop` all come from this — never from the client's own claim
+ * about what happened. What is deliberately NOT decided here is whether the
+ * exit was calm or a panic: `honouredStop`/`exitedPerPlan` in the game ask
+ * about the trader's state of mind at the moment they clicked, which is not
+ * a property of prices and bars and has no mechanical test. That half stays
+ * self-reported by design, the same way the written reason does.
+ */
+export function closePosition(sessionId: string, positionId: string): RecordedTrade {
+  const s = SESSIONS.get(sessionId);
+  if (!s) throw new MarketDataError('Replay session not found or expired. Start a new replay.', 404);
+  if (!s.open || s.open.id !== positionId) {
+    throw new MarketDataError('No matching open position in this session.', 409);
+  }
+
+  s.lastTouchedAt = Date.now();
+  const open = s.open;
+  const exitPrice = s.candles[s.cursor].close;
+
+  const pnl = open.side === 'buy' ? exitPrice - open.entryPrice : open.entryPrice - exitPrice;
+  const stoppedOut = open.side === 'buy' ? exitPrice <= open.stopPrice : exitPrice >= open.stopPrice;
+  const plannedRR =
+    open.targetPrice == null
+      ? null
+      : Math.abs(open.targetPrice - open.entryPrice) / Math.abs(open.entryPrice - open.stopPrice);
+  const stopDistance = Math.abs(open.entryPrice - open.stopPrice) / open.entryPrice;
+
+  const trade: RecordedTrade = {
+    pnl,
+    stoppedOut,
+    plannedRR,
+    preCommitted: open.hasThesis,
+    riskFraction: stopDistance * FIXED_RISK_SIZING,
+    sizedFromStop: true,
+  };
+
+  s.positions.push(trade);
+  s.open = null;
+  return trade;
+}
+
+/** Every trade this session has actually closed, in order. */
+export function getRecordedTrades(sessionId: string): RecordedTrade[] | null {
+  const s = SESSIONS.get(sessionId);
+  return s ? s.positions : null;
 }
 
 export interface RevealedReplay {

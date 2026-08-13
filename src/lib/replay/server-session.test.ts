@@ -13,6 +13,9 @@ import {
   _getSession,
   _putSession,
   _sessionCount,
+  closePosition,
+  getRecordedTrades,
+  openPosition,
   revealReplay,
   stepReplay,
   type ServerReplaySession,
@@ -41,6 +44,8 @@ function makeSession(over: Partial<ServerReplaySession> = {}): ServerReplaySessi
     tickSize: 0.05,
     createdAt: now,
     lastTouchedAt: now,
+    open: null,
+    positions: [],
     ...over,
   };
   _putSession(s);
@@ -139,6 +144,71 @@ describe('reveal', () => {
 
   it('rejects an unknown session', () => {
     expect(() => revealReplay('nope')).toThrow(/not found or expired/);
+  });
+});
+
+describe('positions', () => {
+  it('opens and closes at the current bar close, not a client-supplied price', () => {
+    const s = makeSession(); // cursor 59, candles[59].close === 1061
+    const open = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: 4, hasThesis: true });
+    expect(open.entryPrice).toBe(s.candles[59].close);
+
+    const trade = closePosition('test-session', open.id);
+    expect(trade.pnl).toBe(0); // no bar advanced between open and close
+    expect(trade.preCommitted).toBe(true);
+    expect(trade.sizedFromStop).toBe(true);
+    expect(trade.plannedRR).toBeCloseTo(2, 5); // 4% target ÷ 2% stop
+  });
+
+  it('derives pnl and stoppedOut from real bar movement, not the caller', () => {
+    makeSession({ candles: bars(63), cursor: 59 });
+    const open = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: false });
+    stepReplay('test-session'); // cursor -> 60, close rises by 1
+    const trade = closePosition('test-session', open.id);
+    expect(trade.pnl).toBeGreaterThan(0);
+    expect(trade.stoppedOut).toBe(false);
+    expect(trade.plannedRR).toBeNull(); // no target declared
+  });
+
+  it('rejects a second open while one is already resting', () => {
+    makeSession();
+    openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
+    expect(() =>
+      openPosition('test-session', { side: 'sell', stopPct: 2, targetPct: null, hasThesis: true }),
+    ).toThrow(/already open/);
+  });
+
+  it('rejects a stop outside the range the UI ever offers', () => {
+    makeSession();
+    expect(() =>
+      openPosition('test-session', { side: 'buy', stopPct: 0.01, targetPct: null, hasThesis: true }),
+    ).toThrow(/between/);
+    expect(() =>
+      openPosition('test-session', { side: 'buy', stopPct: 50, targetPct: null, hasThesis: true }),
+    ).toThrow(/between/);
+  });
+
+  it('rejects closing a position that does not match the recorded id', () => {
+    makeSession();
+    openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
+    expect(() => closePosition('test-session', 'not-the-real-id')).toThrow(/No matching open position/);
+  });
+
+  it('accumulates every closed trade in order, and exposes it read-only', () => {
+    makeSession();
+    const first = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
+    closePosition('test-session', first.id);
+    const second = openPosition('test-session', { side: 'sell', stopPct: 3, targetPct: null, hasThesis: false });
+    closePosition('test-session', second.id);
+
+    const trades = getRecordedTrades('test-session');
+    expect(trades).toHaveLength(2);
+    expect(trades?.[0].preCommitted).toBe(true);
+    expect(trades?.[1].preCommitted).toBe(false);
+  });
+
+  it('returns null for an unknown session rather than throwing', () => {
+    expect(getRecordedTrades('nope')).toBeNull();
   });
 });
 

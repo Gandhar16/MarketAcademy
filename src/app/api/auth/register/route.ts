@@ -7,6 +7,7 @@ import { getDb } from '@/lib/db';
 import { createUser } from '@/lib/db/users';
 import { startSession } from '@/lib/auth/session';
 import { enforceRateLimit } from '@/lib/market/http';
+import { verifySameOrigin } from '@/lib/security/csrf';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const limited = enforceRateLimit(req);
   if (limited) return limited;
+
+  const forbidden = verifySameOrigin(req);
+  if (forbidden) return forbidden;
 
   const body = await req.json().catch(() => null);
   if (

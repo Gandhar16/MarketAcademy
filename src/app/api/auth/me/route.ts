@@ -8,6 +8,7 @@ import { getDb } from '@/lib/db';
 import { deleteUser, updateProfile } from '@/lib/db/users';
 import { loadSnapshot } from '@/lib/db/progress';
 import { currentUser, endSession, requireUser } from '@/lib/auth/session';
+import { verifySameOrigin } from '@/lib/security/csrf';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,9 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
+  const forbidden = verifySameOrigin(req);
+  if (forbidden) return forbidden;
+
   const user = await requireUser();
   if (user instanceof Response) return user;
 
@@ -37,7 +41,10 @@ export async function PATCH(req: Request) {
   return NextResponse.json({ user: result.value });
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
+  const forbidden = verifySameOrigin(req);
+  if (forbidden) return forbidden;
+
   const user = await requireUser();
   if (user instanceof Response) return user;
 

@@ -49,12 +49,15 @@ interface Verdict {
 
 export function RunSubmit({
   game,
+  sessionId,
   trades,
   pnl,
   accuracy,
   defaultReason = '',
 }: {
   game: string;
+  /** The server replay session these trades were actually played through, if any — see `/api/replay`. */
+  sessionId?: string;
   trades: TradeRecord[];
   pnl?: number;
   accuracy?: number;
@@ -89,7 +92,7 @@ export function RunSubmit({
       const res = await fetch('/api/progress/run', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ game, trades, pnl, accuracy, reason }),
+        body: JSON.stringify({ game, sessionId, trades, pnl, accuracy, reason }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message ?? 'The run could not be filed.');

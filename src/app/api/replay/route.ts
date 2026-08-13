@@ -9,9 +9,10 @@
  * client cannot request the future — only the next bar.
  */
 import { NextResponse } from 'next/server';
-import { revealReplay, startReplay, stepReplay } from '@/lib/replay/server-session';
+import { closePosition, openPosition, revealReplay, startReplay, stepReplay } from '@/lib/replay/server-session';
 import { enforceRateLimit, errorResponse } from '@/lib/market/http';
 import { MarketDataError } from '@/lib/market/types';
+import { verifySameOrigin } from '@/lib/security/csrf';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const limited = enforceRateLimit(req);
   if (limited) return limited;
+
+  const forbidden = verifySameOrigin(req);
+  if (forbidden) return forbidden;
 
   try {
     const url = new URL(req.url);
@@ -32,6 +36,26 @@ export async function POST(req: Request) {
     if (url.searchParams.has('reveal')) {
       const sessionId = requireSessionId(body);
       return NextResponse.json(revealReplay(sessionId));
+    }
+
+    if (url.searchParams.has('open-position')) {
+      const sessionId = requireSessionId(body);
+      const side = body.side === 'buy' || body.side === 'sell' ? body.side : null;
+      if (!side) throw new MarketDataError('side must be "buy" or "sell".', 400);
+      const stopPct = Number(body.stopPct);
+      const targetPct = body.targetPct == null ? null : Number(body.targetPct);
+      return NextResponse.json(
+        openPosition(sessionId, { side, stopPct, targetPct, hasThesis: body.hasThesis === true }),
+      );
+    }
+
+    if (url.searchParams.has('close-position')) {
+      const sessionId = requireSessionId(body);
+      const positionId = (body as { positionId?: unknown }).positionId;
+      if (typeof positionId !== 'string' || positionId.length === 0) {
+        throw new MarketDataError('positionId is required', 400);
+      }
+      return NextResponse.json(closePosition(sessionId, positionId));
     }
 
     const started = await startReplay({

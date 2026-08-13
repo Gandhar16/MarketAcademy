@@ -6,10 +6,15 @@
  * submitted trade records, never accepted from the client — a leaderboard whose
  * scores are supplied by the thing being ranked is not a leaderboard.
  *
- * The trade records themselves are still client-reported, which is an honest
- * limitation of a game that runs in the browser. What this buys is that every
- * score on the board was produced by one scorer with one set of rules, and that
- * inflating a score requires lying about behaviour rather than about a number.
+ * chart-replay is currently the only game that submits TradeRecord[] built
+ * from real trading decisions, and for it most of the record is no longer
+ * taken on trust either: pnl, stoppedOut, plannedRR, preCommitted,
+ * riskFraction and sizedFromStop are all overwritten below from the replay
+ * session's own server-side ledger (see openPosition/closePosition in
+ * lib/replay/server-session.ts). What is left client-reported —
+ * honouredStop and exitedPerPlan — asks whether the exit was calm or a
+ * panic, which is a fact about the trader's state of mind, not the market,
+ * and has no mechanical test.
  */
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
@@ -17,7 +22,9 @@ import { recordGameRun } from '@/lib/db/progress';
 import type { TradeRecord } from '@/lib/progress/mastery';
 import { requireUser } from '@/lib/auth/session';
 import { enforceRateLimit } from '@/lib/market/http';
+import { verifySameOrigin } from '@/lib/security/csrf';
 import { GAMES_BY_SLUG } from '@/lib/games/catalogue';
+import { getRecordedTrades } from '@/lib/replay/server-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,6 +69,9 @@ export async function POST(req: Request) {
   const limited = enforceRateLimit(req);
   if (limited) return limited;
 
+  const forbidden = verifySameOrigin(req);
+  if (forbidden) return forbidden;
+
   const user = await requireUser();
   if (user instanceof Response) return user;
 
@@ -76,7 +86,53 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'too_large', message: 'Too many trades in one run.' }, { status: 413 });
   }
 
-  const trades = body.trades.map(toTrade).filter((t: TradeRecord | null): t is TradeRecord => t !== null);
+  let trades = body.trades.map(toTrade).filter((t: TradeRecord | null): t is TradeRecord => t !== null);
+
+  // chart-replay is the one game that submits a scored TradeRecord[] built
+  // from actual trading decisions, so it is the one game where a fabricated
+  // POST body is worth anything — see the audit note in server-session.ts.
+  // Every field that is a fact about prices (pnl, stoppedOut, plannedRR) or
+  // about what was recorded at entry (preCommitted, riskFraction,
+  // sizedFromStop) is overwritten here from the server's own ledger for the
+  // session these trades claim to come from. `honouredStop`/`exitedPerPlan`
+  // are the one part of this game that is genuinely self-reported — see the
+  // comment on closePosition() in server-session.ts for why.
+  if (body.game === 'chart-replay') {
+    if (typeof body.sessionId !== 'string' || body.sessionId.length === 0) {
+      return NextResponse.json(
+        { error: 'bad_request', message: 'This run needs the replay session it was played through. Start a new replay.' },
+        { status: 400 },
+      );
+    }
+    const recorded = getRecordedTrades(body.sessionId);
+    if (!recorded) {
+      return NextResponse.json(
+        {
+          error: 'not_found',
+          message: 'That replay session was not found or has expired. Play a fresh replay and file the run promptly.',
+        },
+        { status: 404 },
+      );
+    }
+    if (recorded.length !== trades.length) {
+      return NextResponse.json(
+        {
+          error: 'bad_request',
+          message: `This session recorded ${recorded.length} closed trade(s), but the run claims ${trades.length}. Only trades actually played through this session can be filed.`,
+        },
+        { status: 400 },
+      );
+    }
+    trades = trades.map((t: TradeRecord, i: number) => ({
+      ...t,
+      pnl: recorded[i].pnl,
+      stoppedOut: recorded[i].stoppedOut,
+      plannedRR: recorded[i].plannedRR,
+      preCommitted: recorded[i].preCommitted,
+      riskFraction: recorded[i].riskFraction,
+      sizedFromStop: recorded[i].sizedFromStop,
+    }));
+  }
 
   // The reason is stripped of markup here rather than at render time. It is
   // shown to other learners, and the safest thing to store is text that was
@@ -84,10 +140,19 @@ export async function POST(req: Request) {
   const reason =
     typeof body.reason === 'string' ? body.reason.replace(/[<>]/g, '').trim().slice(0, MAX_REASON_CHARS) : '';
 
+  // `pnl` is normally allowed to be a richer client-computed number (Chart
+  // Replay's own account P&L includes charges a bare sum of trade records
+  // does not — see the comment on recordGameRun). But that richness is also
+  // exactly what made it spoofable: nothing upstream of here checked it
+  // against anything. For chart-replay it is dropped once trades are
+  // server-verified, so recordGameRun falls back to summing the (now
+  // verified) trades' pnl instead of trusting a bare number in the POST body.
+  const trustClientPnl = body.game !== 'chart-replay';
+
   const run = await recordGameRun(await getDb(), user.id, {
     game: body.game,
     accuracy: typeof body.accuracy === 'number' && Number.isFinite(body.accuracy) ? body.accuracy : null,
-    pnl: typeof body.pnl === 'number' && Number.isFinite(body.pnl) ? body.pnl : null,
+    pnl: trustClientPnl && typeof body.pnl === 'number' && Number.isFinite(body.pnl) ? body.pnl : null,
     trades,
     reason,
   });

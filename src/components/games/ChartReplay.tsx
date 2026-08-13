@@ -37,10 +37,18 @@ interface Entry {
   /**
    * Reward against risk, fixed at entry. Recorded because the alternative —
    * judging the trade on what it made — cannot tell a good decision from a
-   * lucky one, and this can.
+   * lucky one, and this can. Client-side display only now — the number that
+   * actually feeds the score is recomputed server-side in closePosition().
    */
   plannedRR: number;
   thesis: string;
+  /**
+   * The server's id for this open position (see server-session.ts). Every
+   * scored field on the trade this position becomes — pnl, stoppedOut,
+   * plannedRR, preCommitted, riskFraction — is derived server-side from what
+   * was actually recorded at open, not from anything in this object.
+   */
+  positionId: string;
 }
 
 export function ChartReplay() {
@@ -60,6 +68,8 @@ export function ChartReplay() {
   const [revealed, setRevealed] = useState<{ symbol: string; candles: Candle[] } | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [lastFill, setLastFill] = useState<string | null>(null);
+  /** True while an open/close-position round trip to the server is in flight. */
+  const [committing, setCommitting] = useState(false);
 
   const [thesis, setThesis] = useState('');
   const [stopPercent, setStopPercent] = useState(3);
@@ -102,6 +112,7 @@ export function ChartReplay() {
     setEntry(null);
     setStance('flat');
     setLastFill(null);
+    setCommitting(false);
     void load();
   }, [load]);
 
@@ -114,7 +125,7 @@ export function ChartReplay() {
   const price = visible.length > 0 ? visible[visible.length - 1].close : 0;
 
   const advance = useCallback(async () => {
-    if (!replay || stepping || replay.finished) return;
+    if (!replay || stepping || committing || replay.finished) return;
     setStepping(true);
     try {
       const result = await replay.step();
@@ -156,76 +167,108 @@ export function ChartReplay() {
     } finally {
       setStepping(false);
     }
-  }, [replay, stepping, account]);
+  }, [replay, stepping, committing, account]);
 
-  const takePosition = (next: Exclude<Stance, 'flat'>) => {
-    if (!replay) return;
-    const stop = next === 'long' ? price * (1 - stopPercent / 100) : price * (1 + stopPercent / 100);
-    const quantity = Math.max(1, Math.floor((account.cash * 0.5) / price));
+  const takePosition = async (next: Exclude<Stance, 'flat'>) => {
+    if (!replay || committing) return;
+    setCommitting(true);
+    try {
+      const side = next === 'long' ? 'buy' : 'sell';
+      // Recorded with the server FIRST, at the price it just dealt — this is
+      // what makes pnl/stoppedOut/plannedRR/preCommitted/riskFraction on the
+      // eventual trade record real rather than a client-side assertion.
+      const opened = await replay.openPosition({
+        side,
+        stopPct: stopPercent,
+        targetPct: targetPercent,
+        hasThesis: thesis.trim().length > 0,
+      });
 
-    replay.submit(
-      newOrderState({
-        id: `entry-${replay.index}`,
-        symbol: 'REPLAY',
-        side: next === 'long' ? 'buy' : 'sell',
-        quantity,
-        type: 'MARKET',
-        product: 'intraday',
-        validity: 'DAY',
-        placedAt: Date.now(),
-      }),
-    );
+      const stop = next === 'long' ? price * (1 - stopPercent / 100) : price * (1 + stopPercent / 100);
+      const quantity = Math.max(1, Math.floor((account.cash * 0.5) / price));
 
-    const target = next === 'long' ? price * (1 + targetPercent / 100) : price * (1 - targetPercent / 100);
-
-    setEntry({ stance: next, price, stop, target, plannedRR: targetPercent / stopPercent, thesis });
-    setTheses((t) => [...t, `${next} from ${price.toFixed(2)}: ${thesis.trim()}`]);
-    setStance(next);
-    setThesis('');
-  };
-
-  const closePosition = (reason: 'plan' | 'impulse') => {
-    if (!replay || !entry) return;
-    const pos = Object.values(account.positions)[0];
-    if (pos) {
       replay.submit(
         newOrderState({
-          id: `exit-${replay.index}`,
+          id: `entry-${replay.index}`,
           symbol: 'REPLAY',
-          side: pos.quantity > 0 ? 'sell' : 'buy',
-          quantity: Math.abs(pos.quantity),
+          side,
+          quantity,
           type: 'MARKET',
           product: 'intraday',
           validity: 'DAY',
           placedAt: Date.now(),
         }),
       );
-    }
 
-    const pnl = entry.stance === 'long' ? price - entry.price : entry.price - price;
-    const stopDistance = Math.abs(entry.price - entry.stop) / entry.price;
-    // Whether the stop was REACHED, which is a different question from whether
-    // it was honoured. A trade can honour a stop it never touched, and a trade
-    // can reach one that was dragged away first.
-    const hitStop =
-      entry.stance === 'long' ? price <= entry.stop : price >= entry.stop;
-    setTrades((t) => [
-      ...t,
-      {
-        preCommitted: entry.thesis.trim().length > 0,
-        // Half the account at risk over the stop distance, which is what the
-        // fixed 50% sizing above actually implies.
-        riskFraction: stopDistance * 0.5,
-        honouredStop: reason !== 'impulse',
-        exitedPerPlan: reason !== 'impulse',
-        pnl,
-        sizedFromStop: true,
-        plannedRR: entry.plannedRR,
-        stoppedOut: hitStop,
-      },
-    ]);
-    setEntry(null);
-    setStance('flat');
+      const target = next === 'long' ? price * (1 + targetPercent / 100) : price * (1 - targetPercent / 100);
+
+      setEntry({
+        stance: next,
+        price: opened.entryPrice,
+        stop,
+        target,
+        plannedRR: targetPercent / stopPercent,
+        thesis,
+        positionId: opened.id,
+      });
+      setTheses((t) => [...t, `${next} from ${opened.entryPrice.toFixed(2)}: ${thesis.trim()}`]);
+      setStance(next);
+      setThesis('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not open the position.');
+    } finally {
+      setCommitting(false);
+    }
+  };
+
+  const closePosition = async (reason: 'plan' | 'impulse') => {
+    if (!replay || !entry || committing) return;
+    setCommitting(true);
+    try {
+      const pos = Object.values(account.positions)[0];
+      if (pos) {
+        replay.submit(
+          newOrderState({
+            id: `exit-${replay.index}`,
+            symbol: 'REPLAY',
+            side: pos.quantity > 0 ? 'sell' : 'buy',
+            quantity: Math.abs(pos.quantity),
+            type: 'MARKET',
+            product: 'intraday',
+            validity: 'DAY',
+            placedAt: Date.now(),
+          }),
+        );
+      }
+
+      // The server closes at the price it just dealt and derives every
+      // mechanically-checkable field from its own record of the position —
+      // see closePosition() in server-session.ts. `honouredStop` and
+      // `exitedPerPlan` are the one part of this game that is genuinely
+      // self-reported: they ask whether the exit was calm or a panic, which
+      // is a fact about the trader, not the market, and has no server-side
+      // test.
+      const verified = await replay.closePosition(entry.positionId);
+      setTrades((t) => [
+        ...t,
+        {
+          preCommitted: verified.preCommitted,
+          riskFraction: verified.riskFraction,
+          honouredStop: reason !== 'impulse',
+          exitedPerPlan: reason !== 'impulse',
+          pnl: verified.pnl,
+          sizedFromStop: true,
+          plannedRR: verified.plannedRR,
+          stoppedOut: verified.stoppedOut,
+        },
+      ]);
+      setEntry(null);
+      setStance('flat');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not close the position.');
+    } finally {
+      setCommitting(false);
+    }
   };
 
   /**
@@ -289,7 +332,7 @@ export function ChartReplay() {
             {!finished && (
               <button
                 onClick={() => void advance()}
-                disabled={stepping}
+                disabled={stepping || committing}
                 className="num rounded-lg border border-line-strong px-3 py-1.5 text-[12px] text-ink-muted transition-colors hover:text-ink disabled:opacity-40"
               >
                 {stepping ? 'Revealing…' : 'Next bar →'}
@@ -383,16 +426,16 @@ export function ChartReplay() {
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
-                  disabled={thesis.trim().length === 0 || stepping}
-                  onClick={() => takePosition('long')}
+                  disabled={thesis.trim().length === 0 || stepping || committing}
+                  onClick={() => void takePosition('long')}
                   className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-30"
                   style={{ background: 'var(--color-up)', color: 'var(--color-on-emphasis)' }}
                 >
                   Go long
                 </button>
                 <button
-                  disabled={thesis.trim().length === 0 || stepping}
-                  onClick={() => takePosition('short')}
+                  disabled={thesis.trim().length === 0 || stepping || committing}
+                  onClick={() => void takePosition('short')}
                   className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-30"
                   style={{ background: 'var(--color-down)', color: 'var(--color-on-emphasis)' }}
                 >
@@ -400,7 +443,7 @@ export function ChartReplay() {
                 </button>
                 <button
                   onClick={() => void advance()}
-                  disabled={stepping}
+                  disabled={stepping || committing}
                   className="rounded-lg border border-line-strong px-4 py-2 text-sm text-ink-muted disabled:opacity-40"
                 >
                   {stepping ? 'Revealing…' : 'Stay flat, next bar →'}
@@ -439,20 +482,22 @@ export function ChartReplay() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   onClick={() => void advance()}
-                  disabled={stepping}
+                  disabled={stepping || committing}
                   className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis disabled:opacity-40"
                 >
                   {stepping ? 'Revealing…' : 'Hold, next bar →'}
                 </button>
                 <button
-                  onClick={() => closePosition('plan')}
-                  className="rounded-lg border border-line-strong px-4 py-2 text-sm text-ink-muted"
+                  onClick={() => void closePosition('plan')}
+                  disabled={committing}
+                  className="rounded-lg border border-line-strong px-4 py-2 text-sm text-ink-muted disabled:opacity-40"
                 >
                   Exit — thesis played out
                 </button>
                 <button
-                  onClick={() => closePosition('impulse')}
-                  className="rounded-lg border border-line px-4 py-2 text-sm text-ink-faint"
+                  onClick={() => void closePosition('impulse')}
+                  disabled={committing}
+                  className="rounded-lg border border-line px-4 py-2 text-sm text-ink-faint disabled:opacity-40"
                 >
                   Exit — I just want out
                 </button>
@@ -492,6 +537,7 @@ export function ChartReplay() {
               ))}
               <RunSubmit
                 game="chart-replay"
+                sessionId={replay?.sessionId}
                 trades={trades}
                 pnl={eq - STARTING_CASH}
                 defaultReason={theses.join('\n')}

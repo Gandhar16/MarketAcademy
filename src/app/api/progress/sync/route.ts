@@ -13,6 +13,7 @@ import { getDb } from '@/lib/db';
 import { mergeSnapshot, type IncomingSnapshot } from '@/lib/db/progress';
 import { requireUser } from '@/lib/auth/session';
 import { enforceRateLimit } from '@/lib/market/http';
+import { verifySameOrigin } from '@/lib/security/csrf';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,6 +28,9 @@ function num(v: unknown, fallback = 0): number {
 export async function POST(req: Request) {
   const limited = enforceRateLimit(req);
   if (limited) return limited;
+
+  const forbidden = verifySameOrigin(req);
+  if (forbidden) return forbidden;
 
   const user = await requireUser();
   if (user instanceof Response) return user;

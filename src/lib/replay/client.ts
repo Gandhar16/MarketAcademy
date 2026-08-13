@@ -76,6 +76,9 @@ export class RemoteReplay {
   get lastPrice(): number {
     return this.#visible.length > 0 ? this.#visible[this.#visible.length - 1].close : 0;
   }
+  get sessionId(): string {
+    return this.#sessionId;
+  }
 
   workingOrders(): OrderState[] {
     return this.#working.map((o) => ({ ...o }));
@@ -143,5 +146,29 @@ export class RemoteReplay {
   /** Only succeeds once the replay is over — the server enforces it. */
   async reveal(): Promise<{ symbol: string; candles: Candle[] }> {
     return post('/api/replay?reveal', { sessionId: this.#sessionId });
+  }
+
+  /**
+   * Records the entry with the server, at the price the server itself just
+   * dealt — see `openPosition` in server-session.ts for why this is the
+   * source of truth for scoring rather than anything computed here.
+   */
+  async openPosition(opts: {
+    side: 'buy' | 'sell';
+    stopPct: number;
+    targetPct: number | null;
+    hasThesis: boolean;
+  }): Promise<{ id: string; entryPrice: number }> {
+    return post('/api/replay?open-position', { sessionId: this.#sessionId, ...opts });
+  }
+
+  async closePosition(positionId: string): Promise<{
+    pnl: number;
+    stoppedOut: boolean;
+    plannedRR: number | null;
+    preCommitted: boolean;
+    riskFraction: number;
+  }> {
+    return post('/api/replay?close-position', { sessionId: this.#sessionId, positionId });
   }
 }
