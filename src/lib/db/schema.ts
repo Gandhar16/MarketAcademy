@@ -34,7 +34,15 @@ CREATE TABLE IF NOT EXISTS users (
   -- Opt-in. A learner who never ticks this is absent from the leaderboard
   -- entirely, not merely hidden from the page.
   leaderboard_opt_in INTEGER NOT NULL DEFAULT 0,
-  market         TEXT NOT NULL DEFAULT 'IN'
+  market         TEXT NOT NULL DEFAULT 'IN',
+  -- 'free' | 'pro'. The source of truth for access checks is this column, not
+  -- the subscriptions table below — it is denormalised on purpose so a gate
+  -- check is one row read, not a join, on every lesson and every game page.
+  plan           TEXT NOT NULL DEFAULT 'free',
+  -- Epoch ms the current Pro grant lapses. NULL means either 'free' (the
+  -- column is meaningless) or a lifetime grant (paid once, never expires) —
+  -- the two are disambiguated by \`plan\` alone, never by this being NULL.
+  plan_expires_at INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -149,4 +157,43 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 );
 
 CREATE INDEX IF NOT EXISTS login_attempts_key ON login_attempts(key, at);
+
+-- One row per Razorpay order (lifetime) or subscription (monthly/quarterly/
+-- annual) a user has ever started checkout on. \`users.plan\`/\`plan_expires_at\`
+-- is what every access check reads; this table is the audit trail and the
+-- thing a webhook updates — see lib/db/payments.ts for why the two are kept
+-- separate rather than computing plan state from this table on every read.
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id                      TEXT PRIMARY KEY,
+  user_id                 TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  plan_id                 TEXT NOT NULL,
+  -- Present for a one-time (lifetime) purchase, NULL for a recurring plan.
+  razorpay_order_id       TEXT,
+  -- Present for a recurring plan, NULL for a one-time purchase.
+  razorpay_subscription_id TEXT,
+  -- 'created' | 'active' | 'cancelled' | 'completed' | 'halted' | 'expired'.
+  -- Mirrors Razorpay's own subscription status vocabulary directly rather than
+  -- inventing a parallel one, so a webhook payload maps onto this with no
+  -- translation table to keep in sync.
+  status                  TEXT NOT NULL DEFAULT 'created',
+  -- Epoch ms the current billing period ends. NULL for a lifetime purchase.
+  current_period_end      INTEGER,
+  created_at              INTEGER NOT NULL,
+  updated_at              INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS subscriptions_user ON subscriptions(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_razorpay_order ON subscriptions(razorpay_order_id) WHERE razorpay_order_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_razorpay_subscription ON subscriptions(razorpay_subscription_id) WHERE razorpay_subscription_id IS NOT NULL;
+
+-- Every Razorpay webhook event actually applied, keyed on Razorpay's own event
+-- id. Razorpay retries a webhook delivery on anything but a 200, so the same
+-- event WILL arrive more than once in the ordinary case, not just as a
+-- failure mode — this table is what makes applying one twice a no-op instead
+-- of a double-charge or a double-extension of a billing period.
+CREATE TABLE IF NOT EXISTS payment_events (
+  razorpay_event_id TEXT PRIMARY KEY,
+  event_type        TEXT NOT NULL,
+  processed_at      INTEGER NOT NULL
+);
 `;

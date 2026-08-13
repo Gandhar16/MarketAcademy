@@ -25,6 +25,8 @@ import type { SyllabusStage } from '@/content/syllabus';
 import { GAMES_BY_SLUG } from '@/lib/games/catalogue';
 import { renderWidget } from '@/components/widgets/registry';
 import { renderGame } from '@/components/games/registry';
+import { ProPaywall } from '@/components/payments/ProPaywall';
+import { isGameGated } from '@/lib/payments/access';
 import { useProgress } from '@/lib/progress/store';
 import { Checkpoint } from './Checkpoint';
 import { WorkedExample } from './WorkedExample';
@@ -50,7 +52,7 @@ export function AnnotatedText({ text, className }: { text: string; className?: s
   return <span className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-export function LessonPlayer({ lesson }: { lesson: Lesson }) {
+export function LessonPlayer({ lesson, isPro }: { lesson: Lesson; isPro: boolean }) {
   const commit = useProgress((s) => s.commit);
   const commitmentFor = useProgress((s) => s.commitmentFor);
   const setBlockIndex = useProgress((s) => s.setBlockIndex);
@@ -151,6 +153,7 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
               index={i}
               lessonId={lesson.id}
               isCurrent={i === unlocked}
+              isPro={isPro}
               commitment={commitmentFor(lesson.id, i)}
               reveal={reveals[i]}
               onCommit={(choice, why) => {
@@ -279,6 +282,7 @@ function BlockView({
   index,
   lessonId,
   isCurrent,
+  isPro,
   commitment,
   reveal,
   onCommit,
@@ -288,6 +292,7 @@ function BlockView({
   index: number;
   lessonId: string;
   isCurrent: boolean;
+  isPro: boolean;
   commitment: { choice: number; why?: string } | undefined;
   reveal: { correct: number; reveal: string } | undefined;
   onCommit: (choice: number, why?: string) => void;
@@ -341,6 +346,18 @@ function BlockView({
       );
 
     case 'game':
+      // A lesson's own tier does not make an embedded game free by
+      // association — a free-tier lesson can still embed a Pro-tier game
+      // (e.g. t1-journal.ts embeds chart-replay), so this is checked
+      // independently of whatever gate let this lesson render at all.
+      if (isGameGated(block.game) && !isPro) {
+        return (
+          <ProPaywall
+            title="This game is part of Pro"
+            body="Six of the ten games stay free forever. This is one of the four with real engine complexity behind it."
+          />
+        );
+      }
       return <figure>{renderGame(block.game, block.config)}</figure>;
 
     case 'checkpoint':

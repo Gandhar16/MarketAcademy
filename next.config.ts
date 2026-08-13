@@ -32,16 +32,32 @@ import type { NextConfig } from "next";
  */
 const isDev = process.env.NODE_ENV === "development";
 
+/**
+ * Razorpay Checkout is a script loaded from checkout.razorpay.com that opens
+ * its own iframe/popup and makes its own API calls — none of that is
+ * same-origin, so it needs explicit allowances on top of the site's own
+ * 'self'. Domains per Razorpay's standard web integration (checkout.js must
+ * be loaded directly from their CDN, not bundled, to stay PCI-compliant —
+ * see razorpay.com/docs/payments/payment-gateway/web-integration/standard/).
+ * Not verified against a live browser console yet — there are no real
+ * Razorpay keys in this environment to actually open the widget with — so
+ * treat this as a documented starting point to confirm once real checkout
+ * traffic is possible, the same way the earlier script-src mistake should
+ * have been caught before, not after, shipping.
+ */
+const RAZORPAY_ORIGINS = "https://checkout.razorpay.com https://api.razorpay.com";
+
 const CSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' ${RAZORPAY_ORIGINS}${isDev ? " 'unsafe-eval'" : ""}`,
   // Tailwind v4 and several widgets emit inline `style` attributes/CSS-in-JS at
   // runtime (e.g. progress bars, gradient positions) — an inline-style CSP that
   // still blocks arbitrary *script* injection is the practical tradeoff here.
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  `img-src 'self' data: blob: ${RAZORPAY_ORIGINS}`,
   "font-src 'self' data:",
-  "connect-src 'self'",
+  `connect-src 'self' ${RAZORPAY_ORIGINS} https://lumberjack.razorpay.com`,
+  `frame-src ${RAZORPAY_ORIGINS}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

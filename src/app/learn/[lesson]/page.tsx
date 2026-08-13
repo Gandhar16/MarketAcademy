@@ -2,8 +2,11 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { LESSONS, LESSONS_BY_ID } from '@/content/registry';
 import { LessonPlayer } from '@/components/lesson/LessonPlayer';
+import { ProPaywall } from '@/components/payments/ProPaywall';
 import { stripAnswers } from '@/lib/lesson/sanitize';
 import { SEQUENCE_BY_ID, TOTAL_TOPICS, nextBuilt, previousBuilt } from '@/content/syllabus';
+import { isTierGated } from '@/lib/payments/access';
+import { currentUserHasProAccess } from '@/lib/payments/gate';
 
 export function generateStaticParams() {
   return LESSONS.map((l) => ({ lesson: l.id }));
@@ -17,6 +20,14 @@ export default async function LessonPage({ params }: { params: Promise<{ lesson:
   const here = SEQUENCE_BY_ID.get(id);
   const prev = previousBuilt(id);
   const next = nextBuilt(id);
+
+  // Computed once: gates the lesson itself if its course is Pro-tier, AND is
+  // passed down to LessonPlayer so an embedded game block can be gated
+  // independently — a free-tier lesson can still embed a Pro-tier game (see
+  // e.g. t1-journal.ts embedding chart-replay), and the lesson being free
+  // must not make the game free by association.
+  const isPro = await currentUserHasProAccess();
+  const allowed = !here || !isTierGated(here.stage.tier) || isPro;
 
   return (
     <>
@@ -39,7 +50,14 @@ export default async function LessonPage({ params }: { params: Promise<{ lesson:
 
       {/* Answers are stripped before the lesson crosses into client code — they
           are fetched from /api/lesson/reveal only once the learner commits. */}
-      <LessonPlayer lesson={stripAnswers(lesson)} />
+      {allowed ? (
+        <LessonPlayer lesson={stripAnswers(lesson)} isPro={isPro} />
+      ) : (
+        <ProPaywall
+          title={`${here?.stage.courseTitle ?? 'This course'} is a Pro course`}
+          body="The first four courses — Ground Floor, Placing a Trade, Risk & Position Sizing, and Long-Term Investing — stay free forever. This one, and everything past it, is part of Pro."
+        />
+      )}
 
       <nav
         aria-label="Course navigation"

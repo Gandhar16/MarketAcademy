@@ -9,6 +9,7 @@ const NAV: NavItem[] = [
   { href: '/kb', label: 'Glossary' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/progress', label: 'Progress' },
+  { href: '/pricing', label: 'Pricing' },
 ];
 
 /**

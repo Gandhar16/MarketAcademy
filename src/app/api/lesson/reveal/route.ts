@@ -7,7 +7,10 @@
  */
 import { NextResponse } from 'next/server';
 import { LESSONS_BY_ID } from '@/content/registry';
+import { SEQUENCE_BY_ID } from '@/content/syllabus';
 import { checkpointAnswersFor, revealFor } from '@/lib/lesson/sanitize';
+import { isTierGated } from '@/lib/payments/access';
+import { currentUserHasProAccess } from '@/lib/payments/gate';
 
 export const runtime = 'nodejs';
 
@@ -23,6 +26,15 @@ export async function GET(req: Request) {
   const lesson = LESSONS_BY_ID.get(lessonId);
   if (!lesson) {
     return NextResponse.json({ error: 'not_found', message: `Unknown lesson "${lessonId}"` }, { status: 404 });
+  }
+
+  // The page-level gate (app/learn/[lesson]/page.tsx) never sends this
+  // lesson's content to a non-Pro browser at all — this is what stops
+  // someone from getting the answer anyway by calling the reveal endpoint
+  // directly with the lesson id and block index.
+  const here = SEQUENCE_BY_ID.get(lessonId);
+  if (here && isTierGated(here.stage.tier) && !(await currentUserHasProAccess())) {
+    return NextResponse.json({ error: 'forbidden', message: 'This lesson is part of Pro.' }, { status: 403 });
   }
 
   const predict = revealFor(lesson, blockIndex);

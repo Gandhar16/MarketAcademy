@@ -24,6 +24,7 @@ import { motion } from 'framer-motion';
 import { SYLLABUS, SEQUENCE, TOTAL_TOPICS, resumeAt, stepOf, type SyllabusStage } from '@/content/syllabus';
 import { TIER_LABELS } from '@/lib/lesson/dsl';
 import { GAMES_BY_SLUG } from '@/lib/games/catalogue';
+import { isTierGated } from '@/lib/payments/access';
 import { useProgress } from '@/lib/progress/store';
 import { useHydrated } from '@/lib/util/client-hooks';
 import { Reveal } from '@/components/motion/Reveal';
@@ -104,7 +105,12 @@ function CourseCard({ stage, completed }: { stage: SyllabusStage; completed: Rea
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-ink-faint">{TIER_LABELS[stage.tier]}</div>
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-ink-faint">
+            {TIER_LABELS[stage.tier]}
+            {isTierGated(stage.tier) && (
+              <span className="rounded-full bg-accent/15 px-1.5 py-0.5 text-accent">Pro</span>
+            )}
+          </div>
           <h3 className="mt-1 font-medium leading-snug text-ink">{stage.courseTitle}</h3>
         </div>
         <CourseRing percent={pct} />

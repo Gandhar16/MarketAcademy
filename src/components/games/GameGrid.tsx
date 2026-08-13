@@ -13,6 +13,7 @@ import { GAME_CATALOGUE } from '@/lib/games/catalogue';
 import { useProgress } from '@/lib/progress/store';
 import { useHydrated } from '@/lib/util/client-hooks';
 import { StaggerContainer, StaggerItem } from '@/components/motion/Stagger';
+import { isGameGated } from '@/lib/payments/access';
 
 export function GameGrid() {
   const hydrated = useHydrated();
@@ -36,6 +37,11 @@ export function GameGrid() {
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="font-medium">{g.name}</span>
                   <div className="flex items-center gap-2">
+                    {isGameGated(g.slug) && (
+                      <span className="rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-accent">
+                        Pro
+                      </span>
+                    )}
                     {isUnlocked && (
                       <span className="text-[10px] uppercase tracking-wider text-up">unlocked by a course</span>
                     )}

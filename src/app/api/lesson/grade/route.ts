@@ -8,8 +8,11 @@
  */
 import { NextResponse } from 'next/server';
 import { LESSONS_BY_ID } from '@/content/registry';
+import { SEQUENCE_BY_ID } from '@/content/syllabus';
 import { gradeCheckpoint, type TaskType } from '@/lib/lesson/grading';
 import { enforceRateLimit } from '@/lib/market/http';
+import { isTierGated } from '@/lib/payments/access';
+import { currentUserHasProAccess } from '@/lib/payments/gate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +32,11 @@ export async function POST(req: Request) {
   const lesson = LESSONS_BY_ID.get(body.lesson);
   if (!lesson) {
     return NextResponse.json({ error: 'not_found', message: `Unknown lesson "${body.lesson}"` }, { status: 404 });
+  }
+
+  const here = SEQUENCE_BY_ID.get(body.lesson);
+  if (here && isTierGated(here.stage.tier) && !(await currentUserHasProAccess())) {
+    return NextResponse.json({ error: 'forbidden', message: 'This lesson is part of Pro.' }, { status: 403 });
   }
 
   const block = lesson.blocks[body.block];

@@ -44,6 +44,8 @@ const ADDITIONS: AddColumn[] = [
   { table: 'user_stats', column: 'wins', definition: 'INTEGER NOT NULL DEFAULT 0' },
   { table: 'user_stats', column: 'losses', definition: 'INTEGER NOT NULL DEFAULT 0' },
   { table: 'user_stats', column: 'best_process', definition: 'REAL NOT NULL DEFAULT 0' },
+  { table: 'users', column: 'plan', definition: "TEXT NOT NULL DEFAULT 'free'" },
+  { table: 'users', column: 'plan_expires_at', definition: 'INTEGER' },
 ];
 
 async function columnsOf(db: Db, table: string): Promise<Set<string>> {

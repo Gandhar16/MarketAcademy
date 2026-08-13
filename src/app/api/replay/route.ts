@@ -13,6 +13,7 @@ import { closePosition, openPosition, revealReplay, startReplay, stepReplay } fr
 import { enforceRateLimit, errorResponse } from '@/lib/market/http';
 import { MarketDataError } from '@/lib/market/types';
 import { verifySameOrigin } from '@/lib/security/csrf';
+import { currentUserHasProAccess } from '@/lib/payments/gate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -56,6 +57,18 @@ export async function POST(req: Request) {
         throw new MarketDataError('positionId is required', 400);
       }
       return NextResponse.json(closePosition(sessionId, positionId));
+    }
+
+    // Chart Replay is the one Pro-gated game with a server-held resource
+    // behind it (this session engine). Gating only the START matters: every
+    // other action below requires a sessionId that could only exist because
+    // a Pro user started it, so step/reveal/open-position/close-position are
+    // protected transitively rather than needing their own check.
+    if (!(await currentUserHasProAccess())) {
+      return NextResponse.json(
+        { error: 'forbidden', message: 'Chart Replay is part of Pro.' },
+        { status: 403 },
+      );
     }
 
     const started = await startReplay({
