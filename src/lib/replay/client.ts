@@ -12,11 +12,29 @@ import { fillAgainstBar, DEFAULT_FILL_CONFIG, type FillResult, type LiquidityCon
 import type { OrderState } from '../engine/order';
 import type { Candle } from '../market/types';
 
+/** Mirrors RecordedTrade in lib/replay/server-session.ts — that module is server-only and cannot be imported here. */
+export interface VerifiedTrade {
+  pnl: number;
+  stoppedOut: boolean;
+  plannedRR: number | null;
+  preCommitted: boolean;
+  riskFraction: number;
+  reason: 'stop' | 'target' | 'session-end' | 'manual';
+}
+
+export interface AutoClosed {
+  positionId: string;
+  exitPrice: number;
+  trade: VerifiedTrade;
+}
+
 export interface RemoteStepResult {
   bar: Candle;
   fills: { order: OrderState; result: FillResult }[];
   finished: boolean;
   index: number;
+  /** Present when the bar just revealed closed the open position on its own — a stop, a target, or the replay ending. */
+  autoClosed?: AutoClosed;
 }
 
 async function post<T>(url: string, body: unknown): Promise<T> {
@@ -105,6 +123,7 @@ export class RemoteReplay {
       finished: boolean;
       averageVolume: number | null;
       previousClose: number;
+      autoClosed?: AutoClosed;
     }>('/api/replay?step', { sessionId: this.#sessionId });
 
     const ctx: LiquidityContext = {
@@ -140,7 +159,7 @@ export class RemoteReplay {
     this.#remaining = stepped.remaining;
     this.#index = stepped.index;
 
-    return { bar: stepped.bar, fills, finished: stepped.finished, index: stepped.index };
+    return { bar: stepped.bar, fills, finished: stepped.finished, index: stepped.index, autoClosed: stepped.autoClosed };
   }
 
   /** Only succeeds once the replay is over — the server enforces it. */
@@ -162,13 +181,7 @@ export class RemoteReplay {
     return post('/api/replay?open-position', { sessionId: this.#sessionId, ...opts });
   }
 
-  async closePosition(positionId: string): Promise<{
-    pnl: number;
-    stoppedOut: boolean;
-    plannedRR: number | null;
-    preCommitted: boolean;
-    riskFraction: number;
-  }> {
+  async closePosition(positionId: string): Promise<VerifiedTrade> {
     return post('/api/replay?close-position', { sessionId: this.#sessionId, positionId });
   }
 }

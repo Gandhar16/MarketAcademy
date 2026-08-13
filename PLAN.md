@@ -2000,3 +2000,45 @@ the offending sentence, which is enough to fix without thinking.
 4. **Reward process, not outcome.** A disciplined loss scores above a reckless win.
 5. **No advice.** This teaches mechanics and reasoning. It never says what to buy.
 6. **Interactive by construction**, enforced by the lesson validator in CI.
+
+## 8. Monetization
+
+### Phase 1 · A Pro content tier — `[x]` SHIPPED, enforcement OFF by default
+
+Razorpay (INR only; Stripe/US deferred — see the pricing-tier discussion this
+was scoped from). T2–T5 courses and the four games with real engine
+complexity (chart-replay, payoff-builder, circuit-breaker, earnings-roulette)
+sit behind a Pro tier: ₹199/month, ₹499/quarter, ₹1,499/year, or a ₹4,999
+lifetime unlock. Full detail, including exactly what a site operator still
+needs to do (create the Razorpay Plans, set env vars, wire the webhook), is
+in `docs/payments.md` rather than duplicated here.
+
+Ships with a kill switch: `PAYWALL_ENABLED` unset means nothing is actually
+locked yet, even though the checkout/webhook/DB machinery is fully live —
+flip it to `true` when ready to enforce.
+
+### Phase 2 · Paid top-ups to a learner's simulated trading capital — NOT STARTED
+
+Noted here as a deliberately later phase, not scoped or designed yet. The
+idea: a learner's simulated cash balance in a trading game (Chart Replay's
+`STARTING_CASH`, currently a fixed ₹2,00,000 reset on every new replay) could
+become something a learner can top up by paying real money for more
+simulated capital to practise with.
+
+Two things worth flagging before this is ever built, so whoever picks it up
+doesn't have to rediscover them:
+
+- **It has to not contradict rule 4 above.** Every leaderboard and every XP
+  gate on this site is deliberately blind to P&L and reads process score
+  instead (see runXp() in lib/progress/mastery.ts). Selling a bigger
+  starting balance must not become a way to buy a better rank or more XP —
+  size is already excluded from process score by construction
+  (`riskFraction` is a *fraction* of capital, not an absolute number), which
+  is a reasonable starting point but should be re-verified once this is
+  actually designed, not assumed to still hold.
+- **It is a different product decision from Phase 1.** Phase 1 gates
+  *content and games* behind a subscription/lifetime unlock. Phase 2 would
+  be closer to an in-game currency top-up. They can reuse the same Razorpay
+  integration (`lib/payments/razorpay.ts`, the checkout/verify/webhook
+  routes) but need their own plan/pricing model, not a variant of
+  `lib/payments/plans.ts`'s PlanId set.

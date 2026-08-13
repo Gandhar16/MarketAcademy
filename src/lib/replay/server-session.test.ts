@@ -210,6 +210,113 @@ describe('positions', () => {
   it('returns null for an unknown session rather than throwing', () => {
     expect(getRecordedTrades('nope')).toBeNull();
   });
+
+  it('a manual close is tagged reason "manual"', () => {
+    makeSession();
+    const open = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
+    const trade = closePosition('test-session', open.id);
+    expect(trade.reason).toBe('manual');
+  });
+});
+
+describe('auto square-off', () => {
+  /** entry bar at index 0 (close 100); the caller supplies bar 1. */
+  function sessionWithNextBar(nextBar: Partial<Candle>): void {
+    const entryBar: Candle = { time: 1_700_000_000, open: 100, high: 101, low: 99, close: 100, volume: 1_000_000 };
+    const bar1: Candle = { time: 1_700_086_400, open: 100, high: 101, low: 99, close: 100.5, volume: 1_000_000, ...nextBar };
+    makeSession({ candles: [entryBar, bar1], cursor: 0, warmupBars: 1 });
+  }
+
+  it('squares off a long at the exact stop when the bar touches it without gapping', () => {
+    sessionWithNextBar({ open: 99, high: 100, low: 97, close: 98 });
+    const open = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
+    expect(open.stopPrice).toBeCloseTo(98, 5);
+
+    const stepped = stepReplay('test-session');
+    expect(stepped.autoClosed?.positionId).toBe(open.id);
+    expect(stepped.autoClosed?.exitPrice).toBeCloseTo(98, 5);
+    expect(stepped.autoClosed?.trade.reason).toBe('stop');
+    expect(stepped.autoClosed?.trade.pnl).toBeCloseTo(-2, 5);
+    expect(stepped.autoClosed?.trade.stoppedOut).toBe(true);
+
+    // The slot is freed and the trade is on the ledger.
+    expect(() => closePosition('test-session', open.id)).toThrow(/No matching open position/);
+    expect(getRecordedTrades('test-session')).toHaveLength(1);
+  });
+
+  it('exits at the open, not the stop, when the bar gaps straight through it', () => {
+    sessionWithNextBar({ open: 90, high: 91, low: 85, close: 87 });
+    openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
+
+    const stepped = stepReplay('test-session');
+    expect(stepped.autoClosed?.trade.reason).toBe('stop');
+    expect(stepped.autoClosed?.exitPrice).toBe(90); // the bar's open, not stopPrice (98)
+    expect(stepped.autoClosed?.trade.pnl).toBeCloseTo(-10, 5);
+  });
+
+  it('squares off a long at the exact target when the bar reaches it without gapping', () => {
+    sessionWithNextBar({ open: 101, high: 106, low: 100, close: 103 });
+    const open = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: 4, hasThesis: true });
+    expect(open.targetPrice).toBeCloseTo(104, 5);
+
+    const stepped = stepReplay('test-session');
+    expect(stepped.autoClosed?.trade.reason).toBe('target');
+    expect(stepped.autoClosed?.exitPrice).toBeCloseTo(104, 5);
+    expect(stepped.autoClosed?.trade.pnl).toBeCloseTo(4, 5);
+    expect(stepped.autoClosed?.trade.stoppedOut).toBe(false);
+  });
+
+  it('resolves a bar that reaches both levels to the stop — pessimistic, same as the fill engine', () => {
+    sessionWithNextBar({ open: 100, high: 106, low: 95, close: 101 });
+    const open = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: 4, hasThesis: true });
+
+    const stepped = stepReplay('test-session');
+    expect(stepped.autoClosed?.trade.reason).toBe('stop');
+    expect(stepped.autoClosed?.exitPrice).toBeCloseTo(open.stopPrice, 5);
+  });
+
+  it('squares off a short at the stop above entry and the target below it', () => {
+    sessionWithNextBar({ open: 101, high: 103, low: 100, close: 101.5 });
+    const open = openPosition('test-session', { side: 'sell', stopPct: 2, targetPct: 4, hasThesis: true });
+    expect(open.stopPrice).toBeCloseTo(102, 5);
+    expect(open.targetPrice).toBeCloseTo(96, 5);
+
+    const stepped = stepReplay('test-session');
+    expect(stepped.autoClosed?.trade.reason).toBe('stop');
+    expect(stepped.autoClosed?.exitPrice).toBeCloseTo(102, 5);
+    expect(stepped.autoClosed?.trade.pnl).toBeCloseTo(-2, 5); // entry 100, exit 102, short
+  });
+
+  it('does nothing when the bar never reaches either level and bars remain', () => {
+    const entryBar: Candle = { time: 1_700_000_000, open: 100, high: 101, low: 99, close: 100, volume: 1_000_000 };
+    const bar1: Candle = { time: 1_700_086_400, open: 100.2, high: 100.8, low: 99.7, close: 100.5, volume: 1_000_000 };
+    const bar2: Candle = { time: 1_700_172_800, open: 100.5, high: 101, low: 100, close: 100.7, volume: 1_000_000 };
+    makeSession({ candles: [entryBar, bar1, bar2], cursor: 0, warmupBars: 1 });
+    openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: 4, hasThesis: true });
+
+    const stepped = stepReplay('test-session'); // reveals bar1 — not the last bar
+    expect(stepped.finished).toBe(false);
+    expect(stepped.autoClosed).toBeUndefined();
+    expect(getRecordedTrades('test-session')).toHaveLength(0);
+  });
+
+  it('squares off at the last price when the replay ends with a position still open', () => {
+    sessionWithNextBar({ open: 100.2, high: 100.8, low: 99.7, close: 100.6 }); // never reaches either level
+    const open = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: 4, hasThesis: true });
+
+    const stepped = stepReplay('test-session'); // this is the last bar — candles has length 2, cursor -> 1
+    expect(stepped.finished).toBe(true);
+    expect(stepped.autoClosed?.trade.reason).toBe('session-end');
+    expect(stepped.autoClosed?.exitPrice).toBe(100.6); // the bar's close
+    expect(stepped.autoClosed?.positionId).toBe(open.id);
+    expect(getRecordedTrades('test-session')).toHaveLength(1);
+  });
+
+  it('leaves a position untouched when nobody has one open', () => {
+    sessionWithNextBar({ open: 90, high: 91, low: 85, close: 87 }); // would trigger a stop if a position existed
+    const stepped = stepReplay('test-session');
+    expect(stepped.autoClosed).toBeUndefined();
+  });
 });
 
 describe('session lifecycle', () => {

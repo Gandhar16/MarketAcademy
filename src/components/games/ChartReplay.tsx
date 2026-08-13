@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CandleChart, type ChartMarker, type PriceLine } from '@/components/chart/CandleChart';
 import { ChartToolbar } from '@/components/chart/ChartToolbar';
 import { computeIndicators, type IndicatorId } from '@/lib/analysis/indicators';
-import { RemoteReplay } from '@/lib/replay/client';
+import { RemoteReplay, type VerifiedTrade } from '@/lib/replay/client';
 import { newOrderState } from '@/lib/engine/order';
 import { applyFill, equity, newAccount, type Account } from '@/lib/engine/portfolio';
 import { MIN_PLANNED_RR, processScore, type TradeRecord } from '@/lib/progress/mastery';
@@ -26,6 +26,27 @@ import { RunSubmit } from './RunSubmit';
 import type { Candle } from '@/lib/market/types';
 
 const STARTING_CASH = 200_000;
+
+/**
+ * A 'stop'/'target'/'session-end' close was not a decision — the level was
+ * reached and the server squared it off, full stop. Only a 'manual' close
+ * (the learner clicked an exit button before either level was reached) still
+ * carries the self-reported plan/impulse distinction, per the whichever
+ * button was actually clicked.
+ */
+function toTradeRecord(v: VerifiedTrade, manualClickWasImpulse = false): TradeRecord {
+  const mechanical = v.reason !== 'manual';
+  return {
+    preCommitted: v.preCommitted,
+    riskFraction: v.riskFraction,
+    honouredStop: mechanical || !manualClickWasImpulse,
+    exitedPerPlan: mechanical || !manualClickWasImpulse,
+    pnl: v.pnl,
+    sizedFromStop: true,
+    plannedRR: v.plannedRR,
+    stoppedOut: v.stoppedOut,
+  };
+}
 
 type Stance = 'flat' | 'long' | 'short';
 
@@ -156,6 +177,48 @@ export function ChartReplay() {
         ]);
         setLastFill(f.result.explanation);
       }
+
+      // The bar just revealed reached the stop or the target — or the
+      // replay ran out of bars with a position still open. Either way the
+      // server already closed it; this is telling the UI, not asking it.
+      if (result.autoClosed && entry && result.autoClosed.positionId === entry.positionId) {
+        const { exitPrice, trade } = result.autoClosed;
+        const pos = Object.values(acct.positions)[0];
+        if (pos) {
+          acct = applyFill(acct, {
+            symbol: 'REPLAY',
+            product: 'intraday',
+            side: pos.quantity > 0 ? 'sell' : 'buy',
+            quantity: Math.abs(pos.quantity),
+            price: exitPrice,
+            at: result.bar.time * 1000,
+          }).account;
+
+          setMarkers((m) => [
+            ...m,
+            {
+              time: result.bar.time,
+              position: pos.quantity > 0 ? 'aboveBar' : 'belowBar',
+              color: trade.reason === 'target' ? '#2dd4a7' : '#ff7a5c',
+              shape: pos.quantity > 0 ? 'arrowDown' : 'arrowUp',
+              text: `${trade.reason === 'target' ? 'Target' : trade.reason === 'stop' ? 'Stop' : 'Closed'} ${exitPrice.toFixed(2)}`,
+            },
+          ]);
+        }
+
+        setLastFill(
+          trade.reason === 'target'
+            ? `Target reached — squared off at ₹${exitPrice.toFixed(2)}. The plan paid, and it closed on its own.`
+            : trade.reason === 'stop'
+              ? `Stop hit — squared off at ₹${exitPrice.toFixed(2)}. The plan closed itself; there was nothing left to decide.`
+              : `The replay ended with the position still open — squared off at ₹${exitPrice.toFixed(2)}, the last price dealt.`,
+        );
+
+        setTrades((t) => [...t, toTradeRecord(trade)]);
+        setEntry(null);
+        setStance('flat');
+      }
+
       setAccount(acct);
 
       if (result.finished) {
@@ -167,7 +230,7 @@ export function ChartReplay() {
     } finally {
       setStepping(false);
     }
-  }, [replay, stepping, committing, account]);
+  }, [replay, stepping, committing, account, entry]);
 
   const takePosition = async (next: Exclude<Stance, 'flat'>) => {
     if (!replay || committing) return;
@@ -249,19 +312,7 @@ export function ChartReplay() {
       // is a fact about the trader, not the market, and has no server-side
       // test.
       const verified = await replay.closePosition(entry.positionId);
-      setTrades((t) => [
-        ...t,
-        {
-          preCommitted: verified.preCommitted,
-          riskFraction: verified.riskFraction,
-          honouredStop: reason !== 'impulse',
-          exitedPerPlan: reason !== 'impulse',
-          pnl: verified.pnl,
-          sizedFromStop: true,
-          plannedRR: verified.plannedRR,
-          stoppedOut: verified.stoppedOut,
-        },
-      ]);
+      setTrades((t) => [...t, toTradeRecord(verified, reason === 'impulse')]);
       setEntry(null);
       setStance('flat');
     } catch (e) {
@@ -309,9 +360,6 @@ export function ChartReplay() {
   const plannedRR = targetPercent / stopPercent;
   /** The hit rate this ratio demands: 1/(1+RR), as a percentage. */
   const breakEvenRate = (100 / (1 + plannedRR));
-  const stopHit =
-    entry != null &&
-    ((entry.stance === 'long' && price <= entry.stop) || (entry.stance === 'short' && price >= entry.stop));
 
   return (
     <div className="space-y-5">
@@ -471,13 +519,10 @@ export function ChartReplay() {
                 </span>
               </div>
               <p className="mt-1 text-[13px] text-ink-faint">Your thesis: &ldquo;{entry?.thesis}&rdquo;</p>
-
-              {stopHit && (
-                <p className="mt-3 rounded-lg border border-down/50 bg-down/10 px-3 py-2 text-[13px] text-ink-muted">
-                  Price is through your stop. Honouring it is what you said you would do. Moving it is how a small loss
-                  becomes the one you remember.
-                </p>
-              )}
+              <p className="mt-2 text-[13px] text-ink-faint">
+                This closes on its own the moment price reaches your stop or your target — whichever comes first.
+                There is nothing to watch for; the buttons below are only for leaving early.
+              </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <button

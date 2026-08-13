@@ -95,8 +95,13 @@ export async function POST(req: Request) {
   // about what was recorded at entry (preCommitted, riskFraction,
   // sizedFromStop) is overwritten here from the server's own ledger for the
   // session these trades claim to come from. `honouredStop`/`exitedPerPlan`
-  // are the one part of this game that is genuinely self-reported — see the
-  // comment on closePosition() in server-session.ts for why.
+  // are ALSO overwritten whenever the server knows the exit was not a
+  // choice — a 'stop' or 'target' close from checkAutoClose(), or a
+  // 'session-end' close — since there is nothing to self-report about a
+  // level the price reached on its own. Only a 'manual' close (the learner
+  // clicked an exit button before either level was reached) leaves those two
+  // fields as the client's claim — see the comment on closePosition() in
+  // server-session.ts for why that one case has no mechanical test.
   if (body.game === 'chart-replay') {
     if (typeof body.sessionId !== 'string' || body.sessionId.length === 0) {
       return NextResponse.json(
@@ -131,6 +136,7 @@ export async function POST(req: Request) {
       preCommitted: recorded[i].preCommitted,
       riskFraction: recorded[i].riskFraction,
       sizedFromStop: recorded[i].sizedFromStop,
+      ...(recorded[i].reason !== 'manual' ? { honouredStop: true, exitedPerPlan: true } : {}),
     }));
   }
 

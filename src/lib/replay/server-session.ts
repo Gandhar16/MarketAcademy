@@ -32,6 +32,17 @@ export interface RecordedTrade {
   preCommitted: boolean;
   riskFraction: number;
   sizedFromStop: true;
+  /**
+   * How the position actually closed. 'stop' and 'target' are mechanical —
+   * the server closed it because the level was reached, not because the
+   * learner clicked anything — 'session-end' is the replay running out of
+   * bars with a position still open (squared off at the last price, the way
+   * a real position would be marked at the close of trading), and 'manual'
+   * is the one genuinely self-reported case: the learner chose to exit
+   * before either level was reached. See closePosition() for why only the
+   * manual case still asks the learner about their state of mind.
+   */
+  reason: 'stop' | 'target' | 'session-end' | 'manual';
 }
 
 export interface OpenPosition {
@@ -154,6 +165,12 @@ export async function startReplay(opts: { symbol?: string; seed?: number } = {})
   };
 }
 
+export interface AutoClosed {
+  positionId: string;
+  exitPrice: number;
+  trade: RecordedTrade;
+}
+
 export interface SteppedBar {
   bar: Candle;
   index: number;
@@ -162,6 +179,13 @@ export interface SteppedBar {
   /** Everything the client's fill engine needs, computed server-side. */
   averageVolume: number | null;
   previousClose: number;
+  /**
+   * Present exactly when this bar closed the open position — its stop or
+   * target was reached, or the replay just ran out of bars with a position
+   * still open. The client did not choose this; it is being told it
+   * happened.
+   */
+  autoClosed?: AutoClosed;
 }
 
 export const VOLUME_WINDOW = 20;
@@ -195,14 +219,34 @@ export function stepReplay(sessionId: string): SteppedBar {
   const previousClose = s.candles[s.cursor].close;
   const averageVolume = averageVolumeAt(s, s.cursor);
   s.cursor += 1;
+  const bar = s.candles[s.cursor];
+  const finished = s.cursor >= s.candles.length - 1;
+
+  let autoClosed: AutoClosed | undefined;
+  if (s.open) {
+    const trigger = checkAutoClose(s.open, bar);
+    if (trigger) {
+      const positionId = s.open.id;
+      const trade = finishPosition(s, s.open, trigger.exitPrice, trigger.reason);
+      autoClosed = { positionId, exitPrice: trigger.exitPrice, trade };
+    } else if (finished) {
+      // Out of bars with a position still open — squared off at the last
+      // price, the way a real position is marked at the close of trading
+      // rather than left open with no more market to close it against.
+      const positionId = s.open.id;
+      const trade = finishPosition(s, s.open, bar.close, 'session-end');
+      autoClosed = { positionId, exitPrice: bar.close, trade };
+    }
+  }
 
   return {
-    bar: s.candles[s.cursor],
+    bar,
     index: s.cursor,
     remaining: s.candles.length - 1 - s.cursor,
-    finished: s.cursor >= s.candles.length - 1,
+    finished,
     averageVolume,
     previousClose,
+    autoClosed,
   };
 }
 
@@ -274,27 +318,17 @@ export function openPosition(
 }
 
 /**
- * Close the open position at the CURRENT bar's close and record the trade.
- *
- * `pnl`, `stoppedOut`, `plannedRR`, `preCommitted`, `riskFraction` and
+ * Computes and records the trade, whatever caused it to close. `pnl`,
+ * `stoppedOut`, `plannedRR`, `preCommitted`, `riskFraction` and
  * `sizedFromStop` all come from this — never from the client's own claim
- * about what happened. What is deliberately NOT decided here is whether the
- * exit was calm or a panic: `honouredStop`/`exitedPerPlan` in the game ask
- * about the trader's state of mind at the moment they clicked, which is not
- * a property of prices and bars and has no mechanical test. That half stays
- * self-reported by design, the same way the written reason does.
+ * about what happened.
  */
-export function closePosition(sessionId: string, positionId: string): RecordedTrade {
-  const s = SESSIONS.get(sessionId);
-  if (!s) throw new MarketDataError('Replay session not found or expired. Start a new replay.', 404);
-  if (!s.open || s.open.id !== positionId) {
-    throw new MarketDataError('No matching open position in this session.', 409);
-  }
-
-  s.lastTouchedAt = Date.now();
-  const open = s.open;
-  const exitPrice = s.candles[s.cursor].close;
-
+function finishPosition(
+  s: ServerReplaySession,
+  open: OpenPosition,
+  exitPrice: number,
+  reason: RecordedTrade['reason'],
+): RecordedTrade {
   const pnl = open.side === 'buy' ? exitPrice - open.entryPrice : open.entryPrice - exitPrice;
   const stoppedOut = open.side === 'buy' ? exitPrice <= open.stopPrice : exitPrice >= open.stopPrice;
   const plannedRR =
@@ -310,11 +344,75 @@ export function closePosition(sessionId: string, positionId: string): RecordedTr
     preCommitted: open.hasThesis,
     riskFraction: stopDistance * FIXED_RISK_SIZING,
     sizedFromStop: true,
+    reason,
   };
 
   s.positions.push(trade);
   s.open = null;
   return trade;
+}
+
+/**
+ * Close the open position at the CURRENT bar's close — the learner choosing
+ * to exit before either level was reached. What is deliberately NOT decided
+ * here is whether that exit was calm or a panic: `honouredStop`/
+ * `exitedPerPlan` in the game ask about the trader's state of mind at the
+ * moment they clicked, which is not a property of prices and bars and has
+ * no mechanical test. That is the one part of this game that stays
+ * self-reported by design, the same way the written reason does — and only
+ * for THIS reason ('manual'). A 'stop' or 'target' close (see stepReplay)
+ * was not a choice at all, so the API route that scores a filed run treats
+ * those as mechanically honoured rather than asking the client.
+ */
+export function closePosition(sessionId: string, positionId: string): RecordedTrade {
+  const s = SESSIONS.get(sessionId);
+  if (!s) throw new MarketDataError('Replay session not found or expired. Start a new replay.', 404);
+  if (!s.open || s.open.id !== positionId) {
+    throw new MarketDataError('No matching open position in this session.', 409);
+  }
+
+  s.lastTouchedAt = Date.now();
+  const exitPrice = s.candles[s.cursor].close;
+  return finishPosition(s, s.open, exitPrice, 'manual');
+}
+
+/**
+ * Did the bar just revealed take out the stop or the target? Checked against
+ * the bar's actual high/low, not its close — a level "reached" means the
+ * price touched it, whether or not the bar closed back through it.
+ *
+ * The stop is checked first, so if a single bar's range spans both levels —
+ * only possible on a wide bar with a tight stop and a distant target — this
+ * resolves to the stop. There is no intrabar sequencing in an OHLC bar to
+ * say which was actually touched first, and the fill engine elsewhere in
+ * this app resolves exactly this kind of ambiguity against the learner
+ * rather than in their favour (`pessimisticIntrabar` in lib/engine/fill.ts)
+ * — the same rule applies here for the same reason.
+ *
+ * A gap — the bar OPENING beyond the level — exits at the open, since the
+ * level itself was never actually available to trade at. A level touched
+ * within the bar's range without a gap exits AT the level exactly: the
+ * position is "squared off at the point it reaches," not at the bar's close.
+ */
+function checkAutoClose(open: OpenPosition, bar: Candle): { exitPrice: number; reason: 'stop' | 'target' } | null {
+  const isBuy = open.side === 'buy';
+
+  const stopHit = isBuy ? bar.low <= open.stopPrice : bar.high >= open.stopPrice;
+  if (stopHit) {
+    const gapped = isBuy ? bar.open <= open.stopPrice : bar.open >= open.stopPrice;
+    return { exitPrice: gapped ? bar.open : open.stopPrice, reason: 'stop' };
+  }
+
+  if (open.targetPrice != null) {
+    const target = open.targetPrice;
+    const targetHit = isBuy ? bar.high >= target : bar.low <= target;
+    if (targetHit) {
+      const gapped = isBuy ? bar.open >= target : bar.open <= target;
+      return { exitPrice: gapped ? bar.open : target, reason: 'target' };
+    }
+  }
+
+  return null;
 }
 
 /** Every trade this session has actually closed, in order. */
