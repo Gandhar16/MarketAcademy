@@ -11,11 +11,20 @@
  *
  * So there are two layouts and one breakpoint:
  *
- *   below lg — wordmark, account state, and a disclosure button. The links live
- *              in a panel that pushes the page down when open, rather than a
- *              fixed overlay: an overlay on a short landscape phone screen has
- *              nowhere to put seven items.
- *   lg and up — everything inline, as before.
+ *   below 900px — wordmark, account state, and a disclosure button. The links
+ *                 live in a panel that pushes the page down when open, rather
+ *                 than a fixed overlay: an overlay on a short landscape phone
+ *                 screen has nowhere to put eight items.
+ *   900px and up — everything inline, as before.
+ *
+ * The breakpoint is a custom `min-[900px]:` rather than Tailwind's `lg`
+ * (1024px) on purpose: on a genuinely "full screen" laptop with OS display
+ * scaling (125%/150% is the common default on Windows HiDPI screens), the
+ * CSS viewport width a maximized browser window actually reports is often
+ * well under 1024px even though the physical screen is desktop-sized — the
+ * hamburger would show for a lot of ordinary desktop use at the standard `lg`
+ * cut. 900px, combined with tighter spacing on the inline links below, is
+ * chosen to still comfortably fit all eight items without wrapping.
  *
  * The panel closes on route change, on Escape, and on any link tap. All three,
  * because a menu that stays open after navigation is the single most common
@@ -68,7 +77,7 @@ export function HeaderNav({ items, displayName }: { items: NavItem[]; displayNam
         </Link>
 
         {/* Wide screens: everything inline. */}
-        <div className="hidden items-center gap-5 text-sm lg:flex">
+        <div className="hidden items-center gap-3 text-[13px] min-[900px]:flex">
           {items.map((n) => {
             const current = isCurrent(n.href);
             return (
@@ -100,7 +109,7 @@ export function HeaderNav({ items, displayName }: { items: NavItem[]; displayNam
 
           <button
             type="button"
-            className="btn-secondary px-3 py-1.5 lg:hidden"
+            className="btn-secondary px-3 py-1.5 min-[900px]:hidden"
             aria-expanded={open}
             aria-controls={panelId}
             onClick={() => setOpen(!open)}
@@ -114,7 +123,7 @@ export function HeaderNav({ items, displayName }: { items: NavItem[]; displayNam
       </nav>
 
       {/* Narrow screens: a disclosure panel in normal flow. */}
-      <div id={panelId} hidden={!open} className="border-t border-line bg-surface lg:hidden">
+      <div id={panelId} hidden={!open} className="border-t border-line bg-surface min-[900px]:hidden">
         <ul className="mx-auto w-full max-w-6xl px-4 py-2 sm:px-6">
           {items.map((n) => (
             <li key={n.href}>

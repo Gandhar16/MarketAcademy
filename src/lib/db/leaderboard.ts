@@ -211,6 +211,7 @@ export async function rankOf(db: Db, userId: string, board: Board = 'overall'): 
 
 export interface GameBoardEntry {
   rank: number;
+  userId: string;
   displayName: string;
   processScore: number;
   runs: number;
@@ -220,12 +221,14 @@ export interface GameBoardEntry {
 /** Per-game board. Ranked on the learner's average process score in that game. */
 export async function gameLeaderboard(db: Db, game: string, limit = 25): Promise<GameBoardEntry[]> {
   const rows = await db.all<{
+    user_id: string;
     display_name: string;
     avg_process: number;
     runs: number;
     best_accuracy: number | null;
   }>(
-      `SELECT u.display_name,
+      `SELECT u.id                  AS user_id,
+              u.display_name,
               AVG(g.process_score) AS avg_process,
               COUNT(*)             AS runs,
               MAX(g.accuracy)      AS best_accuracy
@@ -243,9 +246,21 @@ export async function gameLeaderboard(db: Db, game: string, limit = 25): Promise
 
   return rows.map((r, i) => ({
     rank: i + 1,
+    userId: r.user_id,
     displayName: r.display_name,
     processScore: Number(r.avg_process),
     runs: Number(r.runs),
     bestAccuracy: r.best_accuracy == null ? null : Number(r.best_accuracy),
   }));
+}
+
+/**
+ * A learner's own position on a game's board, including when they are
+ * outside the visible page (e.g. rank 40 on a board that only shows 25) —
+ * same shape as `rankOf` for the global board, for the same reason: "where
+ * do I actually stand" should never require guessing from a truncated list.
+ */
+export async function gameRankOf(db: Db, userId: string, game: string): Promise<GameBoardEntry | null> {
+  const all = await gameLeaderboard(db, game, Number.MAX_SAFE_INTEGER);
+  return all.find((e) => e.userId === userId) ?? null;
 }

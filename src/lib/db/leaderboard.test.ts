@@ -7,6 +7,7 @@ import {
   MIN_RUNS_FOR_DISCIPLINE,
   consistencyScore,
   gameLeaderboard,
+  gameRankOf,
   knowledgeScore,
   leaderboard,
   leaderboardInputs,
@@ -252,5 +253,44 @@ describe('per-game board', () => {
     await play(user.id, DISCIPLINED, MIN_RUNS_FOR_DISCIPLINE, 'chart-replay');
     expect(await gameLeaderboard(db, 'chart-replay')).toHaveLength(1);
     expect(await gameLeaderboard(db, 'cost-cutter')).toHaveLength(0);
+  });
+
+  it('carries the userId, so a caller can tell which row is "you"', async () => {
+    const user = await member('Player');
+    await play(user.id, DISCIPLINED, MIN_RUNS_FOR_DISCIPLINE, 'chart-replay');
+    const board = await gameLeaderboard(db, 'chart-replay');
+    expect(board[0].userId).toBe(user.id);
+  });
+});
+
+describe('gameRankOf', () => {
+  it('finds a learner even below the visible page size', async () => {
+    await Promise.all(
+      Array.from({ length: 5 }, (_, i) =>
+        member(`P${i}`).then(async (u) => {
+          await play(u.id, DISCIPLINED, MIN_RUNS_FOR_DISCIPLINE, 'chart-replay');
+        }),
+      ),
+    );
+
+    // Ask for a page smaller than the field, so at least one player is off it.
+    const page = await gameLeaderboard(db, 'chart-replay', 2);
+    expect(page).toHaveLength(2);
+    const full = await gameLeaderboard(db, 'chart-replay', Number.MAX_SAFE_INTEGER);
+    expect(full).toHaveLength(5);
+
+    // Every trade here is identical, so ties are broken by whatever the SQL
+    // gives — not asserted here, only that gameRankOf agrees with the
+    // unpaginated board about who is at the bottom.
+    const lastOnBoard = full[full.length - 1];
+    const found = await gameRankOf(db, lastOnBoard.userId, 'chart-replay');
+    expect(found?.userId).toBe(lastOnBoard.userId);
+    expect(found?.rank).toBe(5);
+    expect(page.some((e) => e.userId === lastOnBoard.userId)).toBe(false);
+  });
+
+  it('is null for a learner with no runs on that game', async () => {
+    const user = await member('Spectator');
+    expect(await gameRankOf(db, user.id, 'chart-replay')).toBeNull();
   });
 });
