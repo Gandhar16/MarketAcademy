@@ -16,8 +16,15 @@ describe('isTierGated', () => {
 });
 
 describe('isGameGated', () => {
-  it('gates exactly the four flagship games', () => {
-    expect(FLAGSHIP_GAMES).toEqual(['chart-replay', 'payoff-builder', 'circuit-breaker', 'earnings-roulette']);
+  it('gates exactly the flagship games', () => {
+    expect(FLAGSHIP_GAMES).toEqual([
+      'chart-replay',
+      'payoff-builder',
+      'circuit-breaker',
+      'earnings-roulette',
+      'margin-call',
+      'expiry-day',
+    ]);
     for (const slug of FLAGSHIP_GAMES) expect(isGameGated(slug)).toBe(true);
   });
 

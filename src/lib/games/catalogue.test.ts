@@ -37,8 +37,8 @@ describe('game catalogue', () => {
     }
   });
 
-  it('delivers the ten games the plan promised', () => {
-    expect(GAME_CATALOGUE).toHaveLength(10);
+  it('delivers the twelve games the plan promised', () => {
+    expect(GAME_CATALOGUE).toHaveLength(12);
   });
 });
 

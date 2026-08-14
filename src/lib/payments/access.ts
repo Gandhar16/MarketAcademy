@@ -34,12 +34,22 @@ export function isTierGated(tier: Tier): boolean {
 }
 
 /**
- * The four games with real engine complexity worth paying for. The other six
+ * The games with real engine complexity worth paying for. The other six
  * (order-gauntlet, cost-cutter, risk-roulette, bias-buster, candle-sprint,
  * the-long-game) stay free — see the pricing-tier discussion this was built
- * from for why this specific split.
+ * from for why this specific split. Margin Call and Expiry Day joined the
+ * original four for the same reason: each needed a genuinely new engine
+ * module (lib/engine/margin.ts, the physical-settlement math in
+ * lib/engine/options.ts) rather than reusing what the free games already run on.
  */
-export const FLAGSHIP_GAMES: readonly string[] = ['chart-replay', 'payoff-builder', 'circuit-breaker', 'earnings-roulette'];
+export const FLAGSHIP_GAMES: readonly string[] = [
+  'chart-replay',
+  'payoff-builder',
+  'circuit-breaker',
+  'earnings-roulette',
+  'margin-call',
+  'expiry-day',
+];
 
 export function isGameGated(slug: string): boolean {
   return FLAGSHIP_GAMES.includes(slug);

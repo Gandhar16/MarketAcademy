@@ -65,6 +65,62 @@ export function intrinsicValue(spot: number, strike: number, type: OptionType): 
   return type === 'call' ? Math.max(0, spot - strike) : Math.max(0, strike - spot);
 }
 
+/**
+ * Physical settlement of an ITM single-stock option left open at expiry —
+ * "the modern account-killer" (PLAN.md §4). A long call/put that is
+ * in-the-money at expiry and never closed is not cash-settled: the holder
+ * must fund taking (or making) delivery of the underlying shares, at the
+ * FULL strike value, not the premium they paid — plus a delivery charge.
+ * Index options are cash-settled and never hit this path at all.
+ *
+ * SOURCES — verified 2026-08-09 (same figures src/components/widgets/settlement.tsx uses):
+ *   Margin ladder and square-off policy:
+ *     https://support.zerodha.com/category/trading-and-markets/trading-faqs/f-otrading/articles/policy-on-physical-settlement
+ *   Physical delivery charge (0.25%, or 0.1% for netted positions):
+ *     https://zerodha.com/charges/
+ */
+export const PHYSICAL_DELIVERY_PERCENT = 0.25;
+/** Reduced rate where the position nets off against another leg. */
+export const PHYSICAL_DELIVERY_NETTED_PERCENT = 0.1;
+
+export interface PhysicalSettlement {
+  inTheMoney: boolean;
+  /** Per-share payoff at expiry, before any charge. */
+  intrinsic: number;
+  /** What the holder must fund to take delivery — strike x lot size, zero if OTM. */
+  obligation: number;
+  /** Broker's delivery charge on that obligation. */
+  deliveryCharge: number;
+  /** The position's mark-to-market value at expiry, before the obligation and charge. */
+  grossGain: number;
+  /** Obligation as a multiple of the premium originally paid — the "168x the premium" number. */
+  obligationToPremiumRatio: number;
+}
+
+export function physicalSettlementFor(opts: {
+  spot: number;
+  strike: number;
+  type: OptionType;
+  lotSize: number;
+  premiumPaid: number;
+  netted?: boolean;
+}): PhysicalSettlement {
+  const intrinsic = intrinsicValue(opts.spot, opts.strike, opts.type);
+  const inTheMoney = intrinsic > 0;
+  const obligation = inTheMoney ? opts.strike * opts.lotSize : 0;
+  const rate = opts.netted ? PHYSICAL_DELIVERY_NETTED_PERCENT : PHYSICAL_DELIVERY_PERCENT;
+  const deliveryCharge = (obligation * rate) / 100;
+  const grossGain = intrinsic * opts.lotSize;
+  return {
+    inTheMoney,
+    intrinsic,
+    obligation,
+    deliveryCharge,
+    grossGain,
+    obligationToPremiumRatio: opts.premiumPaid > 0 ? obligation / opts.premiumPaid : 0,
+  };
+}
+
 export function blackScholesPrice(i: OptionInputs): number {
   // At or past expiry, and at zero volatility, the option is worth exactly its
   // intrinsic value. Handling this explicitly avoids NaN at the two boundaries

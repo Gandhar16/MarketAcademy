@@ -8,7 +8,10 @@ import {
   legPayoff,
   normalCdf,
   payoffProfile,
+  physicalSettlementFor,
   strategyPayoff,
+  PHYSICAL_DELIVERY_NETTED_PERCENT,
+  PHYSICAL_DELIVERY_PERCENT,
   type Leg,
   type OptionInputs,
 } from './options';
@@ -284,5 +287,47 @@ describe('daysToYears', () => {
   it('uses calendar days, because options decay over weekends too', () => {
     expect(daysToYears(365)).toBe(1);
     expect(daysToYears(7)).toBeCloseTo(7 / 365, 12);
+  });
+});
+
+describe('physicalSettlementFor', () => {
+  it('has no obligation at all when the option expires out of the money', () => {
+    const s = physicalSettlementFor({ spot: 1300, strike: 1350, type: 'call', lotSize: 250, premiumPaid: 2_000 });
+    expect(s.inTheMoney).toBe(false);
+    expect(s.obligation).toBe(0);
+    expect(s.deliveryCharge).toBe(0);
+  });
+
+  it('the obligation is strike x lot size, funded in full, not the premium', () => {
+    const s = physicalSettlementFor({ spot: 1400, strike: 1350, type: 'call', lotSize: 250, premiumPaid: 2_000 });
+    expect(s.inTheMoney).toBe(true);
+    expect(s.obligation).toBe(1_350 * 250);
+    expect(s.deliveryCharge).toBeCloseTo((1_350 * 250 * PHYSICAL_DELIVERY_PERCENT) / 100, 6);
+  });
+
+  it('the worked-example numbers: a ~168x obligation on a ~2000 premium', () => {
+    // Same figures the site's physical-settlement lesson widget uses.
+    const s = physicalSettlementFor({ spot: 1400, strike: 1350, type: 'call', lotSize: 250, premiumPaid: 2_000 });
+    expect(s.obligationToPremiumRatio).toBeGreaterThan(150);
+  });
+
+  it('a netted position pays the reduced delivery rate', () => {
+    const normal = physicalSettlementFor({ spot: 1400, strike: 1350, type: 'call', lotSize: 250, premiumPaid: 2_000 });
+    const netted = physicalSettlementFor({
+      spot: 1400,
+      strike: 1350,
+      type: 'call',
+      lotSize: 250,
+      premiumPaid: 2_000,
+      netted: true,
+    });
+    expect(netted.deliveryCharge).toBeLessThan(normal.deliveryCharge);
+    expect(netted.deliveryCharge).toBeCloseTo((netted.obligation * PHYSICAL_DELIVERY_NETTED_PERCENT) / 100, 6);
+  });
+
+  it('a put is in the money below the strike, not above it', () => {
+    const s = physicalSettlementFor({ spot: 1300, strike: 1350, type: 'put', lotSize: 250, premiumPaid: 2_000 });
+    expect(s.inTheMoney).toBe(true);
+    expect(s.intrinsic).toBe(50);
   });
 });

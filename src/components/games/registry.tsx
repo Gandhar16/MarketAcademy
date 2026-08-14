@@ -19,6 +19,8 @@ import { PayoffBuilder } from './PayoffBuilder';
 import { EarningsRoulette } from './EarningsRoulette';
 import { CandleSprint } from './CandleSprint';
 import { TheLongGame } from './TheLongGame';
+import { MarginCall } from './MarginCall';
+import { ExpiryDay } from './ExpiryDay';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- per-game props are the game's own concern; the registry is deliberately untyped at this seam
 type AnyGame = ComponentType<any>;
@@ -34,6 +36,8 @@ export const GAMES: Record<string, AnyGame> = {
   'bias-buster': BiasBuster,
   'candle-sprint': CandleSprint,
   'the-long-game': TheLongGame,
+  'margin-call': MarginCall,
+  'expiry-day': ExpiryDay,
 };
 
 /**

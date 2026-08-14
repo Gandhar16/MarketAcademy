@@ -10,13 +10,11 @@
  *     https://zerodha.com/charges/
  */
 import { useMemo, useState } from 'react';
+import { physicalSettlementFor, PHYSICAL_DELIVERY_NETTED_PERCENT, PHYSICAL_DELIVERY_PERCENT } from '@/lib/engine/options';
 
 const inr = (n: number) => `₹${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 
-/** Broker delivery charge on physically settled positions. */
-export const PHYSICAL_DELIVERY_PERCENT = 0.25;
-/** Reduced rate where the position nets off against another leg. */
-export const PHYSICAL_DELIVERY_NETTED_PERCENT = 0.1;
+export { PHYSICAL_DELIVERY_PERCENT, PHYSICAL_DELIVERY_NETTED_PERCENT };
 
 export function PhysicalSettlementCalculator({
   strike: strike0 = 1350,
@@ -35,20 +33,12 @@ export function PhysicalSettlementCalculator({
 
   const m = useMemo(() => {
     const outlay = premium * lotSize;
-    const intrinsic = Math.max(0, spot - strike);
-    const inTheMoney = intrinsic > 0;
-    const obligation = inTheMoney ? strike * lotSize : 0;
-    const deliveryCharge = (obligation * PHYSICAL_DELIVERY_PERCENT) / 100;
-    const grossGain = intrinsic * lotSize;
+    const settlement = physicalSettlementFor({ spot, strike, type: 'call', lotSize, premiumPaid: outlay });
     return {
       outlay,
-      intrinsic,
-      inTheMoney,
-      obligation,
-      deliveryCharge,
-      grossGain,
-      ratio: outlay > 0 ? obligation / outlay : 0,
-      chargeShareOfPremium: outlay > 0 ? deliveryCharge / outlay : 0,
+      ...settlement,
+      ratio: settlement.obligationToPremiumRatio,
+      chargeShareOfPremium: outlay > 0 ? settlement.deliveryCharge / outlay : 0,
     };
   }, [premium, spot, strike, lotSize]);
 

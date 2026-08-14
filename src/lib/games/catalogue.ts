@@ -103,6 +103,25 @@ export const GAME_CATALOGUE: GameEntry[] = [
     intro:
       'Real NIFTY 50 calendar-year returns from 2005 to 2024, including the 52% fall of 2008. Four things almost nobody has seen a chart of: what inflation does to a big number, what a 1% fee costs over twenty years, why the average return is not the return you get, and why the ORDER of returns matters once you are contributing.',
   },
+  {
+    slug: 'margin-call',
+    name: 'Margin Call',
+    skill: 'Leverage and forced liquidation',
+    blurb:
+      'Real historical bars, a leveraged long, and a margin-call line drawn on the chart from the moment you enter. Cross it and the exchange closes you out at its price, not yours.',
+    intro:
+      'Real daily bars from a real Indian stock, streamed one at a time exactly like Chart Replay — future hidden, nothing to peek at. What is new is the leverage: pick 2x, 5x or 10x, and the margin-call line moves with it. The lesson is not that leverage is risky as a sentence; it is watching a bar cross a line you could see the whole time and getting force-closed at a worse price than you would have chosen.',
+  },
+  {
+    slug: 'expiry-day',
+    name: 'Expiry Day',
+    skill: 'Assignment risk and physical settlement',
+    blurb:
+      "Buy an at-the-money call. Close it whenever you like — or don't, and find out what a contract you forgot about does to you on expiry.",
+    intro:
+      'A modelled options position on a compressed, real countdown to the close. Pick a cash-settled (index-style) or physically-settled (single-stock-style) contract before you buy: the cash-settled version just pays the difference if it expires in the money, the physical one hands you a bill for the full strike value of the shares — "the modern account-killer", and it only bites the position that was right and then forgotten.',
+    modelled: true,
+  },
 ];
 
 export const GAMES_BY_SLUG = new Map(GAME_CATALOGUE.map((g) => [g.slug, g]));
