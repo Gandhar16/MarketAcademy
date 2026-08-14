@@ -32,7 +32,7 @@ import {
 import { MIN_PLANNED_RR, MIN_REASON_CHARS, processScore, type TradeRecord } from '@/lib/progress/mastery';
 import { fileTrade, type FiledTrade } from '@/lib/progress/fileTrade';
 import { BASE_STARTING_CASH } from '@/lib/account/balance';
-import { useAccountStore } from '@/lib/account/store';
+import { displayBalance, useAccountStore } from '@/lib/account/store';
 import { FiledSummary } from './FiledSummary';
 import type { Candle } from '@/lib/market/types';
 
@@ -104,6 +104,7 @@ export function MarginCall() {
   /** Every position filed so far this session, in the order it closed. */
   const [filed, setFiled] = useState<FiledTrade[]>([]);
   const signedIn = useAccountStore((s) => s.signedIn);
+  const balance = useAccountStore(displayBalance);
 
   const load = useCallback(async () => {
     try {
@@ -134,6 +135,7 @@ export function MarginCall() {
     setMarkers([]);
     setEntry(null);
     setLastEvent(null);
+    useAccountStore.getState().setLiveUnrealized(0);
     void load();
   }, [load]);
 
@@ -142,12 +144,27 @@ export function MarginCall() {
     void load();
   }, [load]);
 
+  // Leaving this game must not leave a phantom unrealised delta behind.
+  useEffect(() => {
+    return () => {
+      useAccountStore.getState().setLiveUnrealized(0);
+    };
+  }, []);
+
   const price = visible.length > 0 ? visible[visible.length - 1].close : 0;
 
   const margin = useMemo(() => {
     if (!entry) return null;
     return marginStateAt({ entryPrice: entry.entryPrice, price, shares: entry.shares, marginPosted: entry.marginPosted });
   }, [entry, price]);
+
+  // The one number that used to make this game's own reading drift from the
+  // header: an open position's unrealised gain/loss (equity above/below the
+  // margin posted for it) is now written to the shared balance on every
+  // price move, instead of only reaching it once the position closed.
+  useEffect(() => {
+    useAccountStore.getState().setLiveUnrealized(entry && margin ? margin.equity - entry.marginPosted : 0);
+  }, [entry, margin]);
 
   const goLong = () => {
     if (!replay || price <= 0 || entry) return;
@@ -331,12 +348,14 @@ export function MarginCall() {
           <div className="flex flex-wrap items-baseline gap-3">
             <div className="num text-sm">
               <span className="text-ink-faint">Last</span> {price.toFixed(2)}
+              <span className="ml-4 text-ink-faint" title="Your one account balance — the same number the header shows, live.">
+                Balance
+              </span>{' '}
+              <span style={{ color: balance >= startingCash ? 'var(--color-up)' : 'var(--color-down)' }}>
+                ₹{Math.round(balance).toLocaleString('en-IN')}
+              </span>
               {margin && (
                 <>
-                  <span className="ml-4 text-ink-faint">Equity</span>{' '}
-                  <span style={{ color: margin.equity >= entry!.marginPosted ? 'var(--color-up)' : 'var(--color-down)' }}>
-                    ₹{Math.round(margin.equity).toLocaleString('en-IN')}
-                  </span>
                   <span className="ml-4 text-ink-faint">To margin call</span>{' '}
                   <span style={{ color: margin.distanceToCallPercent < 3 ? 'var(--color-down)' : 'var(--color-ink)' }}>
                     {margin.distanceToCallPercent.toFixed(1)}%

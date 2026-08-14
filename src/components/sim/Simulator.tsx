@@ -23,7 +23,7 @@ import type { Product } from '@/lib/engine/costs/types';
 import { INDIA_EQUITIES } from '@/lib/market/symbols';
 import type { Quote } from '@/lib/market/types';
 import { initialSimState, simReducer, type BlotterEntry, type PersistedFill } from '@/lib/sim/reducer';
-import { useAccountStore } from '@/lib/account/store';
+import { displayBalance, useAccountStore } from '@/lib/account/store';
 
 const SYMBOLS = INDIA_EQUITIES.slice(0, 6);
 const POLL_MS = 15_000;
@@ -32,6 +32,7 @@ export function Simulator() {
   const [state, dispatch] = useReducer(simReducer, undefined, initialSimState);
   const [symbol, setSymbol] = useState(SYMBOLS[0].symbol);
   const startingCash = useAccountStore((s) => s.startingCash);
+  const balance = useAccountStore(displayBalance);
 
   // How much of `state.blotter` is already on the server — everything beyond
   // this many entries (blotter is newest-first) just executed locally and
@@ -127,6 +128,19 @@ export function Simulator() {
   const unrealised = unrealisedPnl(state.account, marks);
   const positions = Object.values(state.account.positions);
 
+  // Feeds the shared balance live, the same as every other cash-based game —
+  // an open position's mark-to-market gain is real money on the account the
+  // instant a quote moves, not only once the position is actually closed.
+  useEffect(() => {
+    useAccountStore.getState().setLiveUnrealized(unrealised);
+  }, [unrealised]);
+
+  useEffect(() => {
+    return () => {
+      useAccountStore.getState().setLiveUnrealized(0);
+    };
+  }, []);
+
   const preview = useMemo(() => {
     const qty = Number(quantity);
     if (!price || !Number.isFinite(qty) || qty <= 0) return null;
@@ -163,7 +177,7 @@ export function Simulator() {
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-4">
-        <Stat label="Equity" value={inr(Math.round(eq))} tone={eq >= startingCash ? 'up' : 'down'} />
+        <Stat label="Equity" value={inr(Math.round(balance))} tone={balance >= startingCash ? 'up' : 'down'} />
         <Stat label="Cash" value={inr(Math.round(state.account.cash))} />
         <Stat label="Unrealised" value={inr(Math.round(unrealised))} tone={unrealised >= 0 ? 'up' : 'down'} />
         <Stat

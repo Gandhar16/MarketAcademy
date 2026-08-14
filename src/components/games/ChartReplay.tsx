@@ -20,11 +20,11 @@ import { ChartToolbar } from '@/components/chart/ChartToolbar';
 import { computeIndicators, type IndicatorId } from '@/lib/analysis/indicators';
 import { RemoteReplay, type VerifiedTrade } from '@/lib/replay/client';
 import { newOrderState } from '@/lib/engine/order';
-import { applyFill, equity, newAccount, type Account } from '@/lib/engine/portfolio';
+import { applyFill, equity, newAccount, unrealisedPnl, type Account } from '@/lib/engine/portfolio';
 import { MIN_PLANNED_RR, MIN_REASON_CHARS, processScore, type TradeRecord } from '@/lib/progress/mastery';
 import { fileTrade, type FiledTrade } from '@/lib/progress/fileTrade';
 import { BASE_STARTING_CASH } from '@/lib/account/balance';
-import { useAccountStore } from '@/lib/account/store';
+import { displayBalance, useAccountStore } from '@/lib/account/store';
 import { FiledSummary } from './FiledSummary';
 import type { Candle } from '@/lib/market/types';
 
@@ -111,6 +111,7 @@ export function ChartReplay() {
   /** Every trade filed so far this session, in the order it closed — the running record shown as you play. */
   const [filed, setFiled] = useState<FiledTrade[]>([]);
   const signedIn = useAccountStore((s) => s.signedIn);
+  const balance = useAccountStore(displayBalance);
   /** Indicator choices persist across replays — a trader keeps their layout. */
   const [indicators, setIndicators] = useState<IndicatorId[]>(['sma20', 'volume']);
 
@@ -150,6 +151,7 @@ export function ChartReplay() {
     setStance('flat');
     setLastFill(null);
     setCommitting(false);
+    useAccountStore.getState().setLiveUnrealized(0);
     void load();
   }, [load]);
 
@@ -159,7 +161,25 @@ export function ChartReplay() {
     void load();
   }, [load]);
 
+  // Leaving this game — a route change, a restart, a fresh mount elsewhere —
+  // must not leave a phantom unrealised delta sitting in the shared balance.
+  useEffect(() => {
+    return () => {
+      useAccountStore.getState().setLiveUnrealized(0);
+    };
+  }, []);
+
   const price = visible.length > 0 ? visible[visible.length - 1].close : 0;
+
+  // The one thing that used to make this game's own "Equity" drift from the
+  // header: an open position's mark-to-market gain was computed here and
+  // shown here, but never reached the shared balance until the trade closed.
+  // Writing it to the store on every price move means the header and this
+  // screen are now reading the identical number, not two calculations that
+  // happen to usually agree.
+  useEffect(() => {
+    useAccountStore.getState().setLiveUnrealized(entry ? unrealisedPnl(account, { REPLAY: price }) : 0);
+  }, [entry, account, price]);
 
   const advance = useCallback(async () => {
     if (!replay || stepping || committing || replay.finished) return;
@@ -406,15 +426,12 @@ export function ChartReplay() {
           <div className="flex flex-wrap items-baseline gap-3">
             <div className="num text-sm">
               <span className="text-ink-faint">Last</span> {price.toFixed(2)}
-              <span className="ml-4 text-ink-faint" title="Cash plus the mark-to-market value of any open position. The header balance only moves once a position closes and its P&L is banked.">
-                Equity
+              <span className="ml-4 text-ink-faint" title="Your one account balance — the same number the header shows, live.">
+                Balance
               </span>{' '}
-              <span style={{ color: eq >= startingCash ? 'var(--color-up)' : 'var(--color-down)' }}>
-                ₹{Math.round(eq).toLocaleString('en-IN')}
+              <span style={{ color: balance >= startingCash ? 'var(--color-up)' : 'var(--color-down)' }}>
+                ₹{Math.round(balance).toLocaleString('en-IN')}
               </span>
-              {stance !== 'flat' && (
-                <span className="ml-1 text-[10px] text-ink-faint">(incl. open position, not yet banked)</span>
-              )}
               <span className="ml-4 text-ink-faint">{remaining} bars left</span>
             </div>
             {!finished && (

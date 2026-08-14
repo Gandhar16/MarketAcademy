@@ -7,7 +7,7 @@
  * wrote a fresh net P&L is what shows up here, with no polling.
  */
 import { useEffect } from 'react';
-import { useAccountStore } from '@/lib/account/store';
+import { displayBalance, useAccountStore } from '@/lib/account/store';
 
 /**
  * Only ever rendered inside `AccountLinks` once the server has already
@@ -16,7 +16,8 @@ import { useAccountStore } from '@/lib/account/store';
  * turns that fact into an actual number.
  */
 export function AccountBalance() {
-  const { startingCash, status, hydrate } = useAccountStore();
+  const { status, hydrate } = useAccountStore();
+  const balance = useAccountStore(displayBalance);
 
   useEffect(() => {
     if (status === 'idle') void hydrate();
@@ -26,7 +27,7 @@ export function AccountBalance() {
 
   return (
     <span className="num shrink-0 text-[13px] text-ink-muted" title="Your trading account balance">
-      ₹{Math.round(startingCash).toLocaleString('en-IN')}
+      ₹{Math.round(balance).toLocaleString('en-IN')}
     </span>
   );
 }

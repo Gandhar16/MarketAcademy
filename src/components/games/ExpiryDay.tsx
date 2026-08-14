@@ -98,6 +98,20 @@ export function ExpiryDay() {
     return () => clearTimeout(t);
   }, [round, outcome, secondsLeft]);
 
+  // Feeds the shared balance live while the position is open — "if closed
+  // now" is real, moving P&L on the account, not just a preview number.
+  // Drops to 0 once it settles, since finish()'s bankFill takes over then.
+  useEffect(() => {
+    const liveIfClosedNow = round && !outcome ? premium * LOT_SIZE - round.entryCost : 0;
+    useAccountStore.getState().setLiveUnrealized(liveIfClosedNow);
+  }, [round, outcome, premium]);
+
+  useEffect(() => {
+    return () => {
+      useAccountStore.getState().setLiveUnrealized(0);
+    };
+  }, []);
+
   const buy = () => {
     const entryPremium = premiumAt(SPOT0, TOTAL_SECONDS);
     const entryCost = entryPremium * LOT_SIZE;
@@ -172,6 +186,7 @@ export function ExpiryDay() {
     setRound(null);
     setOutcome(null);
     setReason('');
+    useAccountStore.getState().setLiveUnrealized(0);
     // `filed`, like `history`, is NOT reset — both track every round played
     // this mount, not just the one that just settled.
   };

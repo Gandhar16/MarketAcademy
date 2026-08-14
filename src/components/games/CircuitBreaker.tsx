@@ -102,6 +102,7 @@ export function CircuitBreaker() {
     setFinished(false);
     banked.current = false;
     setFiled([]);
+    useAccountStore.getState().setLiveUnrealized(0);
   };
 
   const survived = exitPrice !== null;
@@ -109,6 +110,21 @@ export function CircuitBreaker() {
   const signedIn = useAccountStore((s) => s.signedIn);
   /** The trade filed, once the scenario resolves — at most one, ever. */
   const [filed, setFiled] = useState<FiledTrade[]>([]);
+
+  // Feeds the shared balance live while the position is still open — the
+  // same reasoning as Chart Replay and Margin Call: this P&L is real money
+  // riding on the account the instant the scenario is playing, not only
+  // once it resolves. Drops back to 0 the moment `finished` flips true,
+  // since the bankFill effect below takes over at that exact point.
+  useEffect(() => {
+    useAccountStore.getState().setLiveUnrealized(finished ? 0 : pnl);
+  }, [pnl, finished]);
+
+  useEffect(() => {
+    return () => {
+      useAccountStore.getState().setLiveUnrealized(0);
+    };
+  }, []);
 
   /**
    * There is no thesis and no stop here to be honest about — the position and

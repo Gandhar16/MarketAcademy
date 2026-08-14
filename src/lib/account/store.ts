@@ -15,6 +15,19 @@ import { BASE_STARTING_CASH, startingCashFor } from './balance';
 interface AccountState {
   startingCash: number;
   netPnl: number;
+  /**
+   * The mark-to-market P&L of whichever position is open RIGHT NOW in
+   * whichever game is on screen — zero when nothing is open. This is what
+   * used to make a game's own "Equity" number drift from the header: a game
+   * computed it locally and only banked money into `netPnl` once a position
+   * closed, so the two numbers agreed only at the instant nothing was open.
+   * Every game now writes its open position's live P&L HERE instead of
+   * computing its own separate number, so there is exactly one balance —
+   * `startingCash + liveUnrealized` — and the header and the game are
+   * rendering that same store value, not two calculations that happen to
+   * often match.
+   */
+  liveUnrealized: number;
   status: 'idle' | 'loading' | 'ready';
   signedIn: boolean;
   /** Fetches the real balance from the server. Safe to call more than once — a second call while one is in flight is a no-op. */
@@ -32,6 +45,14 @@ interface AccountState {
    * the result.
    */
   bankFill: (game: string, pnl: number) => void;
+  /**
+   * Called by whichever game currently has a position open, every time its
+   * mark-to-market value changes (a new bar, a price tick) — and with `0`
+   * the instant it goes flat, closes, or the game is left. Not persisted:
+   * this is genuinely unrealised, so a reload correctly drops back to just
+   * the banked balance, the same way a real broker's app would.
+   */
+  setLiveUnrealized: (amount: number) => void;
 }
 
 let inFlight: Promise<void> | null = null;
@@ -39,6 +60,7 @@ let inFlight: Promise<void> | null = null;
 export const useAccountStore = create<AccountState>((set, get) => ({
   startingCash: BASE_STARTING_CASH,
   netPnl: 0,
+  liveUnrealized: 0,
   status: 'idle',
   signedIn: false,
 
@@ -48,8 +70,14 @@ export const useAccountStore = create<AccountState>((set, get) => ({
     inFlight = fetch('/api/account/balance')
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { startingCash: number; netPnl: number } | null) => {
-        if (data) set({ startingCash: data.startingCash, netPnl: data.netPnl, signedIn: true, status: 'ready' });
-        else set({ status: 'ready' });
+        // `liveUnrealized` resets here too: the server's number is always
+        // the fully-realised truth, and a stale open-position delta from
+        // whatever game was last on screen must not leak into a fresh page.
+        if (data) {
+          set({ startingCash: data.startingCash, netPnl: data.netPnl, liveUnrealized: 0, signedIn: true, status: 'ready' });
+        } else {
+          set({ status: 'ready' });
+        }
       })
       .catch(() => set({ status: 'ready' }))
       .finally(() => {
@@ -81,4 +109,14 @@ export const useAccountStore = create<AccountState>((set, get) => ({
       // server, which is the same recovery path a dropped sim fill takes.
     });
   },
+
+  setLiveUnrealized: (amount) => {
+    if (get().liveUnrealized === amount) return;
+    set({ liveUnrealized: amount });
+  },
 }));
+
+/** The one number every game and the header display — banked plus whatever is open right now. */
+export function displayBalance(state: AccountState): number {
+  return state.startingCash + state.liveUnrealized;
+}
