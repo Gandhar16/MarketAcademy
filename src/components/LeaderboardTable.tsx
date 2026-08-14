@@ -10,6 +10,7 @@
  * make the point that this site scores how you traded, not how it turned out.
  */
 import { useState } from 'react';
+import Link from 'next/link';
 import type { Board, RankedEntry } from '@/lib/db/leaderboard';
 import { MIN_RUNS_FOR_DISCIPLINE, WEIGHTS } from '@/lib/db/leaderboard';
 
@@ -161,9 +162,12 @@ function Card({ entry, highlight }: { entry: RankedEntry; highlight?: boolean })
     >
       <div className="flex items-baseline gap-3">
         <span className="num shrink-0 text-ink-faint">#{entry.rank}</span>
-        <span className={`min-w-0 flex-1 truncate ${highlight ? 'font-medium text-accent' : ''}`}>
+        <Link
+          href={`/leaderboard/${entry.userId}`}
+          className={`min-w-0 flex-1 truncate hover:underline ${highlight ? 'font-medium text-accent' : ''}`}
+        >
           {entry.displayName}
-        </span>
+        </Link>
         <span className="num shrink-0 text-base">{entry.score.toFixed(1)}</span>
       </div>
       {provisional && (
@@ -201,7 +205,9 @@ function Row({ entry, highlight }: { entry: RankedEntry; highlight?: boolean }) 
     <tr className={`border-b border-line/60 ${highlight ? 'bg-accent/5' : ''}`}>
       <td className="py-2.5 pr-3 font-mono text-ink-muted">{entry.rank}</td>
       <td className="py-2.5 pr-3">
-        <span className={highlight ? 'font-medium text-accent' : ''}>{entry.displayName}</span>
+        <Link href={`/leaderboard/${entry.userId}`} className={`hover:underline ${highlight ? 'font-medium text-accent' : ''}`}>
+          {entry.displayName}
+        </Link>
         {provisional && (
           <span className="ml-2 rounded bg-surface-2 px-1.5 py-0.5 text-[0.65rem] uppercase tracking-wide text-ink-faint">
             provisional
