@@ -12,8 +12,11 @@
  * Uses the real halts and fill engines — the circuit lock that blocks the exit
  * is the same `canTradeAtBand` the simulator uses.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { canTradeAtBand, checkBand, indiaMarketWideBreaker, indiaPriceBand } from '@/lib/engine/halts';
+import type { TradeRecord } from '@/lib/progress/mastery';
+import { useAccountStore } from '@/lib/account/store';
+import { RunSubmit } from './RunSubmit';
 
 interface Beat {
   /** Minutes since midnight IST. */
@@ -45,6 +48,9 @@ const BEATS: Beat[] = [
 ];
 
 export function CircuitBreaker() {
+  useEffect(() => {
+    void useAccountStore.getState().hydrate();
+  }, []);
   const [beat, setBeat] = useState(0);
   const [position, setPosition] = useState(100);
   const [exitPrice, setExitPrice] = useState<number | null>(null);
@@ -96,6 +102,29 @@ export function CircuitBreaker() {
   };
 
   const survived = exitPrice !== null;
+  const startingCash = useAccountStore((s) => s.startingCash);
+
+  /**
+   * There is no thesis and no stop here to be honest about — the position and
+   * its entry are handed to the player, not chosen. `preCommitted` and
+   * `sizedFromStop` are false rather than fabricated true: this scenario
+   * genuinely does not test either. What it DOES test — did you get out
+   * before the exit stopped being available — is exactly what `honouredStop`
+   * and `exitedPerPlan` report via `survived`, and it is why this game is
+   * one of the few whose process score counts toward the global one (see
+   * TRADE_DISCIPLINE_GAMES): the discipline being measured is real, even
+   * though the plan-formation half of the usual score is structurally absent.
+   */
+  const trade: TradeRecord = {
+    preCommitted: false,
+    riskFraction: startingCash > 0 ? (entry * 100) / startingCash : 0,
+    honouredStop: survived,
+    exitedPerPlan: survived,
+    pnl,
+    sizedFromStop: false,
+    plannedRR: null,
+    stoppedOut: !survived,
+  };
 
   return (
     <div className="space-y-5">
@@ -213,6 +242,18 @@ export function CircuitBreaker() {
           <p className="mt-3 text-[13px] text-ink-faint">
             The bounce at 11:15 was the decision point. It felt like relief; it was the last liquid exit of the day.
           </p>
+
+          <RunSubmit
+            game="circuit-breaker"
+            trades={[trade]}
+            pnl={pnl}
+            defaultReason={
+              survived
+                ? `Sold at ₹${exitPrice!.toFixed(2)} at ${fmtTime(current.time)}, before the lower circuit locked the book — before the bounce at 11:15 failed and the exit stopped being available.`
+                : `Held through the bounce at 11:15 and into the lower circuit, and was locked at ₹${current.price.toFixed(2)} into the close with no counterparty left to sell to.`
+            }
+          />
+
           <button onClick={reset} className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis">
             Play it again
           </button>

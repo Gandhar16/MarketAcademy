@@ -10,6 +10,7 @@ import { randomUUID } from 'node:crypto';
 import type { SkillMastery, Streak, TradeRecord } from '@/lib/progress/mastery';
 import { processScore, runXp, type RunOutcome, type RunXp } from '@/lib/progress/mastery';
 import { encouragement } from '@/lib/progress/encouragement';
+import { TRADE_DISCIPLINE_GAMES } from '@/lib/games/catalogue';
 import type { Db } from './driver';
 
 export interface StoredLesson {
@@ -396,9 +397,16 @@ export async function loadTotals(db: Db, userId: string): Promise<RunTotals> {
 export const PROCESS_WINDOW = 20;
 
 export async function refreshProcessScore(db: Db, userId: string, now = Date.now()): Promise<number> {
+  // Only games with a real trade-discipline story move this number — see
+  // TRADE_DISCIPLINE_GAMES for why. A quiz game with nothing here would
+  // otherwise pull the average toward zero for a dimension it never tested.
+  const placeholders = TRADE_DISCIPLINE_GAMES.map(() => '?').join(', ');
   const rows = await db.all<{ process_score: number }>(
-    'SELECT process_score FROM game_runs WHERE user_id = ? ORDER BY played_at DESC LIMIT ?',
+    `SELECT process_score FROM game_runs
+      WHERE user_id = ? AND game IN (${placeholders})
+      ORDER BY played_at DESC LIMIT ?`,
     userId,
+    ...TRADE_DISCIPLINE_GAMES,
     PROCESS_WINDOW,
   );
 

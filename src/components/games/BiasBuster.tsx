@@ -12,16 +12,34 @@
 import { useState } from 'react';
 import { BIAS_SCENARIOS } from '@/lib/games/scenarios';
 import { useSequentialScenarios } from '@/lib/hooks/useSequentialScenarios';
+import type { TradeRecord } from '@/lib/progress/mastery';
+import { RunSubmit } from './RunSubmit';
 
 export function BiasBuster() {
   const [trapped, setTrapped] = useState<string[]>([]);
   const [correct, setCorrect] = useState<string[]>([]);
+  // One record per question, for filing the run — see the comment on the
+  // RunSubmit call below for what these fields do and don't mean here.
+  const [trades, setTrades] = useState<TradeRecord[]>([]);
   const { index, picked, current, finished, total, choose: pick, next, reset } = useSequentialScenarios(BIAS_SCENARIOS);
 
   const choose = (i: number) => {
     pick(i, (choiceIndex, item) => {
       if (choiceIndex === item.correctIndex) setCorrect((c) => [...c, item.id]);
       else if (choiceIndex === item.trapIndex) setTrapped((t) => [...t, item.bias]);
+      setTrades((t) => [
+        ...t,
+        {
+          preCommitted: true,
+          riskFraction: 0,
+          honouredStop: true,
+          exitedPerPlan: true,
+          pnl: 0,
+          sizedFromStop: false,
+          plannedRR: null,
+          stoppedOut: false,
+        },
+      ]);
     });
   };
 
@@ -48,13 +66,31 @@ export function BiasBuster() {
             </p>
           )}
         </div>
+        {/*
+          No money changes hands here, so `pnl` is honestly zero on every
+          record rather than a stand-in "points" number dressed up as P&L —
+          which means this run cannot clear runXp()'s "the plan paid" gate
+          and earns no game XP. That is correct, not a gap: XP in this app is
+          the reward for a well-reasoned WIN, and a quiz has no win to
+          reward. What filing the run still gets you is a place on this
+          game's own leaderboard and a `runs` count that is honestly yours.
+        */}
+        <RunSubmit
+          game="bias-buster"
+          trades={trades}
+          pnl={0}
+          accuracy={total > 0 ? correct.length / total : 0}
+          defaultReason={`Answered ${total} bias scenarios cold, before any reveal. Took the common trap on ${trapped.length > 0 ? trapped.join(', ') : 'none of them'}.`}
+        />
+
         <button
           onClick={() => {
             reset();
             setTrapped([]);
             setCorrect([]);
+            setTrades([]);
           }}
-          className="rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis"
+          className="mt-4 rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis"
         >
           Run it again
         </button>

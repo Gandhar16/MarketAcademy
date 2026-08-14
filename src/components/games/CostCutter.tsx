@@ -13,6 +13,8 @@ import { useMemo, useState } from 'react';
 import { roundTripCost } from '@/lib/engine/costs';
 import { BROKER_IN_DISCOUNT, BROKER_IN_FULL_SERVICE } from '@/lib/engine/costs/india';
 import type { BrokeragePlan, Product } from '@/lib/engine/costs/types';
+import type { TradeRecord } from '@/lib/progress/mastery';
+import { RunSubmit } from './RunSubmit';
 
 const PRODUCTS: { id: Product; label: string }[] = [
   { id: 'delivery', label: 'Delivery' },
@@ -128,6 +130,32 @@ export function CostCutter() {
             : 'Over target. Before you reach for the broker toggle, try cutting the number of round trips: it is a linear multiplier on everything, and it is the only lever fully under your control.'}
         </p>
       </div>
+
+      {/*
+        No stop, no target, no reveal — this is an open-ended sandbox, so
+        there is nothing to be "pre-committed" to and no money at stake.
+        Filing records the configuration you landed on; `accuracy` is
+        whether it actually cleared the target, which is this game's one
+        real pass/fail signal.
+      */}
+      <RunSubmit
+        game="cost-cutter"
+        trades={[
+          {
+            preCommitted: false,
+            riskFraction: 0,
+            honouredStop: true,
+            exitedPerPlan: true,
+            pnl: 0,
+            sizedFromStop: false,
+            plannedRR: null,
+            stoppedOut: false,
+          },
+        ]}
+        pnl={0}
+        accuracy={passed ? 1 : 0}
+        defaultReason={`Landed on ${PRODUCTS.find((p) => p.id === product)?.label}, ${broker.id === 'in-discount' ? 'a discount broker' : 'a full-service broker'}, ${trips} round trips a year on ₹${capital.toLocaleString('en-IN')} — ${annualPercent.toFixed(2)}% annual cost, ${passed ? 'under' : 'over'} the ${TARGET_PERCENT}% target.`}
+      />
     </div>
   );
 }

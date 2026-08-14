@@ -11,6 +11,8 @@
  */
 import { useMemo, useState } from 'react';
 import { DEFAULT_RUIN_CONFIG, expectancy, kellyFraction, simulate, type RuinConfig } from '@/lib/games/ruin';
+import type { TradeRecord } from '@/lib/progress/mastery';
+import { RunSubmit } from './RunSubmit';
 
 const RISK_STEPS = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.35];
 
@@ -134,6 +136,32 @@ export function RiskRoulette() {
           Seed {seed}. These are modelled coin flips with your stated edge — not market data.
         </span>
       </div>
+
+      {/*
+        A sizing sandbox, not a single decision with a reveal — there is no
+        stop and no money actually at stake, so `pnl` stays honestly zero.
+        `accuracy` reports the survival rate of the sizing choice itself
+        (1 - chance of ruin), which is the one number this game is built to
+        make you feel.
+      */}
+      <RunSubmit
+        game="risk-roulette"
+        trades={[
+          {
+            preCommitted: false,
+            riskFraction,
+            honouredStop: true,
+            exitedPerPlan: true,
+            pnl: 0,
+            sizedFromStop: false,
+            plannedRR: null,
+            stoppedOut: false,
+          },
+        ]}
+        pnl={0}
+        accuracy={1 - summary.ruinProbability}
+        defaultReason={`Sized at ${(riskFraction * 100).toFixed(1)}% risk per trade against a ${(winRate * 100).toFixed(0)}% win rate — ${(summary.ruinProbability * 100).toFixed(1)}% chance of ruin over 200 trades across ${summary.paths.length} modelled runs.`}
+      />
     </div>
   );
 }

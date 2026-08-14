@@ -11,6 +11,8 @@
  */
 import { useMemo, useState } from 'react';
 import { payoffProfile, strategyPayoff, STRATEGY_TEMPLATES, type Leg } from '@/lib/engine/options';
+import type { TradeRecord } from '@/lib/progress/mastery';
+import { RunSubmit } from './RunSubmit';
 
 const CENTRE = 24_000;
 const STEP = CENTRE * 0.01;
@@ -118,6 +120,21 @@ export function PayoffBuilder() {
   };
 
   if (level >= CHALLENGES.length) {
+    // No stake and no single moment of commitment — legs can be adjusted and
+    // re-checked freely, so `preCommitted` is honestly false rather than
+    // claiming a decision that was never locked in. `pnl` stays zero: this
+    // is construction, not money.
+    const trades: TradeRecord[] = solved.map(() => ({
+      preCommitted: false,
+      riskFraction: 0,
+      honouredStop: true,
+      exitedPerPlan: true,
+      pnl: 0,
+      sizedFromStop: false,
+      plannedRR: null,
+      stoppedOut: false,
+    }));
+
     return (
       <div className="rounded-xl border border-accent-dim/50 bg-accent-dim/10 p-6">
         <div className="text-[11px] uppercase tracking-wider text-accent">All structures built</div>
@@ -127,6 +144,15 @@ export function PayoffBuilder() {
           directions. Anyone who can read a payoff diagram can derive every named strategy on demand — and, more
           usefully, can tell at a glance which ones have an unbounded loss hiding in them.
         </p>
+
+        <RunSubmit
+          game="payoff-builder"
+          trades={trades}
+          pnl={0}
+          accuracy={CHALLENGES.length > 0 ? solved.length / CHALLENGES.length : 0}
+          defaultReason={`Built ${solved.length} of ${CHALLENGES.length} target payoff shapes from legs, matched against the target curve rather than a memorised recipe.`}
+        />
+
         <button
           onClick={() => {
             setLevel(0);

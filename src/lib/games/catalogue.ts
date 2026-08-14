@@ -125,3 +125,21 @@ export const GAME_CATALOGUE: GameEntry[] = [
 ];
 
 export const GAMES_BY_SLUG = new Map(GAME_CATALOGUE.map((g) => [g.slug, g]));
+
+/**
+ * Games whose process score genuinely measures TRADE discipline —
+ * pre-commitment, a stop that was honoured or wasn't, sizing from that stop,
+ * a planned reward-to-risk — because they are the games that actually have
+ * those concepts: a real entry, a real stop, a real exit.
+ *
+ * This is what `user_stats.process_score` (the number the global
+ * `/leaderboard` reads) is averaged over — see `refreshProcessScore` in
+ * lib/db/progress.ts. Every other game still files a run, still earns XP,
+ * and still has its own per-game leaderboard (`gameLeaderboard`, unaffected
+ * by this list — it ranks each game against itself). What it does not get
+ * to do is move a global score that measures a kind of discipline it was
+ * never testing: a quiz game scoring near-zero on "stop honoured" — because
+ * it has no stop — would otherwise drag down the discipline score of
+ * someone who trades Chart Replay carefully and also likes Order Gauntlet.
+ */
+export const TRADE_DISCIPLINE_GAMES: readonly string[] = ['chart-replay', 'circuit-breaker', 'margin-call', 'expiry-day'];

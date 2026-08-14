@@ -12,6 +12,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PATTERNS, PATTERNS_BY_ID, type PatternId, type PatternStats, verdictFor } from '@/lib/analysis/patterns';
 import type { Candle, Series } from '@/lib/market/types';
+import type { TradeRecord } from '@/lib/progress/mastery';
+import { RunSubmit } from './RunSubmit';
 
 const SYMBOL = 'RELIANCE.NS';
 const WINDOW = 6;
@@ -99,6 +101,24 @@ export function CandleSprint() {
     return stats.filter((s) => ids.has(s.patternId));
   }, [answers, stats]);
 
+  // Pattern-spotting speed, not money — `pnl` stays honestly zero. Naming a
+  // pattern under time pressure IS a real, timely commitment, so
+  // `preCommitted` reports true for every round actually answered.
+  const trades: TradeRecord[] = useMemo(
+    () =>
+      answers.map(() => ({
+        preCommitted: true,
+        riskFraction: 0,
+        honouredStop: true,
+        exitedPerPlan: true,
+        pnl: 0,
+        sizedFromStop: false,
+        plannedRR: null,
+        stoppedOut: false,
+      })),
+    [answers],
+  );
+
   if (error) return <div className="rounded-xl border border-danger/50 bg-danger/10 p-5 text-sm text-danger">{error}</div>;
   if (!rounds) return <div className="h-64 animate-pulse rounded-xl border border-line bg-surface" />;
 
@@ -162,6 +182,14 @@ export function CandleSprint() {
             quicker at recognising it does not change that.
           </p>
         </div>
+
+        <RunSubmit
+          game="candle-sprint"
+          trades={trades}
+          pnl={0}
+          accuracy={answers.length > 0 ? correct / answers.length : 0}
+          defaultReason={`Sprinted ${answers.length} charts, ${correct} identified correctly, averaging ${(avgMs / 1000).toFixed(1)}s per chart.`}
+        />
 
         <button
           onClick={() => {

@@ -20,6 +20,8 @@ import {
   project,
   sequenceRiskComparison,
 } from '@/lib/games/compounding';
+import type { TradeRecord } from '@/lib/progress/mastery';
+import { RunSubmit } from './RunSubmit';
 
 const inr = (n: number) =>
   n >= 1e7
@@ -152,6 +154,30 @@ export function TheLongGame() {
         including the {NIFTY_ANNUAL_RETURNS.find((r) => r.year === 2008)!.ret.toFixed(0)}% of 2008. Past returns are
         history, not a forecast — this is a model of what those specific years would have done to a specific plan.
       </p>
+
+      {/*
+        A projection sandbox — nothing to pre-commit to, no stop, and no
+        money actually at stake over the twenty simulated years, so `pnl`
+        stays honestly zero. There is no natural pass/fail here, so
+        `accuracy` is left unset rather than forced.
+      */}
+      <RunSubmit
+        game="the-long-game"
+        trades={[
+          {
+            preCommitted: false,
+            riskFraction: 0,
+            honouredStop: true,
+            exitedPerPlan: true,
+            pnl: 0,
+            sizedFromStop: false,
+            plannedRR: null,
+            stoppedOut: false,
+          },
+        ]}
+        pnl={0}
+        defaultReason={`Modelled ₹${initial.toLocaleString('en-IN')} starting, ₹${contribution.toLocaleString('en-IN')}/year, ${fee.toFixed(2)}% fee, ${inflation.toFixed(1)}% inflation over ${years} real NIFTY years${reversed ? ' (reversed order)' : ''}: ₹${Math.round(result.finalReal).toLocaleString('en-IN')} in today's money.`}
+      />
     </div>
   );
 }

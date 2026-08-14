@@ -13,6 +13,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { GAUNTLET_SCENARIOS, type GauntletScenario } from '@/lib/games/scenarios';
 import type { OrderType } from '@/lib/engine/order';
+import type { TradeRecord } from '@/lib/progress/mastery';
+import { RunSubmit } from './RunSubmit';
 
 const ORDER_TYPES: { id: OrderType; label: string; hint: string }[] = [
   { id: 'MARKET', label: 'MARKET', hint: 'Certain fill, uncertain price' },
@@ -78,6 +80,25 @@ export function OrderGauntlet() {
 
   const score = useMemo(() => answers.filter((a) => a.correct).length, [answers]);
 
+  // One record per scenario. `preCommitted` reports whether a real choice was
+  // made in time — a timeout is honestly recorded as no decision at all, not
+  // a wrong one. No money changes hands here, so `pnl` stays zero throughout
+  // rather than standing in a fake number dressed up as P&L.
+  const trades: TradeRecord[] = useMemo(
+    () =>
+      answers.map((a) => ({
+        preCommitted: a.picked !== null,
+        riskFraction: 0,
+        honouredStop: true,
+        exitedPerPlan: true,
+        pnl: 0,
+        sizedFromStop: false,
+        plannedRR: null,
+        stoppedOut: false,
+      })),
+    [answers],
+  );
+
   if (finished) {
     return (
       <div className="space-y-4">
@@ -111,6 +132,14 @@ export function OrderGauntlet() {
             </li>
           ))}
         </ul>
+
+        <RunSubmit
+          game="order-gauntlet"
+          trades={trades}
+          pnl={0}
+          accuracy={GAUNTLET_SCENARIOS.length > 0 ? score / GAUNTLET_SCENARIOS.length : 0}
+          defaultReason={`Ran the gauntlet: ${score} of ${GAUNTLET_SCENARIOS.length} correct, choosing on fill certainty vs price certainty under a clock.`}
+        />
 
         <button onClick={restart} className="rounded-lg bg-accent px-5 py-2.5 font-medium text-on-emphasis">
           Run it again

@@ -11,9 +11,12 @@
  * Priced with Black–Scholes throughout, so the loss is a consequence of the
  * model rather than a scripted punchline.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { blackScholesPrice, daysToYears, type OptionInputs } from '@/lib/engine/options';
 import { mulberry32 } from '@/lib/util/rng';
+import type { TradeRecord } from '@/lib/progress/mastery';
+import { useAccountStore } from '@/lib/account/store';
+import { RunSubmit } from './RunSubmit';
 
 const SPOT = 1400;
 const STRIKE = 1400;
@@ -55,6 +58,11 @@ export function EarningsRoulette() {
   const [call, setCall] = useState<'up' | 'down' | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [history, setHistory] = useState<{ move: number; pnl: number; rightDirection: boolean }[]>([]);
+
+  const startingCash = useAccountStore((s) => s.startingCash);
+  useEffect(() => {
+    void useAccountStore.getState().hydrate();
+  }, []);
 
   const entryCost = useMemo(() => priceStraddle(SPOT, DAYS_BEFORE, IV_BEFORE), []);
   const outcome = useMemo(() => drawOutcome(seed + round * 7919), [seed, round]);
@@ -231,6 +239,29 @@ export function EarningsRoulette() {
               </div>
             ))}
           </div>
+
+          <RunSubmit
+            game="earnings-roulette"
+            trades={history.map(
+              (h): TradeRecord => ({
+                // Committing to a direction before the reveal IS this game's
+                // pre-commitment — the one dimension it genuinely shares with
+                // the trade-discipline games. There is no stop to abandon and
+                // no early exit to take, so those two report true rather than
+                // being scored on something this game never offered.
+                preCommitted: true,
+                riskFraction: startingCash > 0 ? entryCost / startingCash : 0,
+                honouredStop: true,
+                exitedPerPlan: true,
+                pnl: h.pnl,
+                sizedFromStop: false,
+                plannedRR: null,
+                stoppedOut: false,
+              }),
+            )}
+            pnl={history.reduce((s, h) => s + h.pnl, 0)}
+            defaultReason={`Bought the straddle before ${history.length} earnings announcement${history.length === 1 ? '' : 's'}, calling direction each time before the reveal.`}
+          />
         </div>
       )}
 

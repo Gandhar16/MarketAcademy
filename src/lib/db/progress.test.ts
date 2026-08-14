@@ -233,6 +233,25 @@ describe('game runs', () => {
       .process_score;
     expect(score).toBeLessThan(50);
   });
+
+  it('does not let a non-trade-discipline game move the global process score', async () => {
+    // A quiz game submitting the worst possible trade-discipline fields —
+    // which it must, having no stop or thesis of its own to report.
+    await recordGameRun(db, userId, { game: 'order-gauntlet', trades: [RECKLESS] }, T0);
+    const score = (await db.get('SELECT process_score FROM user_stats WHERE user_id = ?', userId) as { process_score: number })
+      .process_score;
+    expect(score).toBe(0);
+  });
+
+  it('keeps a trade-discipline game unaffected by non-trade-discipline runs mixed in around it', async () => {
+    const chartReplay = await recordGameRun(db, userId, { game: 'chart-replay', trades: [DISCIPLINED] }, T0);
+    await recordGameRun(db, userId, { game: 'order-gauntlet', trades: [RECKLESS] }, T0 + 1);
+    await recordGameRun(db, userId, { game: 'bias-buster', trades: [RECKLESS] }, T0 + 2);
+    const score = (await db.get('SELECT process_score FROM user_stats WHERE user_id = ?', userId) as { process_score: number })
+      .process_score;
+    // Only the one chart-replay run counts, so the average IS that run's own score.
+    expect(score).toBeCloseTo(chartReplay.processScore, 6);
+  });
 });
 
 describe('what a run records', () => {
