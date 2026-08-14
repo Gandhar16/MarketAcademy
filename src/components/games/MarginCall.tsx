@@ -29,10 +29,11 @@ import {
   sharesForMargin,
   type Leverage,
 } from '@/lib/engine/margin';
-import { MIN_PLANNED_RR, processScore, type TradeRecord } from '@/lib/progress/mastery';
+import { MIN_PLANNED_RR, MIN_REASON_CHARS, processScore, type TradeRecord } from '@/lib/progress/mastery';
+import { fileTrade, type FiledTrade } from '@/lib/progress/fileTrade';
 import { BASE_STARTING_CASH } from '@/lib/account/balance';
 import { useAccountStore } from '@/lib/account/store';
-import { RunSubmit } from './RunSubmit';
+import { FiledSummary } from './FiledSummary';
 import type { Candle } from '@/lib/market/types';
 
 interface Entry {
@@ -59,12 +60,12 @@ interface ClosedTrade {
   thesis: string;
 }
 
-function toTradeRecord(t: ClosedTrade): TradeRecord {
+function toTradeRecord(t: ClosedTrade, riskFraction: number): TradeRecord {
   return {
     preCommitted: t.thesis.trim().length > 0,
     // How much of the account this one position put up as margin — not the
     // notional it controlled, which is the whole point being tested.
-    riskFraction: 0, // filled in by the caller, which knows the balance this margin was posted against
+    riskFraction,
     // Being forced out by the exchange is a different failure from honouring
     // your own stop — it means the position was sized past what your own
     // plan would have survived.
@@ -100,7 +101,9 @@ export function MarginCall() {
   const [thesis, setThesis] = useState('');
   const [stopPercent, setStopPercent] = useState(8);
   const [targetPercent, setTargetPercent] = useState(16);
-  const [theses, setTheses] = useState<string[]>([]);
+  /** Every position filed so far this session, in the order it closed. */
+  const [filed, setFiled] = useState<FiledTrade[]>([]);
+  const signedIn = useAccountStore((s) => s.signedIn);
 
   const load = useCallback(async () => {
     try {
@@ -127,7 +130,7 @@ export function MarginCall() {
     setFinished(false);
     setRevealed(null);
     setClosed([]);
-    setTheses([]);
+    setFiled([]);
     setMarkers([]);
     setEntry(null);
     setLastEvent(null);
@@ -162,7 +165,6 @@ export function MarginCall() {
       plannedRR: targetPercent / stopPercent,
       thesis,
     });
-    setTheses((t) => [...t, `${leverage}x from ${price.toFixed(2)}: ${thesis.trim()}`]);
     setLastEvent(
       `Opened ${leverage}x long — ₹${marginPosted.toLocaleString('en-IN')} margin controls ${shares.toFixed(2)} shares.`,
     );
@@ -183,45 +185,53 @@ export function MarginCall() {
     finalizePosition(entry, price, 'manual');
   };
 
-  const finalizePosition = (e: Entry, exitPrice: number, reason: CloseReason) => {
-    const pnl = e.marginPosted + e.shares * (exitPrice - e.entryPrice) - e.marginPosted;
-    const trade: ClosedTrade = {
-      entryPrice: e.entryPrice,
-      exitPrice,
-      marginPosted: e.marginPosted,
-      leverage: e.leverage,
-      pnl,
-      reason,
-      plannedRR: e.plannedRR,
-      thesis: e.thesis,
-    };
-    setClosed((c) => [...c, trade]);
-    setEntry(null);
-    // Banked the instant the position closes — not held back for the
-    // debrief's "file this run" click, which is about XP and reasoning.
-    useAccountStore.getState().bankFill('margin-call', pnl);
+  const finalizePosition = useCallback(
+    (e: Entry, exitPrice: number, reason: CloseReason) => {
+      const pnl = e.marginPosted + e.shares * (exitPrice - e.entryPrice) - e.marginPosted;
+      const trade: ClosedTrade = {
+        entryPrice: e.entryPrice,
+        exitPrice,
+        marginPosted: e.marginPosted,
+        leverage: e.leverage,
+        pnl,
+        reason,
+        plannedRR: e.plannedRR,
+        thesis: e.thesis,
+      };
+      setClosed((c) => [...c, trade]);
+      setEntry(null);
+      // Banked and filed the instant the position closes — not held back for
+      // a "file this run" click at the end of the whole session. The reason
+      // is the thesis already written before this position was opened.
+      useAccountStore.getState().bankFill('margin-call', pnl);
+      const record = toTradeRecord(trade, e.marginPosted / startingCash);
+      void fileTrade('margin-call', record, e.thesis).then((r) => {
+        if (r) setFiled((f) => [...f, r]);
+      });
 
-    const colour = reason === 'liquidated' ? '#ff7a5c' : pnl >= 0 ? '#2dd4a7' : '#ff7a5c';
-    setMarkers((m) => [
-      ...m,
-      {
-        time: Math.floor(Date.now() / 1000),
-        position: 'aboveBar',
-        color: colour,
-        shape: 'arrowDown',
-        text: `${reason === 'liquidated' ? 'MARGIN CALL' : reason === 'stop' ? 'Stop' : reason === 'target' ? 'Target' : 'Closed'} ${exitPrice.toFixed(2)}`,
-      },
-    ]);
-    setLastEvent(
-      reason === 'liquidated'
-        ? `Forced out at ₹${exitPrice.toFixed(2)} — the exchange's price, not yours. Margin gone: ₹${Math.abs(pnl).toLocaleString('en-IN')}.`
-        : reason === 'stop'
-          ? `Your own stop hit first — closed at ₹${exitPrice.toFixed(2)}, before liquidation was ever in play.`
-          : reason === 'target'
-            ? `Target reached — closed at ₹${exitPrice.toFixed(2)}.`
-            : `Closed manually at ₹${exitPrice.toFixed(2)}.`,
-    );
-  };
+      const colour = reason === 'liquidated' ? '#ff7a5c' : pnl >= 0 ? '#2dd4a7' : '#ff7a5c';
+      setMarkers((m) => [
+        ...m,
+        {
+          time: Math.floor(Date.now() / 1000),
+          position: 'aboveBar',
+          color: colour,
+          shape: 'arrowDown',
+          text: `${reason === 'liquidated' ? 'MARGIN CALL' : reason === 'stop' ? 'Stop' : reason === 'target' ? 'Target' : 'Closed'} ${exitPrice.toFixed(2)}`,
+        },
+      ]);
+      setLastEvent(
+        reason === 'liquidated'
+          ? `Forced out at ₹${exitPrice.toFixed(2)} — the exchange's price, not yours. Margin gone: ₹${Math.abs(pnl).toLocaleString('en-IN')}.`
+          : reason === 'stop'
+            ? `Your own stop hit first — closed at ₹${exitPrice.toFixed(2)}, before liquidation was ever in play.`
+            : reason === 'target'
+              ? `Target reached — closed at ₹${exitPrice.toFixed(2)}.`
+              : `Closed manually at ₹${exitPrice.toFixed(2)}.`,
+      );
+    },
+    [startingCash],
+  );
 
   const advance = useCallback(async () => {
     if (!replay || stepping || replay.finished) return;
@@ -268,7 +278,7 @@ export function MarginCall() {
     } finally {
       setStepping(false);
     }
-  }, [replay, stepping, entry]);
+  }, [replay, stepping, entry, finalizePosition]);
 
   const shown = revealed?.candles ?? visible;
 
@@ -302,7 +312,7 @@ export function MarginCall() {
     const unleveragedShares = t.marginPosted / t.entryPrice;
     return s + unleveragedShares * (t.exitPrice - t.entryPrice);
   }, 0);
-  const trades: TradeRecord[] = closed.map((t) => ({ ...toTradeRecord(t), riskFraction: t.marginPosted / startingCash }));
+  const trades: TradeRecord[] = closed.map((t) => toTradeRecord(t, t.marginPosted / startingCash));
   const score = trades.length > 0 ? processScore(trades) : null;
   const plannedRR = targetPercent / stopPercent;
   const previewMargin = Math.round((startingCash * marginPercent) / 100);
@@ -406,13 +416,20 @@ export function MarginCall() {
               </div>
 
               <label className="mt-3 block">
-                <span className="text-sm text-ink-muted">Why? One line. This is your thesis.</span>
+                <span className="text-sm text-ink-muted">
+                  Why? This is your thesis — and, once this position closes, your reason. There is no editing it
+                  afterwards.
+                </span>
                 <input
                   value={thesis}
                   onChange={(e) => setThesis(e.target.value)}
-                  placeholder="e.g. holding above the prior swing low on rising volume"
+                  placeholder="e.g. holding above the prior swing low on rising volume, stop under it, target the prior high"
                   className="mt-1 w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-line-strong"
                 />
+                <span className={`num mt-1 block text-[11px] ${thesis.trim().length >= MIN_REASON_CHARS ? 'text-up' : 'text-ink-faint'}`}>
+                  {thesis.trim().length}/{MIN_REASON_CHARS} characters — below this, the position still closes and
+                  banks its P&L, but earns no XP.
+                </span>
               </label>
 
               <label className="mt-3 block">
@@ -541,7 +558,7 @@ export function MarginCall() {
                   exchange does not ask what your thesis was, and it does not wait for a better price.
                 </p>
               )}
-              <RunSubmit game="margin-call" trades={trades} pnl={totalPnl} defaultReason={theses.join('\n')} />
+              <FiledSummary filed={filed} tradeCount={closed.length} signedIn={signedIn} noun="position" />
             </>
           ) : (
             <p className="mt-2 text-sm text-ink-muted">

@@ -15,8 +15,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { canTradeAtBand, checkBand, indiaMarketWideBreaker, indiaPriceBand } from '@/lib/engine/halts';
 import type { TradeRecord } from '@/lib/progress/mastery';
+import { fileTrade, type FiledTrade } from '@/lib/progress/fileTrade';
 import { useAccountStore } from '@/lib/account/store';
-import { RunSubmit } from './RunSubmit';
+import { FiledSummary } from './FiledSummary';
 
 interface Beat {
   /** Minutes since midnight IST. */
@@ -100,20 +101,14 @@ export function CircuitBreaker() {
     setLog([]);
     setFinished(false);
     banked.current = false;
+    setFiled([]);
   };
 
   const survived = exitPrice !== null;
   const startingCash = useAccountStore((s) => s.startingCash);
-
-  // Banked the instant the scenario resolves — either exit — not held back
-  // for the debrief's "file this run" click, which is about XP and reasoning.
-  // Guarded so a re-render at `finished` does not bank the same trade twice.
-  const banked = useRef(false);
-  useEffect(() => {
-    if (!finished || banked.current) return;
-    banked.current = true;
-    useAccountStore.getState().bankFill('circuit-breaker', pnl);
-  }, [finished, pnl]);
+  const signedIn = useAccountStore((s) => s.signedIn);
+  /** The trade filed, once the scenario resolves — at most one, ever. */
+  const [filed, setFiled] = useState<FiledTrade[]>([]);
 
   /**
    * There is no thesis and no stop here to be honest about — the position and
@@ -136,6 +131,30 @@ export function CircuitBreaker() {
     plannedRR: null,
     stoppedOut: !survived,
   };
+
+  // There is no user-authored reason here — the scenario is scripted, not
+  // chosen — so what a thesis would be elsewhere is this generated account
+  // of what actually happened, same text this debrief already showed.
+  const generatedReason = survived
+    ? `Sold at ₹${exitPrice?.toFixed(2)} at ${fmtTime(current.time)}, before the lower circuit locked the book — before the bounce at 11:15 failed and the exit stopped being available.`
+    : `Held through the bounce at 11:15 and into the lower circuit, and was locked at ₹${current.price.toFixed(2)} into the close with no counterparty left to sell to.`;
+
+  // Banked and filed the instant the scenario resolves — either exit — not
+  // held back for a "file this run" click. Guarded so a re-render at
+  // `finished` does not bank or file the same trade twice.
+  const banked = useRef(false);
+  useEffect(() => {
+    if (!finished || banked.current) return;
+    banked.current = true;
+    useAccountStore.getState().bankFill('circuit-breaker', pnl);
+    void fileTrade('circuit-breaker', trade, generatedReason).then((r) => {
+      if (r) setFiled((f) => [...f, r]);
+    });
+    // Deliberately narrow: this must fire exactly once per resolution, keyed
+    // on `finished` alone — `trade`/`generatedReason`/`pnl` are read from the
+    // closure at that moment, not tracked as reactive dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finished]);
 
   return (
     <div className="space-y-5">
@@ -254,16 +273,7 @@ export function CircuitBreaker() {
             The bounce at 11:15 was the decision point. It felt like relief; it was the last liquid exit of the day.
           </p>
 
-          <RunSubmit
-            game="circuit-breaker"
-            trades={[trade]}
-            pnl={pnl}
-            defaultReason={
-              survived
-                ? `Sold at ₹${exitPrice!.toFixed(2)} at ${fmtTime(current.time)}, before the lower circuit locked the book — before the bounce at 11:15 failed and the exit stopped being available.`
-                : `Held through the bounce at 11:15 and into the lower circuit, and was locked at ₹${current.price.toFixed(2)} into the close with no counterparty left to sell to.`
-            }
-          />
+          <FiledSummary filed={filed} tradeCount={1} signedIn={signedIn} noun="trade" />
 
           <button onClick={reset} className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-emphasis">
             Play it again

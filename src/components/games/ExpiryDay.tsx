@@ -21,9 +21,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { blackScholesPrice, daysToYears, physicalSettlementFor } from '@/lib/engine/options';
 import { mulberry32 } from '@/lib/util/rng';
-import { processScore, type TradeRecord } from '@/lib/progress/mastery';
+import { MIN_REASON_CHARS, processScore, type TradeRecord } from '@/lib/progress/mastery';
+import { fileTrade, type FiledTrade } from '@/lib/progress/fileTrade';
 import { useAccountStore } from '@/lib/account/store';
-import { RunSubmit } from './RunSubmit';
+import { FiledSummary } from './FiledSummary';
 
 const SPOT0 = 1_400;
 const STRIKE = 1_400;
@@ -77,8 +78,11 @@ export function ExpiryDay() {
   const [secondsLeft, setSecondsLeft] = useState(TOTAL_SECONDS);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [history, setHistory] = useState<{ pnl: number; reason: TradeRecord }[]>([]);
+  /** Every expiry filed so far, in the order it settled. */
+  const [filed, setFiled] = useState<FiledTrade[]>([]);
 
   const startingCash = useAccountStore((s) => s.startingCash);
+  const signedIn = useAccountStore((s) => s.signedIn);
 
   useEffect(() => {
     void useAccountStore.getState().hydrate();
@@ -138,9 +142,6 @@ export function ExpiryDay() {
 
   function finish(o: Outcome) {
     setOutcome(o);
-    // Banked the instant the position settles — not held back for the
-    // debrief's "file this run" click, which is about XP and reasoning.
-    useAccountStore.getState().bankFill('expiry-day', o.pnl);
     const record: TradeRecord = {
       preCommitted: round!.reason.trim().length > 0,
       riskFraction: round!.entryCost / startingCash,
@@ -152,6 +153,13 @@ export function ExpiryDay() {
       stoppedOut: o.reason === 'expired_physical',
     };
     setHistory((h) => [...h, { pnl: o.pnl, reason: record }]);
+    // Banked and filed the instant the position settles — not held back for
+    // a "file this run" click. The reason is the one already written before
+    // this expiry was bought.
+    useAccountStore.getState().bankFill('expiry-day', o.pnl);
+    void fileTrade('expiry-day', record, round!.reason).then((r) => {
+      if (r) setFiled((f) => [...f, r]);
+    });
   }
 
   useEffect(() => {
@@ -164,6 +172,8 @@ export function ExpiryDay() {
     setRound(null);
     setOutcome(null);
     setReason('');
+    // `filed`, like `history`, is NOT reset — both track every round played
+    // this mount, not just the one that just settled.
   };
 
   const trades = history.map((h) => h.reason);
@@ -207,13 +217,19 @@ export function ExpiryDay() {
           </div>
 
           <label className="mt-4 block">
-            <span className="text-sm text-ink-muted">Why this trade? One line.</span>
+            <span className="text-sm text-ink-muted">
+              Why this trade? Once it settles, this is your reason — there is no editing it afterwards.
+            </span>
             <input
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. expecting a breakout above the morning range"
+              placeholder="e.g. expecting a breakout above the morning range, closing before expiry either way"
               className="mt-1 w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-line-strong"
             />
+            <span className={`num mt-1 block text-[11px] ${reason.trim().length >= MIN_REASON_CHARS ? 'text-up' : 'text-ink-faint'}`}>
+              {reason.trim().length}/{MIN_REASON_CHARS} characters — below this, the trade still settles and banks its
+              P&L, but earns no XP.
+            </span>
           </label>
 
           <p className="mt-3 num text-sm text-ink-muted">
@@ -280,7 +296,7 @@ export function ExpiryDay() {
                 {score.score}
                 <span className="text-sm text-ink-faint">/100 process</span>
               </div>
-              <RunSubmit game="expiry-day" trades={trades} pnl={totalPnl} defaultReason={round.reason} />
+              <FiledSummary filed={filed} tradeCount={trades.length} signedIn={signedIn} noun="round" />
             </>
           )}
 

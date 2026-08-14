@@ -15,7 +15,6 @@
  * the fear of real money, but we can train the behaviour that survives it.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { CandleChart, type ChartMarker, type PriceLine } from '@/components/chart/CandleChart';
 import { ChartToolbar } from '@/components/chart/ChartToolbar';
 import { computeIndicators, type IndicatorId } from '@/lib/analysis/indicators';
@@ -23,43 +22,11 @@ import { RemoteReplay, type VerifiedTrade } from '@/lib/replay/client';
 import { newOrderState } from '@/lib/engine/order';
 import { applyFill, equity, newAccount, type Account } from '@/lib/engine/portfolio';
 import { MIN_PLANNED_RR, MIN_REASON_CHARS, processScore, type TradeRecord } from '@/lib/progress/mastery';
+import { fileTrade, type FiledTrade } from '@/lib/progress/fileTrade';
 import { BASE_STARTING_CASH } from '@/lib/account/balance';
 import { useAccountStore } from '@/lib/account/store';
+import { FiledSummary } from './FiledSummary';
 import type { Candle } from '@/lib/market/types';
-
-/** What filing one closed trade actually earned, for the running record shown as you play. */
-interface FiledTrade {
-  pnl: number;
-  xp: number;
-  encouragement: string | null;
-}
-
-/**
- * Files ONE closed trade the instant it closes — not batched to the end of
- * the replay, so XP, the reasoning feed, and the leaderboard all see it the
- * moment the stop or the target is actually hit, same as the balance itself
- * (see bankFill in lib/account/store.ts). Silent no-op for a signed-out
- * learner, same reasoning as bankFill: there is no account to file it under.
- */
-async function fileClosedTrade(sessionId: string, record: TradeRecord, reason: string): Promise<FiledTrade | null> {
-  if (!useAccountStore.getState().signedIn) return null;
-  try {
-    const res = await fetch('/api/progress/run', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ game: 'chart-replay', sessionId, trades: [record], reason }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    // Reconciles with the server's own running total — it should already
-    // match the optimistic bankFill delta, since nothing else touched it
-    // between the two calls (this game never holds more than one position).
-    useAccountStore.getState().setNetPnl(data.totals.netPnl);
-    return { pnl: record.pnl, xp: data.xpAwarded, encouragement: data.encouragement ?? null };
-  } catch {
-    return null;
-  }
-}
 
 /**
  * A 'stop'/'target'/'session-end' close was not a decision — the level was
@@ -274,7 +241,7 @@ export function ChartReplay() {
         // character-count hint is shown before entry, not after.
         useAccountStore.getState().bankFill('chart-replay', trade.pnl);
         if (replay.sessionId) {
-          void fileClosedTrade(replay.sessionId, record, entry.thesis).then((r) => {
+          void fileTrade('chart-replay', record, entry.thesis, { sessionId: replay.sessionId }).then((r) => {
             if (r) setFiled((f) => [...f, r]);
           });
         }
@@ -379,7 +346,7 @@ export function ChartReplay() {
       setStance('flat');
       useAccountStore.getState().bankFill('chart-replay', verified.pnl);
       if (replay.sessionId) {
-        void fileClosedTrade(replay.sessionId, record, thesisText).then((r) => {
+        void fileTrade('chart-replay', record, thesisText, { sessionId: replay.sessionId }).then((r) => {
           if (r) setFiled((f) => [...f, r]);
         });
       }
@@ -668,61 +635,6 @@ export function ChartReplay() {
             New replay
           </button>
         </div>
-      )}
-    </div>
-  );
-}
-
-const money = (n: number) => `${n < 0 ? '−' : '+'}₹${Math.abs(Math.round(n)).toLocaleString('en-IN')}`;
-
-/**
- * Every trade this session was already filed — under the learner's name, XP
- * and all — the instant it closed, not gathered here for a final "submit"
- * click. This is a receipt, not a form.
- */
-function FiledSummary({ filed, tradeCount, signedIn }: { filed: FiledTrade[]; tradeCount: number; signedIn: boolean }) {
-  if (!signedIn) {
-    return (
-      <div className="mt-5 rounded-lg border border-line bg-surface px-4 py-3 text-[13px] text-ink-muted">
-        <Link href="/register" className="text-accent underline underline-offset-2">
-          Create an account
-        </Link>{' '}
-        and every trade you take will be filed under your name — XP, reasoning feed and leaderboard — the instant its
-        stop or target is hit, not just kept on this screen.
-      </div>
-    );
-  }
-
-  const totalXp = filed.reduce((s, f) => s + f.xp, 0);
-  const totalPnl = filed.reduce((s, f) => s + f.pnl, 0);
-
-  return (
-    <div className="mt-5 border-t border-line pt-5">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className={`num text-2xl ${totalXp > 0 ? 'text-accent' : 'text-ink-faint'}`}>+{totalXp} XP</span>
-        <span className="num text-sm text-ink-faint">
-          {filed.length} of {tradeCount} trade{tradeCount === 1 ? '' : 's'} filed
-        </span>
-        <span className={`num ml-auto text-sm ${totalPnl >= 0 ? 'text-up' : 'text-down'}`}>{money(totalPnl)}</span>
-      </div>
-      <p className="mt-2 text-[13px] text-ink-muted">
-        Each trade above was filed under your name — scored, banked, and put on the{' '}
-        <Link href="/reasons" className="text-accent underline underline-offset-2">
-          reasoning feed
-        </Link>{' '}
-        (if you have opted in) — the instant its stop or target was hit. Nothing left to submit.
-      </p>
-      {filed.some((f) => f.xp === 0) && (
-        <p className="mt-2 text-[13px] text-ink-faint">
-          At least one trade earned no XP — usually a thesis under {MIN_REASON_CHARS} characters, or a reward-to-risk
-          below {MIN_PLANNED_RR}:1. The P&L still banked either way.
-        </p>
-      )}
-      {filed.length < tradeCount && (
-        <p className="mt-2 text-[13px] text-danger">
-          {tradeCount - filed.length} trade{tradeCount - filed.length === 1 ? '' : 's'} closed but could not be filed
-          — most likely a dropped connection. The P&L is still banked; only the XP and reasoning entry are missing.
-        </p>
       )}
     </div>
   );
