@@ -21,8 +21,8 @@ export default async function PricingPage() {
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Go Pro</h1>
         <p className="mt-3 text-ink-muted">
           Free stays free forever — Ground Floor, Placing a Trade, Risk &amp; Position Sizing, and Long-Term Investing,
-          plus six of the ten games. Pro unlocks the rest: technical and fundamental analysis, options, professional
-          risk management, edge cases, and the four games with real engine complexity behind them.
+          plus six of the twelve games. Pro unlocks the rest: technical and fundamental analysis, options, professional
+          risk management, edge cases, and the six games with real engine complexity behind them.
         </p>
       </div>
 

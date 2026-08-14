@@ -74,7 +74,30 @@ export default function Home() {
         </div>
       </Reveal>
 
-      <Reveal as="section" className="mt-16" delay={0.1}>
+      {/*
+        SEBI's own study, not a marketing number: "Analysis of Profit and
+        Loss of Individual Traders dealing in Equity Futures & Options
+        Segment", Sept 2024 — 93% of individual F&O traders lost money over
+        FY22–FY24, aggregate net loss over ₹1.8 lakh crore.
+        https://www.sebi.gov.in/media-and-notifications/press-releases/sep-2024/updated-sebi-study-reveals-93-of-individual-traders-incurred-losses-in-equity-fando-between-fy22-and-fy24-aggregate-losses-exceed-1-8-lakh-crores-over-three-years_86906.html
+        Led with here, not buried, because it is the actual argument for a
+        site that teaches costs and process honestly rather than a platform
+        that profits from more of this.
+      */}
+      <Reveal as="section" className="mt-14">
+        <div className="rounded-xl border border-down/30 bg-down/5 px-6 py-5">
+          <p className="text-sm leading-relaxed text-ink-muted">
+            <span className="num text-2xl font-semibold text-down">93%</span>
+            <span className="ml-3">
+              of individual equity F&amp;O traders in India lost money over FY22–FY24, for a combined loss above{' '}
+              <span className="num text-ink">₹1.8 lakh crore</span> — SEBI&rsquo;s own study, not ours. Realistic
+              costs and honest fills are not a feature here. They are the whole point.
+            </span>
+          </p>
+        </div>
+      </Reveal>
+
+      <Reveal as="section" className="mt-14" delay={0.1}>
         <LiveTicker />
       </Reveal>
 

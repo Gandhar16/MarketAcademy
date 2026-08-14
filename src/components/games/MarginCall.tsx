@@ -265,7 +265,6 @@ export function MarginCall() {
     } finally {
       setStepping(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replay, stepping, entry]);
 
   const shown = revealed?.candles ?? visible;

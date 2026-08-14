@@ -13,7 +13,6 @@ import { useMemo, useState } from 'react';
 import { roundTripCost } from '@/lib/engine/costs';
 import { BROKER_IN_DISCOUNT, BROKER_IN_FULL_SERVICE } from '@/lib/engine/costs/india';
 import type { BrokeragePlan, Product } from '@/lib/engine/costs/types';
-import type { TradeRecord } from '@/lib/progress/mastery';
 import { RunSubmit } from './RunSubmit';
 
 const PRODUCTS: { id: Product; label: string }[] = [

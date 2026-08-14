@@ -20,7 +20,6 @@ import {
   project,
   sequenceRiskComparison,
 } from '@/lib/games/compounding';
-import type { TradeRecord } from '@/lib/progress/mastery';
 import { RunSubmit } from './RunSubmit';
 
 const inr = (n: number) =>

@@ -354,7 +354,7 @@ function BlockView({
         return (
           <ProPaywall
             title="This game is part of Pro"
-            body="Six of the ten games stay free forever. This is one of the four with real engine complexity behind it."
+            body="Six of the twelve games stay free forever. This is one of the six with real engine complexity behind it."
           />
         );
       }

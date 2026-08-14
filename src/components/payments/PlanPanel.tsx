@@ -66,7 +66,7 @@ export function PlanPanel({ isPro, planLabel, planExpiresAt, canCancel }: PlanPa
         </>
       ) : (
         <>
-          <p className="mt-2 text-sm text-ink-muted">Free plan — the first four courses and six of the ten games.</p>
+          <p className="mt-2 text-sm text-ink-muted">Free plan — the first four courses and six of the twelve games.</p>
           <Link href="/pricing" className="btn-primary mt-4 inline-block">
             See plans
           </Link>

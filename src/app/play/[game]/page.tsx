@@ -56,7 +56,7 @@ export default async function GamePage({ params }: { params: Promise<{ game: str
             ) : (
               <ProPaywall
                 title={`${entry.name} is a Pro game`}
-                body="Six of the ten games stay free forever. This is one of the four with real engine complexity behind it, and it's part of Pro."
+                body="Six of the twelve games stay free forever. This is one of the six with real engine complexity behind it, and it's part of Pro."
               />
             )}
           </div>

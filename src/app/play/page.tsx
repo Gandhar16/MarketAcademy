@@ -7,8 +7,8 @@ export default function PlayIndex() {
     <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
       <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Games</h1>
       <p className="mt-3 max-w-2xl text-ink-muted">
-        Ten games, each training one specific, measurable skill. None of them rank you on profit. Finish the matching
-        course and a game is marked unlocked here — every game stays playable either way for now.
+        Twelve games, each training one specific, measurable skill. None of them rank you on profit. Finish the
+        matching course and a game is marked unlocked here — every game stays playable either way for now.
       </p>
 
       <GameGrid />

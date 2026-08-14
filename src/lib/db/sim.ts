@@ -23,7 +23,7 @@ export interface SimFillInput {
   realised: number;
 }
 
-export interface SimFillRow extends SimFillInput {}
+export type SimFillRow = SimFillInput;
 
 const n = (v: unknown): number => Number(v ?? 0);
 

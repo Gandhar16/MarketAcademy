@@ -94,11 +94,6 @@ export function ExpiryDay() {
     return () => clearTimeout(t);
   }, [round, outcome, secondsLeft]);
 
-  useEffect(() => {
-    if (round && !outcome && secondsLeft <= 0) settle('expiry');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [secondsLeft, round, outcome]);
-
   const buy = () => {
     const entryPremium = premiumAt(SPOT0, TOTAL_SECONDS);
     const entryCost = entryPremium * LOT_SIZE;
@@ -155,6 +150,11 @@ export function ExpiryDay() {
     };
     setHistory((h) => [...h, { pnl: o.pnl, reason: record }]);
   }
+
+  useEffect(() => {
+    if (round && !outcome && secondsLeft <= 0) settle('expiry');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [secondsLeft, round, outcome]);
 
   const newRound = () => {
     setSeed((s) => s + 101);

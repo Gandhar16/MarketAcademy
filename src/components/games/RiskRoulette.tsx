@@ -11,7 +11,6 @@
  */
 import { useMemo, useState } from 'react';
 import { DEFAULT_RUIN_CONFIG, expectancy, kellyFraction, simulate, type RuinConfig } from '@/lib/games/ruin';
-import type { TradeRecord } from '@/lib/progress/mastery';
 import { RunSubmit } from './RunSubmit';
 
 const RISK_STEPS = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.35];
