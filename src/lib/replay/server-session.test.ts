@@ -15,6 +15,8 @@ import {
   _sessionCount,
   closePosition,
   getRecordedTrades,
+  markTradeFiled,
+  nextUnfiledTrade,
   openPosition,
   revealReplay,
   stepReplay,
@@ -46,6 +48,7 @@ function makeSession(over: Partial<ServerReplaySession> = {}): ServerReplaySessi
     lastTouchedAt: now,
     open: null,
     positions: [],
+    filedCount: 0,
     ...over,
   };
   _putSession(s);
@@ -216,6 +219,48 @@ describe('positions', () => {
     const open = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
     const trade = closePosition('test-session', open.id);
     expect(trade.reason).toBe('manual');
+  });
+});
+
+describe('per-trade filing', () => {
+  it('has nothing to file until a trade actually closes', () => {
+    makeSession();
+    expect(nextUnfiledTrade('test-session')).toBeNull();
+    openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
+    expect(nextUnfiledTrade('test-session')).toBeNull(); // still open
+  });
+
+  it('offers the newly closed trade, then nothing once it is marked filed', () => {
+    makeSession();
+    const open = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
+    closePosition('test-session', open.id);
+
+    const next = nextUnfiledTrade('test-session');
+    expect(next?.index).toBe(0);
+    expect(markTradeFiled('test-session', 0)).toBe(true);
+    expect(nextUnfiledTrade('test-session')).toBeNull();
+  });
+
+  it('refuses to file the same trade twice, or out of order', () => {
+    makeSession();
+    const open = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
+    closePosition('test-session', open.id);
+
+    expect(markTradeFiled('test-session', 0)).toBe(true);
+    expect(markTradeFiled('test-session', 0)).toBe(false); // a retry of the same filing
+    expect(markTradeFiled('test-session', 5)).toBe(false); // nowhere near the next unfiled index
+  });
+
+  it('offers each trade in turn as a session plays multiple rounds', () => {
+    makeSession();
+    const first = openPosition('test-session', { side: 'buy', stopPct: 2, targetPct: null, hasThesis: true });
+    closePosition('test-session', first.id);
+    markTradeFiled('test-session', 0);
+
+    const second = openPosition('test-session', { side: 'sell', stopPct: 2, targetPct: null, hasThesis: true });
+    closePosition('test-session', second.id);
+
+    expect(nextUnfiledTrade('test-session')?.index).toBe(1);
   });
 });
 

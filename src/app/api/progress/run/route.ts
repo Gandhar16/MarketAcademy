@@ -24,7 +24,7 @@ import { requireUser } from '@/lib/auth/session';
 import { enforceRateLimit } from '@/lib/market/http';
 import { verifySameOrigin } from '@/lib/security/csrf';
 import { GAMES_BY_SLUG } from '@/lib/games/catalogue';
-import { getRecordedTrades } from '@/lib/replay/server-session';
+import { markTradeFiled, nextUnfiledTrade } from '@/lib/replay/server-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -88,20 +88,17 @@ export async function POST(req: Request) {
 
   let trades = body.trades.map(toTrade).filter((t: TradeRecord | null): t is TradeRecord => t !== null);
 
-  // chart-replay is the one game that submits a scored TradeRecord[] built
-  // from actual trading decisions, so it is the one game where a fabricated
-  // POST body is worth anything — see the audit note in server-session.ts.
-  // Every field that is a fact about prices (pnl, stoppedOut, plannedRR) or
-  // about what was recorded at entry (preCommitted, riskFraction,
-  // sizedFromStop) is overwritten here from the server's own ledger for the
-  // session these trades claim to come from. `honouredStop`/`exitedPerPlan`
-  // are ALSO overwritten whenever the server knows the exit was not a
-  // choice — a 'stop' or 'target' close from checkAutoClose(), or a
-  // 'session-end' close — since there is nothing to self-report about a
-  // level the price reached on its own. Only a 'manual' close (the learner
-  // clicked an exit button before either level was reached) leaves those two
-  // fields as the client's claim — see the comment on closePosition() in
-  // server-session.ts for why that one case has no mechanical test.
+  // chart-replay is the one game that submits a scored TradeRecord built from
+  // an actual trading decision, so it is the one game where a fabricated POST
+  // body is worth anything — see the audit note in server-session.ts. It is
+  // also filed ONE TRADE AT A TIME, the instant that trade closes, rather
+  // than batched at the end of a session (see ChartReplay.tsx) — a win or a
+  // loss is real the moment it happens, and XP for it should not wait on
+  // however many more trades the learner takes afterwards. `nextUnfiledTrade`
+  // is the server's own ledger telling us which trade that is; the client's
+  // claim about which trade it is filing is never trusted, only its
+  // honouredStop/exitedPerPlan self-report for a 'manual' close (see below).
+  let filedTradeIndex: number | null = null;
   if (body.game === 'chart-replay') {
     if (typeof body.sessionId !== 'string' || body.sessionId.length === 0) {
       return NextResponse.json(
@@ -109,35 +106,42 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    const recorded = getRecordedTrades(body.sessionId);
-    if (!recorded) {
+    const next = nextUnfiledTrade(body.sessionId);
+    if (!next) {
       return NextResponse.json(
         {
           error: 'not_found',
-          message: 'That replay session was not found or has expired. Play a fresh replay and file the run promptly.',
+          message:
+            'No newly closed trade to file for that session — either nothing has closed yet, it was already filed, or the session expired.',
         },
         { status: 404 },
       );
     }
-    if (recorded.length !== trades.length) {
-      return NextResponse.json(
-        {
-          error: 'bad_request',
-          message: `This session recorded ${recorded.length} closed trade(s), but the run claims ${trades.length}. Only trades actually played through this session can be filed.`,
-        },
-        { status: 400 },
-      );
-    }
-    trades = trades.map((t: TradeRecord, i: number) => ({
-      ...t,
-      pnl: recorded[i].pnl,
-      stoppedOut: recorded[i].stoppedOut,
-      plannedRR: recorded[i].plannedRR,
-      preCommitted: recorded[i].preCommitted,
-      riskFraction: recorded[i].riskFraction,
-      sizedFromStop: recorded[i].sizedFromStop,
-      ...(recorded[i].reason !== 'manual' ? { honouredStop: true, exitedPerPlan: true } : {}),
-    }));
+    // Every field that is a fact about prices (pnl, stoppedOut, plannedRR) or
+    // about what was recorded at entry (preCommitted, riskFraction,
+    // sizedFromStop) comes from the server's own ledger, never the client.
+    // `honouredStop`/`exitedPerPlan` are ALSO overwritten whenever the server
+    // knows the exit was not a choice — a 'stop' or 'target' close from
+    // checkAutoClose(), or a 'session-end' close — since there is nothing to
+    // self-report about a level the price reached on its own. Only a
+    // 'manual' close (the learner clicked an exit button before either level
+    // was reached) leaves those two fields as the client's claim — see the
+    // comment on closePosition() in server-session.ts for why that one case
+    // has no mechanical test.
+    const clientClaim = trades[0];
+    trades = [
+      {
+        pnl: next.trade.pnl,
+        stoppedOut: next.trade.stoppedOut,
+        plannedRR: next.trade.plannedRR,
+        preCommitted: next.trade.preCommitted,
+        riskFraction: next.trade.riskFraction,
+        sizedFromStop: next.trade.sizedFromStop,
+        honouredStop: next.trade.reason !== 'manual' ? true : (clientClaim?.honouredStop ?? false),
+        exitedPerPlan: next.trade.reason !== 'manual' ? true : (clientClaim?.exitedPerPlan ?? false),
+      },
+    ];
+    filedTradeIndex = next.index;
   }
 
   // The reason is stripped of markup here rather than at render time. It is
@@ -162,6 +166,12 @@ export async function POST(req: Request) {
     trades,
     reason,
   });
+
+  // Only after the run is actually recorded — a crash between the two would
+  // otherwise leave a trade permanently unfilable rather than merely retried.
+  if (body.game === 'chart-replay' && filedTradeIndex != null) {
+    markTradeFiled(body.sessionId, filedTradeIndex);
+  }
 
   // `notes` is returned in full, including the gates that failed. A learner who
   // earned nothing is owed the reason more than one who earned everything.

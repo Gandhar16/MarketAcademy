@@ -70,6 +70,14 @@ export interface ServerReplaySession {
   open: OpenPosition | null;
   /** Every round-trip closed in this session, in the order it happened. */
   positions: RecordedTrade[];
+  /**
+   * How many of `positions`, from the front, have already been filed as a
+   * scored run — see nextUnfiledTrade/markTradeFiled. A trade is filed the
+   * instant it closes (see ChartReplay.tsx), not batched to the end of the
+   * session, so this is almost always `positions.length - 1` or
+   * `positions.length` rather than 0.
+   */
+  filedCount: number;
 }
 
 const SESSIONS = new Map<string, ServerReplaySession>();
@@ -153,6 +161,7 @@ export async function startReplay(opts: { symbol?: string; seed?: number } = {})
     lastTouchedAt: now,
     open: null,
     positions: [],
+    filedCount: 0,
   };
   SESSIONS.set(session.id, session);
 
@@ -419,6 +428,34 @@ function checkAutoClose(open: OpenPosition, bar: Candle): { exitPrice: number; r
 export function getRecordedTrades(sessionId: string): RecordedTrade[] | null {
   const s = SESSIONS.get(sessionId);
   return s ? s.positions : null;
+}
+
+/**
+ * The one closed trade this session has not yet filed as a scored run, if
+ * any. A trade is filed the instant it closes rather than batched to the end
+ * of the session — see /api/progress/run and ChartReplay.tsx — so at most
+ * one trade is ever "unfiled" at a time in the ordinary case; this exists
+ * mainly so a client's filing POST is verified against the server's own
+ * ledger instead of trusted, and so a retried POST cannot re-score a trade
+ * that was already filed.
+ */
+export function nextUnfiledTrade(sessionId: string): { index: number; trade: RecordedTrade } | null {
+  const s = SESSIONS.get(sessionId);
+  if (!s || s.filedCount >= s.positions.length) return null;
+  return { index: s.filedCount, trade: s.positions[s.filedCount] };
+}
+
+/**
+ * Marks trade `index` as filed. Only advances when `index` is exactly the
+ * next unfiled trade — filing out of order or filing the same trade twice
+ * (a retry racing a success) is a no-op rather than an error, so the caller
+ * can treat "not recorded" uniformly instead of having to distinguish why.
+ */
+export function markTradeFiled(sessionId: string, index: number): boolean {
+  const s = SESSIONS.get(sessionId);
+  if (!s || index !== s.filedCount) return false;
+  s.filedCount += 1;
+  return true;
 }
 
 export interface RevealedReplay {
