@@ -23,6 +23,15 @@ interface AccountState {
   setNetPnl: (netPnl: number) => void;
   /** Applies a single delta on top of whatever is currently known, for callers that only know the change, not the new total. */
   applyDelta: (delta: number) => void;
+  /**
+   * Banks one closed trade's realised P&L: applies it to the balance
+   * immediately (so the header and every other open game reflect it on this
+   * render) and persists it to `/api/account/fill` so it survives a reload
+   * and a switch to a different game. Silent no-op for a signed-out learner —
+   * there is nowhere to persist it, and the local delta already showed them
+   * the result.
+   */
+  bankFill: (game: string, pnl: number) => void;
 }
 
 let inFlight: Promise<void> | null = null;
@@ -54,5 +63,22 @@ export const useAccountStore = create<AccountState>((set, get) => ({
   applyDelta: (delta) => {
     const netPnl = get().netPnl + delta;
     set({ netPnl, startingCash: startingCashFor(netPnl) });
+  },
+
+  bankFill: (game, pnl) => {
+    if (pnl === 0) return;
+    const netPnl = get().netPnl + pnl;
+    set({ netPnl, startingCash: startingCashFor(netPnl) });
+    if (!get().signedIn) return;
+    const id = `${game}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    fetch('/api/account/fill', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id, game, pnl }),
+    }).catch(() => {
+      // Best-effort. The optimistic delta already reflects it locally; the
+      // next hydrate() (a fresh page, a different game) reconciles with the
+      // server, which is the same recovery path a dropped sim fill takes.
+    });
   },
 }));

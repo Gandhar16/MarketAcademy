@@ -304,20 +304,22 @@ export async function recordGameRun(
       message ?? '',
     );
 
-    // Every run updates the running totals, win or lose. P&L in particular is
-    // kept whichever way it went — a learner is entitled to know what their
-    // decisions actually cost, and a scoreboard that only accumulated the good
-    // runs would be the same lie as a broker's marketing page.
+    // Every run updates the running totals, win or lose — runs/wins/losses
+    // here, same as always. `net_pnl` is NOT touched here: every cash-based
+    // game banks its trades' realised P&L the instant each one closes (see
+    // lib/db/gameFills.ts, POST /api/account/fill), well before a run ever
+    // reaches this point, so adding `pnl` again here would double-count it.
+    // Filing a run is about XP and the written reason now, not about money —
+    // the money was already real the moment the trade closed.
     //
     // `game_xp` is separate from `lesson_xp` on purpose: game XP now carries an
     // outcome signal, and the leaderboard's knowledge component reads lesson_xp
     // only, so a profitable run cannot move a rank.
     await t.run(
-      `INSERT INTO user_stats (user_id, game_xp, net_pnl, runs, wins, losses, best_process, updated_at)
-       VALUES (?, ?, ?, 1, ?, ?, ?, ?)
+      `INSERT INTO user_stats (user_id, game_xp, runs, wins, losses, best_process, updated_at)
+       VALUES (?, ?, 1, ?, ?, ?, ?)
        ON CONFLICT(user_id) DO UPDATE SET
          game_xp      = user_stats.game_xp + excluded.game_xp,
-         net_pnl      = user_stats.net_pnl + excluded.net_pnl,
          runs         = user_stats.runs + 1,
          wins         = user_stats.wins + excluded.wins,
          losses       = user_stats.losses + excluded.losses,
@@ -325,7 +327,6 @@ export async function recordGameRun(
          updated_at   = excluded.updated_at`,
       userId,
       earned.xp,
-      pnl,
       outcome === 'win' ? 1 : 0,
       outcome === 'loss' ? 1 : 0,
       scored.score,

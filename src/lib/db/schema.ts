@@ -172,6 +172,25 @@ CREATE TABLE IF NOT EXISTS sim_fills (
 
 CREATE INDEX IF NOT EXISTS sim_fills_user ON sim_fills(user_id, at);
 
+-- One row per trade a cash-based game (Chart Replay, Margin Call, Expiry Day,
+-- Circuit Breaker, Earnings Roulette) actually closed. Realised P&L is banked
+-- into \`user_stats.net_pnl\` the moment the trade closes, not when the run is
+-- later filed for XP — a win or a loss is real money the instant it happens,
+-- and a learner switching games mid-session must not find the header back at
+-- the base balance because they had not yet clicked "file this run". Filing a
+-- run (see recordGameRun in lib/db/progress.ts) no longer touches net_pnl at
+-- all; it only scores and records what already happened here. \`id\` is
+-- caller-supplied and is the de-dupe key, same as sim_fills.
+CREATE TABLE IF NOT EXISTS game_fills (
+  id       TEXT PRIMARY KEY,
+  user_id  TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  game     TEXT NOT NULL,
+  at       INTEGER NOT NULL,
+  pnl      REAL NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS game_fills_user ON game_fills(user_id, at);
+
 -- Failed sign-in attempts, for throttling. Keyed on the email being attempted
 -- AND the client address, so one attacker cannot lock out a real user by
 -- hammering their address from elsewhere.

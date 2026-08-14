@@ -276,15 +276,20 @@ describe('what a run records', () => {
     expect(row.xp_awarded as number).toBeGreaterThan(0);
   });
 
-  it('keeps the P&L whichever way it went', async () => {
+  it('keeps the outcome record whichever way it went, without touching the banked balance', async () => {
     // A scoreboard that only accumulated the good runs would be the same lie as
-    // a broker's marketing page.
+    // a broker's marketing page. But the balance itself is banked per-trade via
+    // /api/account/fill as each trade closes (see gameFills.test.ts) — filing a
+    // run afterwards must not add the same P&L to net_pnl a second time.
     await recordGameRun(db, userId, { game: 'chart-replay', trades: [WIN], reason: REASON }, T0);
     await recordGameRun(db, userId, { game: 'chart-replay', trades: [STOPPED], reason: REASON }, T0 + 1);
 
     const { totals } = await recordGameRun(db, userId, { game: 'chart-replay', trades: [STOPPED], reason: REASON }, T0 + 2);
-    expect(totals.netPnl).toBe(2_500 - 1_000 - 1_000);
+    expect(totals.netPnl).toBe(0);
     expect(totals).toMatchObject({ runs: 3, wins: 1, losses: 2 });
+
+    const sumOfRuns = (await db.get('SELECT SUM(pnl) AS total FROM game_runs') as { total: number }).total;
+    expect(sumOfRuns).toBe(2_500 - 1_000 - 1_000);
   });
 
   it('awards XP for the win and nothing for the stop-outs', async () => {

@@ -84,6 +84,9 @@ export function EarningsRoulette() {
   const reveal = () => {
     setRevealed(true);
     setHistory((h) => [...h, { move: outcome.movePercent, pnl, rightDirection }]);
+    // Banked the instant the results are announced — not held back for a
+    // "file this run" click at the end of a whole earnings season.
+    useAccountStore.getState().bankFill('earnings-roulette', pnl);
   };
 
   const nextRound = () => {

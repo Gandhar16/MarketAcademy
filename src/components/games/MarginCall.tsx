@@ -197,6 +197,9 @@ export function MarginCall() {
     };
     setClosed((c) => [...c, trade]);
     setEntry(null);
+    // Banked the instant the position closes — not held back for the
+    // debrief's "file this run" click, which is about XP and reasoning.
+    useAccountStore.getState().bankFill('margin-call', pnl);
 
     const colour = reason === 'liquidated' ? '#ff7a5c' : pnl >= 0 ? '#2dd4a7' : '#ff7a5c';
     setMarkers((m) => [

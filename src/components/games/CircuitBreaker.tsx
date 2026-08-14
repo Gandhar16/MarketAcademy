@@ -12,7 +12,7 @@
  * Uses the real halts and fill engines — the circuit lock that blocks the exit
  * is the same `canTradeAtBand` the simulator uses.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { canTradeAtBand, checkBand, indiaMarketWideBreaker, indiaPriceBand } from '@/lib/engine/halts';
 import type { TradeRecord } from '@/lib/progress/mastery';
 import { useAccountStore } from '@/lib/account/store';
@@ -99,10 +99,21 @@ export function CircuitBreaker() {
     setExitPrice(null);
     setLog([]);
     setFinished(false);
+    banked.current = false;
   };
 
   const survived = exitPrice !== null;
   const startingCash = useAccountStore((s) => s.startingCash);
+
+  // Banked the instant the scenario resolves — either exit — not held back
+  // for the debrief's "file this run" click, which is about XP and reasoning.
+  // Guarded so a re-render at `finished` does not bank the same trade twice.
+  const banked = useRef(false);
+  useEffect(() => {
+    if (!finished || banked.current) return;
+    banked.current = true;
+    useAccountStore.getState().bankFill('circuit-breaker', pnl);
+  }, [finished, pnl]);
 
   /**
    * There is no thesis and no stop here to be honest about — the position and

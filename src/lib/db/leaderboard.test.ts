@@ -3,6 +3,7 @@ import type { Db } from './driver';
 import { openTestDb } from './index';
 import { createUser, updateProfile } from './users';
 import { recordGameRun } from './progress';
+import { recordGameFill } from './gameFills';
 import {
   MIN_RUNS_FOR_DISCIPLINE,
   consistencyScore,
@@ -61,7 +62,13 @@ async function member(name: string, opts: { xp?: number; streak?: number } = {})
 
 async function play(userId: string, trade: TradeRecord, runs = MIN_RUNS_FOR_DISCIPLINE, game = 'chart-replay') {
   for (let i = 0; i < runs; i++) {
-    await recordGameRun(db, userId, { game, trades: [trade] }, 1_700_000_000_000 + i * 1000);
+    const at = 1_700_000_000_000 + i * 1000;
+    // A real game banks the trade the moment it closes, well before the run is
+    // ever filed — see gameFills.ts. Mirrored here so these tests' net_pnl
+    // matches what actually happens, not the pre-refactor shortcut of letting
+    // recordGameRun bank it.
+    await recordGameFill(db, userId, { id: `${userId}-${game}-${i}`, game, at, pnl: trade.pnl });
+    await recordGameRun(db, userId, { game, trades: [trade] }, at);
   }
 }
 

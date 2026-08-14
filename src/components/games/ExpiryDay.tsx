@@ -138,6 +138,9 @@ export function ExpiryDay() {
 
   function finish(o: Outcome) {
     setOutcome(o);
+    // Banked the instant the position settles — not held back for the
+    // debrief's "file this run" click, which is about XP and reasoning.
+    useAccountStore.getState().bankFill('expiry-day', o.pnl);
     const record: TradeRecord = {
       preCommitted: round!.reason.trim().length > 0,
       riskFraction: round!.entryCost / startingCash,

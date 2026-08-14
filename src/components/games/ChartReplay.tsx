@@ -231,6 +231,9 @@ export function ChartReplay() {
         setTrades((t) => [...t, toTradeRecord(trade)]);
         setEntry(null);
         setStance('flat');
+        // Banked the instant it closes — not held back for the debrief's
+        // "file this run" click, which is about XP and reasoning, not money.
+        useAccountStore.getState().bankFill('chart-replay', trade.pnl);
       }
 
       setAccount(acct);
@@ -329,6 +332,7 @@ export function ChartReplay() {
       setTrades((t) => [...t, toTradeRecord(verified, reason === 'impulse')]);
       setEntry(null);
       setStance('flat');
+      useAccountStore.getState().bankFill('chart-replay', verified.pnl);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not close the position.');
     } finally {
