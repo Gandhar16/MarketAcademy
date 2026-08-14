@@ -261,6 +261,13 @@ describe('per-game board', () => {
     const board = await gameLeaderboard(db, 'chart-replay');
     expect(board[0].userId).toBe(user.id);
   });
+
+  it('sums pnl across every run of that game, for the P&L column', async () => {
+    const user = await member('Player');
+    await play(user.id, DISCIPLINED, MIN_RUNS_FOR_DISCIPLINE, 'chart-replay');
+    const board = await gameLeaderboard(db, 'chart-replay');
+    expect(board[0].netPnl).toBe(DISCIPLINED.pnl * MIN_RUNS_FOR_DISCIPLINE);
+  });
 });
 
 describe('gameRankOf', () => {

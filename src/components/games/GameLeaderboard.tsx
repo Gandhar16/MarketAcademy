@@ -77,6 +77,15 @@ function Entry({ entry, highlight }: { entry: GameBoardEntry; highlight?: boolea
         </span>
       )}
       <span className="num shrink-0">{entry.processScore.toFixed(0)}</span>
+      {/* Shown for interest, same greyed-and-unranked treatment as the global board — this game's process score is what determines `rank`, not this. */}
+      <span
+        className={`num w-16 shrink-0 text-right text-[11px] ${
+          entry.netPnl == null ? 'text-ink-faint' : entry.netPnl >= 0 ? 'text-up/60' : 'text-down/60'
+        }`}
+        title="Net P&L in this game — shown for interest, not ranked"
+      >
+        {entry.netPnl == null ? '—' : entry.netPnl.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+      </span>
     </div>
   );
 }

@@ -216,6 +216,8 @@ export interface GameBoardEntry {
   processScore: number;
   runs: number;
   bestAccuracy: number | null;
+  /** Summed pnl across every recorded run of this game. Shown for interest, same as the global board — not an input to `rank`. */
+  netPnl: number | null;
 }
 
 /** Per-game board. Ranked on the learner's average process score in that game. */
@@ -226,12 +228,14 @@ export async function gameLeaderboard(db: Db, game: string, limit = 25): Promise
     avg_process: number;
     runs: number;
     best_accuracy: number | null;
+    net_pnl: number | null;
   }>(
       `SELECT u.id                  AS user_id,
               u.display_name,
               AVG(g.process_score) AS avg_process,
               COUNT(*)             AS runs,
-              MAX(g.accuracy)      AS best_accuracy
+              MAX(g.accuracy)      AS best_accuracy,
+              SUM(g.pnl)           AS net_pnl
          FROM game_runs g
          JOIN users u ON u.id = g.user_id
         WHERE g.game = ? AND u.leaderboard_opt_in = 1
@@ -251,6 +255,7 @@ export async function gameLeaderboard(db: Db, game: string, limit = 25): Promise
     processScore: Number(r.avg_process),
     runs: Number(r.runs),
     bestAccuracy: r.best_accuracy == null ? null : Number(r.best_accuracy),
+    netPnl: r.net_pnl == null ? null : Number(r.net_pnl),
   }));
 }
 

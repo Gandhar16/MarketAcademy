@@ -22,10 +22,9 @@ import { RemoteReplay, type VerifiedTrade } from '@/lib/replay/client';
 import { newOrderState } from '@/lib/engine/order';
 import { applyFill, equity, newAccount, type Account } from '@/lib/engine/portfolio';
 import { MIN_PLANNED_RR, processScore, type TradeRecord } from '@/lib/progress/mastery';
+import { BASE_STARTING_CASH } from '@/lib/account/balance';
 import { RunSubmit } from './RunSubmit';
 import type { Candle } from '@/lib/market/types';
-
-const STARTING_CASH = 200_000;
 
 /**
  * A 'stop'/'target'/'session-end' close was not a decision — the level was
@@ -75,8 +74,15 @@ interface Entry {
 export function ChartReplay() {
   const [replay, setReplay] = useState<RemoteReplay | null>(null);
   const [visible, setVisible] = useState<Candle[]>([]);
+  /**
+   * The real, persistent balance — fetched fresh each time a session starts
+   * (see `load()`), so it always reflects the running total every other
+   * recorded run has already fed into `user_stats.net_pnl`. Defaults to the
+   * shared base until that fetch resolves.
+   */
+  const [startingCash, setStartingCash] = useState(BASE_STARTING_CASH);
   const [account, setAccount] = useState<Account>(() =>
-    newAccount({ market: 'IN', venue: 'NSE', startingCash: STARTING_CASH }),
+    newAccount({ market: 'IN', venue: 'NSE', startingCash: BASE_STARTING_CASH }),
   );
   const [stance, setStance] = useState<Stance>('flat');
   const [entry, setEntry] = useState<Entry | null>(null);
@@ -110,11 +116,19 @@ export function ChartReplay() {
 
   const load = useCallback(async () => {
     try {
+      // Fetched fresh every time — the one account this game shares with
+      // every other cash-based one, not a number invented for this session.
+      const cash = await fetch('/api/account/balance')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: { startingCash: number } | null) => data?.startingCash ?? BASE_STARTING_CASH)
+        .catch(() => BASE_STARTING_CASH);
+
       const r = await RemoteReplay.start();
       setReplay(r);
       setVisible(r.visible);
       setRemaining(r.remaining);
-      setAccount(newAccount({ market: 'IN', venue: 'NSE', startingCash: STARTING_CASH }));
+      setStartingCash(cash);
+      setAccount(newAccount({ market: 'IN', venue: 'NSE', startingCash: cash }));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not start a replay.');
     } finally {
@@ -372,7 +386,7 @@ export function ChartReplay() {
             <div className="num text-sm">
               <span className="text-ink-faint">Last</span> {price.toFixed(2)}
               <span className="ml-4 text-ink-faint">Equity</span>{' '}
-              <span style={{ color: eq >= STARTING_CASH ? 'var(--color-up)' : 'var(--color-down)' }}>
+              <span style={{ color: eq >= startingCash ? 'var(--color-up)' : 'var(--color-down)' }}>
                 ₹{Math.round(eq).toLocaleString('en-IN')}
               </span>
               <span className="ml-4 text-ink-faint">{remaining} bars left</span>
@@ -562,7 +576,8 @@ export function ChartReplay() {
                 <span className="text-lg text-ink-faint">/100 process</span>
               </div>
               <p className="num mt-1 text-sm text-ink-faint">
-                Equity ₹{Math.round(eq).toLocaleString('en-IN')} · charges paid ₹
+                Equity ₹{Math.round(eq).toLocaleString('en-IN')} from a balance of ₹
+                {Math.round(startingCash).toLocaleString('en-IN')} · charges paid ₹
                 {account.totalCharges.toFixed(2)} · max drawdown {(account.maxDrawdown * 100).toFixed(1)}%
               </p>
               <ul className="mt-4 space-y-1.5">
@@ -584,7 +599,7 @@ export function ChartReplay() {
                 game="chart-replay"
                 sessionId={replay?.sessionId}
                 trades={trades}
-                pnl={eq - STARTING_CASH}
+                pnl={eq - startingCash}
                 defaultReason={theses.join('\n')}
               />
             </>
