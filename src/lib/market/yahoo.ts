@@ -62,6 +62,32 @@ export const MAX_LOOKBACK_DAYS: Record<Interval, number> = {
   '1mo': 36_500,
 };
 
+/**
+ * Yahoo's chart endpoint fails transiently far more than its status code
+ * implies — a dropped connection, a stale cookie/crumb handshake on a cold
+ * server instance, a plain rate-limit blip. None of those are "this symbol
+ * has no data"; they are "ask again in a moment and it will probably work."
+ * A couple of short, cheap retries turns most of them invisible instead of
+ * surfacing a 502 for something that would have succeeded on the next try.
+ */
+const HISTORY_RETRIES = 2;
+const RETRY_DELAY_MS = 300;
+
+async function withRetry<T>(fn: () => Promise<T>, attempts: number): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < attempts) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 function marketState(raw: string | undefined): Quote['marketState'] {
   switch (raw) {
     case 'PRE':
@@ -139,11 +165,15 @@ export class YahooProvider implements MarketProvider {
 
     let result: { quotes?: Record<string, unknown>[]; meta?: Record<string, unknown> };
     try {
-      result = (await yahooFinance.chart(symbol, {
-        period1: new Date(from),
-        period2: new Date(to),
-        interval: YF_INTERVAL[interval] as never,
-      })) as never;
+      result = await withRetry(
+        () =>
+          yahooFinance.chart(symbol, {
+            period1: new Date(from),
+            period2: new Date(to),
+            interval: YF_INTERVAL[interval] as never,
+          }) as never,
+        HISTORY_RETRIES,
+      );
     } catch (err) {
       throw new MarketDataError(`Upstream history request failed for ${symbol}`, 502, err);
     }

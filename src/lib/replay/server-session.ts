@@ -87,16 +87,93 @@ export const SESSION_TTL_MS = 60 * 60_000;
 /** Hard cap so a scripted client cannot exhaust server memory. */
 export const MAX_SESSIONS = 500;
 
+/**
+ * A large, liquid Nifty 50-style basket — the same "boring on purpose"
+ * reasoning as INDIA_EQUITIES in lib/market/symbols.ts: long-tenured
+ * large-caps that are unlikely to be delisted or renamed out from under a
+ * replay. Index membership itself drifts a little over time (additions and
+ * removals happen every few months), so this is not asserted as the exact
+ * current 50 names — it is a wide, varied set of the kind of stock that
+ * genuinely is one, which is what a replay actually needs.
+ *
+ * Wide on purpose: a pool of 8 meant every session was drawing from the same
+ * handful of charts, and any one symbol's Yahoo history request failing
+ * (rate limits, a cold cookie handshake — see withRetry in lib/market/yahoo.ts)
+ * had an outsized chance of being the one just picked. `startReplay` below
+ * also falls back to a different symbol from this pool on failure rather
+ * than surfacing it, so a single flaky name can no longer block the game.
+ */
 export const REPLAY_POOL = [
   'RELIANCE.NS',
   'HDFCBANK.NS',
+  'ICICIBANK.NS',
   'INFY.NS',
+  'TCS.NS',
   'ITC.NS',
-  'TATAMOTORS.NS',
   'SBIN.NS',
+  'BHARTIARTL.NS',
+  'HINDUNILVR.NS',
+  'LT.NS',
+  'KOTAKBANK.NS',
+  'AXISBANK.NS',
+  'BAJFINANCE.NS',
+  'ASIANPAINT.NS',
   'MARUTI.NS',
   'SUNPHARMA.NS',
+  'TATAMOTORS.NS',
+  'TITAN.NS',
+  'ULTRACEMCO.NS',
+  'WIPRO.NS',
+  'NESTLEIND.NS',
+  'POWERGRID.NS',
+  'NTPC.NS',
+  'ONGC.NS',
+  'HCLTECH.NS',
+  'TATASTEEL.NS',
+  'JSWSTEEL.NS',
+  'ADANIENT.NS',
+  'ADANIPORTS.NS',
+  'BAJAJFINSV.NS',
+  'BRITANNIA.NS',
+  'CIPLA.NS',
+  'COALINDIA.NS',
+  'DIVISLAB.NS',
+  'DRREDDY.NS',
+  'EICHERMOT.NS',
+  'GRASIM.NS',
+  'HDFCLIFE.NS',
+  'HEROMOTOCO.NS',
+  'HINDALCO.NS',
+  'INDUSINDBK.NS',
+  'M&M.NS',
+  'SBILIFE.NS',
+  'SHREECEM.NS',
+  'TECHM.NS',
+  'UPL.NS',
+  'BPCL.NS',
 ];
+
+/** How many different symbols `startReplay` will try before giving up. */
+const MAX_SYMBOL_ATTEMPTS = 4;
+
+/** Fisher–Yates, seeded so the same seed always tries symbols in the same order — useful for reproducing a report. */
+function shuffled<T>(items: readonly T[], seed: number): T[] {
+  const out = [...items];
+  let s = seed >>> 0 || 1;
+  const next = () => {
+    // xorshift32 — small, fast, and deterministic, which Math.random() is not.
+    s ^= s << 13;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    s >>>= 0;
+    return s / 0xffffffff;
+  };
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(next() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 /**
  * Roughly seven months of daily bars shown before the learner has to act —
@@ -132,15 +209,41 @@ export async function startReplay(opts: { symbol?: string; seed?: number } = {})
   sweep();
 
   const seed = opts.seed ?? Math.floor(Math.random() * 2 ** 31);
-  const symbol = opts.symbol ?? REPLAY_POOL[seed % REPLAY_POOL.length];
+  const need = WARMUP_BARS + SESSION_BARS;
+
+  // A fixed symbol (tests, a "replay this one again" feature) gets exactly
+  // one attempt, honestly — falling back away from a symbol the caller
+  // specifically asked for would be surprising. Otherwise, a random symbol
+  // whose upstream request fails or genuinely lacks enough history should
+  // not fail the whole game; a different symbol from the same pool is just
+  // as good a replay, so try a few before giving up.
+  const candidates = opts.symbol ? [opts.symbol] : shuffled(REPLAY_POOL, seed).slice(0, MAX_SYMBOL_ATTEMPTS);
 
   const to = Date.now();
   const from = to - 5 * 366 * 86_400_000;
-  const series = await getHistory({ symbol, interval: '1d', from, to });
 
-  const need = WARMUP_BARS + SESSION_BARS;
-  if (series.candles.length < need + 10) {
-    throw new MarketDataError(`Not enough history for ${symbol} to run a replay.`, 503);
+  let symbol: string | null = null;
+  let series: Awaited<ReturnType<typeof getHistory>> | null = null;
+  let lastError: unknown;
+
+  for (const candidate of candidates) {
+    try {
+      const s = await getHistory({ symbol: candidate, interval: '1d', from, to });
+      if (s.candles.length < need + 10) {
+        throw new MarketDataError(`Not enough history for ${candidate} to run a replay.`, 503);
+      }
+      symbol = candidate;
+      series = s;
+      break;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  if (!symbol || !series) {
+    throw lastError instanceof MarketDataError
+      ? lastError
+      : new MarketDataError('Could not start a replay — every candidate symbol failed.', 502, lastError);
   }
 
   // A deterministic-but-varied window, so the same symbol does not always

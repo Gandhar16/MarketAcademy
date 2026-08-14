@@ -406,10 +406,15 @@ export function ChartReplay() {
           <div className="flex flex-wrap items-baseline gap-3">
             <div className="num text-sm">
               <span className="text-ink-faint">Last</span> {price.toFixed(2)}
-              <span className="ml-4 text-ink-faint">Equity</span>{' '}
+              <span className="ml-4 text-ink-faint" title="Cash plus the mark-to-market value of any open position. The header balance only moves once a position closes and its P&L is banked.">
+                Equity
+              </span>{' '}
               <span style={{ color: eq >= startingCash ? 'var(--color-up)' : 'var(--color-down)' }}>
                 ₹{Math.round(eq).toLocaleString('en-IN')}
               </span>
+              {stance !== 'flat' && (
+                <span className="ml-1 text-[10px] text-ink-faint">(incl. open position, not yet banked)</span>
+              )}
               <span className="ml-4 text-ink-faint">{remaining} bars left</span>
             </div>
             {!finished && (
