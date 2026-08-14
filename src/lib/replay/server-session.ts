@@ -176,14 +176,23 @@ function shuffled<T>(items: readonly T[], seed: number): T[] {
 }
 
 /**
- * Roughly seven months of daily bars shown before the learner has to act —
+ * Roughly nine months of daily bars shown before the learner has to act —
  * enough to actually mark a trendline, a support zone or a chart pattern on
  * real history rather than guessing from a handful of candles. Raised from
- * 60 (three months) after feedback that there was not enough history on
- * screen to analyse before the replay portion began.
+ * 60 (three months), then again from 150, after feedback that there was not
+ * enough history on screen to analyse before the replay portion began.
  */
-export const WARMUP_BARS = 150;
-export const SESSION_BARS = 60;
+export const WARMUP_BARS = 180;
+/**
+ * Roughly six months of tradeable bars. Raised from 60 (three months) after
+ * feedback that a stop or target set inside the game's own allowed range
+ * (0.5–20% away — see MIN/MAX_STOP_PCT and MIN/MAX_TARGET_PCT below) could
+ * still run out of bars before either was ever reached, forcing a
+ * 'session-end' square-off that was neither a plan paying off nor a mistake
+ * being caught — just the replay ending arbitrarily underneath the learner.
+ * Twice the room makes that a rare edge case again rather than a routine one.
+ */
+export const SESSION_BARS = 120;
 
 function sweep(now = Date.now()): void {
   for (const [id, s] of SESSIONS) {
@@ -219,8 +228,12 @@ export async function startReplay(opts: { symbol?: string; seed?: number } = {})
   // as good a replay, so try a few before giving up.
   const candidates = opts.symbol ? [opts.symbol] : shuffled(REPLAY_POOL, seed).slice(0, MAX_SYMBOL_ATTEMPTS);
 
+  // A full 25 years, ending now — so the window a replay is drawn from is
+  // wide enough that `startAt` below (seeded, uniform across whatever came
+  // back) genuinely can land anywhere from decades ago to recent history,
+  // not just within however much a narrower fetch happened to cover.
   const to = Date.now();
-  const from = to - 5 * 366 * 86_400_000;
+  const from = to - 25 * 366 * 86_400_000;
 
   let symbol: string | null = null;
   let series: Awaited<ReturnType<typeof getHistory>> | null = null;
