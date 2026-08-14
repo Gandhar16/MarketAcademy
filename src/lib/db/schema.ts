@@ -148,6 +148,30 @@ CREATE TABLE IF NOT EXISTS user_stats (
 
 CREATE INDEX IF NOT EXISTS user_stats_xp ON user_stats(xp DESC);
 
+-- One row per fill the simulator's live order book actually executed. The
+-- simulator otherwise keeps its state in memory only (see lib/sim/reducer.ts)
+-- and would lose every position and every line of the blotter on a refresh;
+-- this is what survives one — the client replays these fills, oldest first,
+-- through the same fill logic that produced them the first time, and gets
+-- back the identical account. \`realised\` is added to \`user_stats.net_pnl\`
+-- the moment a fill closes or reduces a position, same as a completed game
+-- run, so the simulator shares the one account balance rather than floating
+-- free of it. \`id\` is caller-supplied and is the de-dupe key: a retried POST
+-- for a fill already on file is a no-op, not a double-counted P&L.
+CREATE TABLE IF NOT EXISTS sim_fills (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  at         INTEGER NOT NULL,
+  symbol     TEXT NOT NULL,
+  product    TEXT NOT NULL,
+  side       TEXT NOT NULL,
+  quantity   REAL NOT NULL,
+  price      REAL NOT NULL,
+  realised   REAL NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS sim_fills_user ON sim_fills(user_id, at);
+
 -- Failed sign-in attempts, for throttling. Keyed on the email being attempted
 -- AND the client address, so one attacker cannot lock out a real user by
 -- hammering their address from elsewhere.

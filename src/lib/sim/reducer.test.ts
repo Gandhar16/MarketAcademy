@@ -202,4 +202,10 @@ describe('quote failures and reset', () => {
     expect(s.blotter).toHaveLength(0);
     expect(Object.keys(s.account.positions)).toHaveLength(0);
   });
+
+  it('resets to a given starting cash, so the sim can pick up the learner\'s real balance', () => {
+    let s = run(withQuote(), { type: 'place', order: order() });
+    s = simReducer(s, { type: 'reset', startingCash: 75_000 });
+    expect(s.account.cash).toBe(75_000);
+  });
 });

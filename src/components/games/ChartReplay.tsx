@@ -23,6 +23,7 @@ import { newOrderState } from '@/lib/engine/order';
 import { applyFill, equity, newAccount, type Account } from '@/lib/engine/portfolio';
 import { MIN_PLANNED_RR, processScore, type TradeRecord } from '@/lib/progress/mastery';
 import { BASE_STARTING_CASH } from '@/lib/account/balance';
+import { useAccountStore } from '@/lib/account/store';
 import { RunSubmit } from './RunSubmit';
 import type { Candle } from '@/lib/market/types';
 
@@ -116,12 +117,11 @@ export function ChartReplay() {
 
   const load = useCallback(async () => {
     try {
-      // Fetched fresh every time — the one account this game shares with
-      // every other cash-based one, not a number invented for this session.
-      const cash = await fetch('/api/account/balance')
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data: { startingCash: number } | null) => data?.startingCash ?? BASE_STARTING_CASH)
-        .catch(() => BASE_STARTING_CASH);
+      // The one account this game shares with every other cash-based one and
+      // with the header, not a number invented for this session — hydrate()
+      // is a no-op if the store already has a fresh value in flight.
+      await useAccountStore.getState().hydrate();
+      const cash = useAccountStore.getState().startingCash;
 
       const r = await RemoteReplay.start();
       setReplay(r);

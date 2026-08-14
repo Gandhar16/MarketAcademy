@@ -15,14 +15,15 @@
  *  • market orders cross a modelled spread, so a round trip at an unchanged
  *    price loses money, because in reality it does
  */
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { computeCost } from '@/lib/engine/costs';
 import { sizeFromStop, equity, unrealisedPnl } from '@/lib/engine/portfolio';
 import type { OrderType } from '@/lib/engine/order';
 import type { Product } from '@/lib/engine/costs/types';
 import { INDIA_EQUITIES } from '@/lib/market/symbols';
 import type { Quote } from '@/lib/market/types';
-import { initialSimState, simReducer, STARTING_CASH, type BlotterEntry } from '@/lib/sim/reducer';
+import { initialSimState, simReducer, type BlotterEntry, type PersistedFill } from '@/lib/sim/reducer';
+import { useAccountStore } from '@/lib/account/store';
 
 const SYMBOLS = INDIA_EQUITIES.slice(0, 6);
 const POLL_MS = 15_000;
@@ -30,6 +31,66 @@ const POLL_MS = 15_000;
 export function Simulator() {
   const [state, dispatch] = useReducer(simReducer, undefined, initialSimState);
   const [symbol, setSymbol] = useState(SYMBOLS[0].symbol);
+  const startingCash = useAccountStore((s) => s.startingCash);
+
+  // How much of `state.blotter` is already on the server — everything beyond
+  // this many entries (blotter is newest-first) just executed locally and
+  // needs filing. Set past the true length until hydration resolves, so nothing
+  // fires before there is anything to compare against.
+  const persistedCount = useRef(Number.POSITIVE_INFINITY);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await useAccountStore.getState().hydrate();
+      const cash = useAccountStore.getState().startingCash;
+
+      const fills: PersistedFill[] = await fetch('/api/sim/fills')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: { fills: PersistedFill[] } | null) => data?.fills ?? [])
+        .catch(() => []);
+
+      if (cancelled) return;
+      dispatch({ type: 'hydrate', startingCash: cash, fills });
+      persistedCount.current = fills.length;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Whatever is beyond `persistedCount` just executed live and has not been
+  // filed yet. Blotter is newest-first, so those are the leading entries.
+  useEffect(() => {
+    const freshCount = state.blotter.length - persistedCount.current;
+    if (!(freshCount > 0)) return;
+    const fresh = state.blotter.slice(0, freshCount);
+    persistedCount.current = state.blotter.length;
+
+    // Oldest of the new batch first, so a reload's replay order matches the
+    // order these actually executed in.
+    [...fresh].reverse().forEach((entry) => {
+      void fetch('/api/sim/fills', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: entry.id,
+          at: entry.at,
+          symbol: entry.symbol,
+          product: entry.product,
+          side: entry.side,
+          quantity: entry.quantity,
+          price: entry.price,
+          realised: entry.realised,
+        }),
+      }).catch(() => {
+        // A dropped fill-log write does not undo the trade the learner just
+        // made; it only means this one fill will be missing after a reload.
+        // Nothing here can retry safely without risking a double-file.
+      });
+      if (entry.realised !== 0) useAccountStore.getState().applyDelta(entry.realised);
+    });
+  }, [state.blotter]);
 
   const [side, setSide] = useState<'buy' | 'sell'>('buy');
   const [type, setType] = useState<OrderType>('MARKET');
@@ -80,7 +141,10 @@ export function Simulator() {
     dispatch({
       type: 'place',
       order: {
-        id: `o-${Date.now()}`,
+        // The blotter entry a fill produces re-uses this id verbatim as the
+        // primary key it is persisted under (see the effect above), so it
+        // has to survive two orders placed in the same millisecond.
+        id: `o-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         symbol,
         side,
         quantity: Number(quantity),
@@ -99,7 +163,7 @@ export function Simulator() {
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-4">
-        <Stat label="Equity" value={inr(Math.round(eq))} tone={eq >= STARTING_CASH ? 'up' : 'down'} />
+        <Stat label="Equity" value={inr(Math.round(eq))} tone={eq >= startingCash ? 'up' : 'down'} />
         <Stat label="Cash" value={inr(Math.round(state.account.cash))} />
         <Stat label="Unrealised" value={inr(Math.round(unrealised))} tone={unrealised >= 0 ? 'up' : 'down'} />
         <Stat
@@ -285,7 +349,13 @@ export function Simulator() {
 
           <button
             onClick={() => {
-              if (confirm('Reset the simulator account?')) dispatch({ type: 'reset' });
+              if (!confirm('Reset the simulator account? This clears every fill on file, and its P&L is reversed off your account balance.')) return;
+              void (async () => {
+                await fetch('/api/sim/fills', { method: 'DELETE' }).catch(() => {});
+                await useAccountStore.getState().hydrate();
+                persistedCount.current = 0;
+                dispatch({ type: 'reset', startingCash: useAccountStore.getState().startingCash });
+              })();
             }}
             className="w-full text-[12px] text-ink-faint underline underline-offset-4 hover:text-down"
           >

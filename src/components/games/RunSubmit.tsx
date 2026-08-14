@@ -27,6 +27,7 @@ import Link from 'next/link';
 import type { TradeRecord } from '@/lib/progress/mastery';
 import { MIN_REASON_CHARS } from '@/lib/progress/mastery';
 import { useSession } from '@/components/auth/SessionProvider';
+import { useAccountStore } from '@/lib/account/store';
 
 interface Verdict {
   xpAwarded: number;
@@ -96,7 +97,11 @@ export function RunSubmit({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message ?? 'The run could not be filed.');
-      setVerdict(data as Verdict);
+      const filed = data as Verdict;
+      setVerdict(filed);
+      // The header (and any other open game) picks this up on its next
+      // render — "updated everywhere" means right now, not after a refetch.
+      useAccountStore.getState().setNetPnl(filed.totals.netPnl);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The run could not be filed.');
     } finally {

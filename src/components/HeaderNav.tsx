@@ -3,38 +3,19 @@
 /**
  * The site navigation, at every width.
  *
- * The previous header put seven links and the account controls in one flex row
- * with `flex-wrap`. On a desktop that is fine. On a 360px phone the links wrap
- * to three lines, the sticky header eats a third of the viewport, and every
- * page below it starts already scrolled. Wrapping is not responsiveness — it is
- * what happens when nothing was decided.
- *
- * So there are two layouts and one breakpoint:
- *
- *   below 900px — wordmark, account state, and a disclosure button. The links
- *                 live in a panel that pushes the page down when open, rather
- *                 than a fixed overlay: an overlay on a short landscape phone
- *                 screen has nowhere to put eight items.
- *   900px and up — everything inline, as before.
- *
- * The breakpoint is a custom `min-[900px]:` rather than Tailwind's `lg`
- * (1024px) on purpose: on a genuinely "full screen" laptop with OS display
- * scaling (125%/150% is the common default on Windows HiDPI screens), the
- * CSS viewport width a maximized browser window actually reports is often
- * well under 1024px even though the physical screen is desktop-sized — the
- * hamburger would show for a lot of ordinary desktop use at the standard `lg`
- * cut. 900px, combined with tighter spacing on the inline links below, is
- * chosen to still comfortably fit all eight items without wrapping.
- *
- * The panel closes on route change, on Escape, and on any link tap. All three,
- * because a menu that stays open after navigation is the single most common
- * mobile-nav bug and each of those paths is how a real person closes it.
+ * One row, always. No hamburger and no disclosure panel — a menu that is
+ * sometimes a button and sometimes a list of links is two components
+ * pretending to be one, and it was the reason "is the hamburger showing when
+ * it shouldn't be" kept coming up. Instead the row itself scrolls sideways
+ * (`overflow-x-auto`) when it does not fit: nothing is ever hidden behind a
+ * tap, it is at most a swipe away, and there is exactly one nav to keep
+ * correct.
  */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useId, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ThemeToggle } from './ThemeToggle';
+import { AccountBalance } from './AccountBalance';
 
 export interface NavItem {
   href: string;
@@ -43,27 +24,6 @@ export interface NavItem {
 
 export function HeaderNav({ items, displayName }: { items: NavItem[]; displayName: string | null }) {
   const pathname = usePathname();
-  const panelId = useId();
-
-  /**
-   * The menu remembers WHICH page it was opened on, rather than a bare boolean
-   * plus an effect that closes it on navigation. Same behaviour, and the close
-   * is derived instead of being a second render triggered by the first — a
-   * route change makes `openPath !== pathname` and the panel is simply closed.
-   */
-  const [openPath, setOpenPath] = useState<string | null>(null);
-  const open = openPath === pathname;
-  const setOpen = (next: boolean) => setOpenPath(next ? pathname : null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpenPath(null);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
-
   const isCurrent = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const reduceMotion = useReducedMotion();
 
@@ -76,8 +36,7 @@ export function HeaderNav({ items, displayName }: { items: NavItem[]; displayNam
           <span className="sm:hidden">Market&nbsp;Academy</span>
         </Link>
 
-        {/* Wide screens: everything inline. */}
-        <div className="hidden items-center gap-3 text-[13px] min-[900px]:flex">
+        <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto text-[13px]">
           {items.map((n) => {
             const current = isCurrent(n.href);
             return (
@@ -86,7 +45,7 @@ export function HeaderNav({ items, displayName }: { items: NavItem[]; displayNam
                 href={n.href}
                 aria-current={current ? 'page' : undefined}
                 className={[
-                  'relative py-1 transition-colors',
+                  'relative shrink-0 py-1 transition-colors',
                   current ? 'text-ink' : 'text-ink-muted hover:text-ink',
                 ].join(' ')}
               >
@@ -106,42 +65,8 @@ export function HeaderNav({ items, displayName }: { items: NavItem[]; displayNam
         <div className="ml-auto flex shrink-0 items-center gap-3 text-sm">
           <ThemeToggle />
           <AccountLinks displayName={displayName} />
-
-          <button
-            type="button"
-            className="btn-secondary px-3 py-1.5 min-[900px]:hidden"
-            aria-expanded={open}
-            aria-controls={panelId}
-            onClick={() => setOpen(!open)}
-          >
-            <span className="sr-only">{open ? 'Close menu' : 'Open menu'}</span>
-            <span aria-hidden className="num text-base leading-none">
-              {open ? '✕' : '☰'}
-            </span>
-          </button>
         </div>
       </nav>
-
-      {/* Narrow screens: a disclosure panel in normal flow. */}
-      <div id={panelId} hidden={!open} className="border-t border-line bg-surface min-[900px]:hidden">
-        <ul className="mx-auto w-full max-w-6xl px-4 py-2 sm:px-6">
-          {items.map((n) => (
-            <li key={n.href}>
-              <Link
-                href={n.href}
-                aria-current={isCurrent(n.href) ? 'page' : undefined}
-                onClick={() => setOpen(false)}
-                className={[
-                  'block rounded-lg px-3 py-3 text-[15px] transition-colors',
-                  isCurrent(n.href) ? 'bg-surface-2 text-ink' : 'text-ink-muted hover:bg-surface-2 hover:text-ink',
-                ].join(' ')}
-              >
-                {n.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
     </header>
   );
 }
@@ -149,8 +74,9 @@ export function HeaderNav({ items, displayName }: { items: NavItem[]; displayNam
 function AccountLinks({ displayName }: { displayName: string | null }) {
   if (displayName) {
     return (
-      <Link href="/account" className="max-w-[9rem] truncate text-ink-muted transition-colors hover:text-ink">
-        {displayName}
+      <Link href="/account" className="flex items-center gap-2 text-ink-muted transition-colors hover:text-ink">
+        <span className="hidden max-w-[9rem] truncate sm:inline">{displayName}</span>
+        <AccountBalance />
       </Link>
     );
   }
