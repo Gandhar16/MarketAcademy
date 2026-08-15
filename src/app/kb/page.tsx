@@ -26,8 +26,9 @@ export default function KnowledgeBasePage() {
         account. No definition here relies on a word you have not already been given.
       </p>
       <p className="mt-3 text-sm leading-relaxed text-ink-faint">
-        You should rarely need this page. Inside a lesson, the first time an unfamiliar word appears it carries a dotted
-        underline — tap it and the definition comes to you.
+        You should rarely need this page. Anywhere on this site — a lesson, a game, the itemised bill after a fill — an
+        unfamiliar word carries a dotted underline. Hover it, or tap it on a phone, and the definition comes to you.
+        Every term also has a page of its own, with an everyday comparison and what to read first.
       </p>
 
       <div className="mt-8">

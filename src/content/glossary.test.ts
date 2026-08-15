@@ -102,6 +102,26 @@ describe('definitions are actually plain', () => {
     }
   });
 
+  it('never uses jargon in `analogy` either', () => {
+    // An analogy exists to be the ONE thing on the page a beginner can read
+    // without a second lookup. Jargon in it defeats the entire purpose, so it
+    // is held to exactly the same standard as `plain`.
+    const problems: string[] = [];
+
+    for (const e of GLOSSARY) {
+      if (!e.analogy) continue;
+      const declared = new Set<string>([...(e.needs ?? []), ...ASSUMED_VOCABULARY]);
+      for (const { phrase, id } of GLOSSARY_LOOKUP) {
+        if (id === e.id || declared.has(id)) continue;
+        if (mentionsTerm(e.analogy, phrase)) {
+          problems.push(`${e.id}.analogy uses "${phrase}" (${id}) without listing it in needs`);
+        }
+      }
+    }
+
+    expect(problems, problems.join('\n')).toEqual([]);
+  });
+
   it('gives every entry a category the glossary page knows how to show', () => {
     const known = new Set([
       'basics',

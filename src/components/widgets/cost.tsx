@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react';
 import { computeCost, roundTripCost } from '@/lib/engine/costs';
 import { BROKER_IN_DISCOUNT, BROKER_IN_FULL_SERVICE } from '@/lib/engine/costs/india';
 import type { CostBreakdown, Market, Product, Venue } from '@/lib/engine/costs/types';
+import { CostLineLabel } from '@/components/glossary/CostLineLabel';
 
 const money = (n: number, currency: 'INR' | 'USD') =>
   n.toLocaleString(currency === 'INR' ? 'en-IN' : 'en-US', {
@@ -92,7 +93,7 @@ export function CostBreakdownTable(props: CostBreakdownTableProps) {
                     title={PAYEE_LABEL[l.payee]}
                   />
                   <span className="text-ink-muted">
-                    {l.label}
+                    <CostLineLabel lineKey={l.key} label={l.label} />
                     <span className="ml-1.5 text-[11px] text-ink-faint">{l.basis}</span>
                   </span>
                   <span className="num shrink-0">{money(l.amount, b.currency)}</span>

@@ -24,6 +24,7 @@ import { INDIA_EQUITIES } from '@/lib/market/symbols';
 import type { Quote } from '@/lib/market/types';
 import { initialSimState, simReducer, type BlotterEntry, type PersistedFill } from '@/lib/sim/reducer';
 import { displayBalance, useAccountStore } from '@/lib/account/store';
+import { CostLineLabel } from '@/components/glossary/CostLineLabel';
 
 const SYMBOLS = INDIA_EQUITIES.slice(0, 6);
 const POLL_MS = 15_000;
@@ -413,7 +414,8 @@ function Blotter({ entries }: { entries: BlotterEntry[] }) {
                   {e.charges.map((c) => (
                     <li key={c.key} className="flex items-baseline justify-between gap-3 text-[12px]">
                       <span className="text-ink-muted">
-                        {c.label} <span className="text-ink-faint">{c.basis}</span>
+                        <CostLineLabel lineKey={c.key} label={c.label} />{' '}
+                        <span className="text-ink-faint">{c.basis}</span>
                       </span>
                       <span className="num shrink-0">₹{c.amount.toFixed(2)}</span>
                     </li>

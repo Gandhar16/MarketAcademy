@@ -1755,6 +1755,116 @@ is closed.** The only remaining open threads are the 3 illustrative
 `ElliottWaveFigure`, `VolumeProfileFigure` — which need real shape-
 detection, a genuinely harder problem not attempted this session.
 
+#### 3ff. Terminology everywhere, everyday analogies, and animated explainers — `[x]` COMPLETE
+
+**The ask, and the competitive research behind it.** Three things: define
+STT and the rest of the jargon where a learner actually meets it; make
+terms hoverable/tappable so a definition comes to you; and add "videos"
+that explain a topic with real-world analogies. Explicitly instructed to
+research Investopedia and the other incumbents first.
+
+**What the research actually found** (Investopedia, Zerodha Varsity,
+Babypips, Schwab's glossary, the flashcard/spaced-repetition tools):
+
+| Competitor | The thing worth taking | The thing to leave |
+|---|---|---|
+| **Investopedia** | ~13,000 terms, and crucially **one page per term** — definition, how it works, a worked instance, related terms. That per-term URL is why they own the search result for every piece of jargon a beginner ever types. | Pages are long, ad-heavy, and written precision-first, which is exactly what already failed the reader who arrived confused. |
+| **Zerodha Varsity** | Six video modules, 5–14 chapters each, bite-sized; content broken into cards; a quiz at the end of each level. Video is clearly the format that reaches beginners here. | The videos are recorded, so a statutory rate change silently makes them wrong until somebody re-records. |
+| **Babypips** | Analogies and humour as the primary teaching device, not decoration — and glossary terms that pop up inline ("lot size: trade unit"). The best-executed inline glossary of the lot. | Forex only; quizzes test recall. |
+| **Schwab / Ferguson Wellman** | 100–200 term glossaries, plainly written. | A flat list with no path through it. |
+| **Brainscape / flashcard tools** | Spaced repetition on definitions specifically. | Not built this pass — noted below. |
+
+**The gap this exposed, which was not the gap that was reported.** The
+glossary was never missing. 116 terms existed, STT among them, each with
+`plain`/`more`/`example` and a dependency graph. Three things were wrong
+with how it was *reachable*:
+
+1. **The popover was lesson-only.** `GlossaryPopover` wrapped
+   `LessonPlayer` and nothing else. A learner meets "STT" for the first
+   time in the itemised bill after a fill in Chart Replay — not in a
+   paragraph. Every game, the simulator and the whole of `/sim` were
+   jargon with no way in.
+2. **No term had a URL.** `/kb` is a search box over a long list. A
+   definition could not be linked, sent, bookmarked, or found by anyone
+   searching the web for the words they were stuck on — which is how
+   most people meet a glossary at all. This is the single biggest thing
+   Investopedia does that we did not.
+3. **Tap-only, on an over-applied principle.** "Hover does not exist on
+   a phone" is a correct argument against *depending* on hover. It had
+   become a rule against *supporting* it, and on a desktop a dotted
+   underline that needs a click reads as broken.
+
+| Piece | Status | Where |
+|---|---|---|
+| `analogy` field on `GlossaryEntry`, authored in its own file | `[x]` | `src/content/analogies.ts` — 82 terms |
+| Analogy required on every T0/T1 term, jargon-checked like `plain` | `[x]` | `analogies.test.ts`, `glossary.test.ts` |
+| Per-term pages, one URL each | `[x]` | `/kb/[term]` — 116 pages |
+| Related terms read from the dependency graph in BOTH directions | `[x]` | `src/lib/glossary/related.ts` |
+| Definitions site-wide, hover + tap + keyboard focus | `[x]` | `src/components/glossary/TermDefinitions.tsx` (root layout) |
+| `<Term>` for React-rendered UI the prose annotator cannot reach | `[x]` | same file |
+| Cost-line → glossary mapping, shared by all three bill renderers | `[x]` | `src/lib/glossary/cost-terms.ts`, `CostLineLabel.tsx` |
+| Animated explainers with player, chapters, captions, transcript | `[x]` | `/explain`, `/explain/[id]` |
+| Three explainers, figures computed by the real engines | `[x]` | `src/content/explainers.ts` |
+
+**The analogies are deliberately not load-bearing.** Every true statement
+stays in `plain` and `more`. Delete `analogies.ts` and the site loses no
+correctness, only a handhold — that is the test for whether an analogy
+has quietly started teaching. They may simplify and may never falsify,
+so where a comparison breaks down the break is named inside it ("moats
+dry up", "every comparison breaks down somewhere"). The same jargon test
+that governs `plain` governs these, and it fired on the first run: the
+STT analogy was written as "the stamp duty on a property sale", which is
+itself a glossary term.
+
+**Why the explainers are not video files, having been asked for video.**
+The format was chosen deliberately and the reasons are worth keeping.
+Four of them are the same ones that make every diagram here inline SVG
+(theme, sharpness, weight, captions). The fifth decided it: **the figures
+in these come from the same cost engine that prices real fills.** The
+₹237.82 round-trip bill, the five-way split of who took what, the
+breakeven move, and the option's week-by-week time-value melt are all
+computed — `computeCost`, `roundTripCost`, `blackScholesPrice`. Change a
+rate in `costs/india.ts` and the explainer re-derives itself, captions
+included. A recorded video would go on confidently stating the old rate
+in a human voice until somebody noticed, which is the failure mode §7
+exists to prevent wearing a friendlier face.
+
+**Scene kinds are restricted to mechanisms: `chain`, `bars`, `ladder`.**
+There is deliberately no scene kind that can draw a price path, because a
+drawn price path is invented market data (§7.1). A test asserts the set,
+so adding one becomes a visible decision rather than an afternoon's
+convenience. If an explainer ever needs a chart it needs real bars from
+the real API, the way `ta-tools.tsx` already does.
+
+**Two design corrections made mid-build, both worth recording:**
+
+- **Scene duration is derived, not authored.** `seconds` is now a floor
+  for how long the picture needs; `sceneSeconds()` extends it whenever
+  the caption would not fit at 15 characters/second. Hand-timing failed
+  three times in a row — every reworded caption silently became wrong and
+  the only thing that noticed was a test complaining about a tenth of a
+  second. Deriving it removed the class of mistake instead of catching
+  instances of it.
+- **`TermDefinitions` had to pass the flex stretch through.** It sits in
+  the middle of the root layout's flex column. An unstyled wrapper there
+  silently collapses every short page on the site, which is why it takes
+  a `className`.
+
+**Still open, and deliberately not attempted this pass:**
+
+- [ ] Spaced repetition over glossary terms (the engine for mastery decay
+      already exists; §3i already tracks the missing UI). Brainscape's
+      one genuinely transferable idea.
+- [ ] More explainers — the three built cover costs, the order path and
+      time decay. Circuit limits, physical settlement and position sizing
+      are the obvious next three.
+- [ ] `Term` is wired into the three cost-bill renderers. The games'
+      own stat labels (margin, drawdown, IV) are not yet marked up.
+- [ ] **Not verified in a browser.** Standing caveat: verification is
+      tsc, eslint, 1,435 unit tests and a clean production build. The
+      hover behaviour in particular has not been eyeballed on a real
+      pointer device.
+
 ---
 
 ### M4 · Polish — `[ ]`

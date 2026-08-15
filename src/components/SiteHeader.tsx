@@ -10,6 +10,7 @@ const NAV: NavItem[] = [
   { href: '/play', label: 'Games' },
   { href: '/sim', label: 'Simulator' },
   { href: '/reasons', label: 'Reasoning' },
+  { href: '/explain', label: 'Explainers' },
   { href: '/kb', label: 'Glossary' },
   { href: '/progress', label: 'Progress' },
   { href: '/pricing', label: 'Pricing' },

@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SessionProvider } from '@/components/auth/SessionProvider';
 import { currentUser } from '@/lib/auth/session';
 import { MarketThemeBackground } from '@/components/MarketThemeBackground';
+import { TermDefinitions } from '@/components/glossary/TermDefinitions';
 
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'], display: 'swap' });
 const mono = JetBrains_Mono({ variable: '--font-jetbrains', subsets: ['latin'], display: 'swap' });
@@ -86,9 +87,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }
         >
           <SiteHeader />
-          <div id="content" className="flex-1">
-            {children}
-          </div>
+          {/* Wraps the whole app, not just the lessons: jargon turns up in a
+              cost breakdown after a fill far more often than it turns up in a
+              paragraph, and until now only the paragraph had a definition. */}
+          <TermDefinitions className="flex flex-1 flex-col">
+            <div id="content" className="flex-1">
+              {children}
+            </div>
+          </TermDefinitions>
         </SessionProvider>
       </body>
     </html>

@@ -33,7 +33,6 @@ import { WorkedExample } from './WorkedExample';
 import { TermPrimer } from './TermPrimer';
 import { renderFigure } from '@/components/visuals/registry';
 import { annotateLesson, annotateReveal, renderProse } from '@/lib/lesson/annotate';
-import { GlossaryPopover } from './GlossaryPopover';
 
 /**
  * Pre-annotated prose for the lesson currently being read, keyed by its source
@@ -100,7 +99,6 @@ export function LessonPlayer({ lesson, isPro }: { lesson: Lesson; isPro: boolean
 
   return (
     <AnnotationContext.Provider value={annotations}>
-      <GlossaryPopover>
         <article className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
       <header>
         <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.2em] text-accent">
@@ -229,7 +227,6 @@ export function LessonPlayer({ lesson, isPro }: { lesson: Lesson; isPro: boolean
         </motion.div>
       )}
         </article>
-      </GlossaryPopover>
     </AnnotationContext.Provider>
   );
 }

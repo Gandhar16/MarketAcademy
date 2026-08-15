@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { computeCost, roundTripCost } from '@/lib/engine/costs';
 import type { Product } from '@/lib/engine/costs/types';
+import { CostLineLabel } from '@/components/glossary/CostLineLabel';
 
 /**
  * The landing page's argument, made interactively rather than asserted.
@@ -87,7 +88,7 @@ export function CostRealityCheck() {
           {entry.lines.map((l) => (
             <li key={l.key} className="flex items-baseline justify-between gap-4 text-sm">
               <span className="text-ink-muted">
-                {l.label}
+                <CostLineLabel lineKey={l.key} label={l.label} />
                 <span className="ml-2 text-[11px] text-ink-faint">{l.basis}</span>
               </span>
               <span className="num shrink-0">{inr(l.amount)}</span>

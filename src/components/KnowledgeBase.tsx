@@ -132,7 +132,11 @@ function Entry({ entry, lessons }: { entry: GlossaryEntry; lessons: { id: string
   return (
     <article id={entry.id} className="scroll-mt-32 rounded-xl border border-line bg-surface p-5">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h3 className="text-lg font-medium text-ink">{entry.term}</h3>
+        <h3 className="text-lg font-medium text-ink">
+          <Link href={`/kb/${entry.id}`} className="hover:text-accent">
+            {entry.term}
+          </Link>
+        </h3>
         {entry.tier && (
           <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[0.65rem] uppercase tracking-wide text-ink-faint">
             {entry.tier}
@@ -153,6 +157,13 @@ function Entry({ entry, lessons }: { entry: GlossaryEntry; lessons: { id: string
 
       {open && (
         <div className="mt-4 space-y-3 border-t border-line pt-4">
+          {entry.analogy && (
+            <p className="rounded-lg border border-accent/25 bg-accent/[0.06] px-3 py-2 text-sm leading-relaxed text-ink-muted">
+              <span className="text-accent">Think of it like: </span>
+              {entry.analogy}
+            </p>
+          )}
+
           {entry.more && <p className="text-sm leading-relaxed text-ink-muted">{entry.more}</p>}
 
           {entry.example && (
@@ -165,9 +176,9 @@ function Entry({ entry, lessons }: { entry: GlossaryEntry; lessons: { id: string
               {entry.needs.map((n, i) => (
                 <span key={n}>
                   {i > 0 && ', '}
-                  <a href={`#${n}`} className="text-accent hover:underline">
+                  <Link href={`/kb/${n}`} className="text-accent hover:underline">
                     {GLOSSARY_BY_ID.get(n)?.term ?? n}
-                  </a>
+                  </Link>
                 </span>
               ))}
             </p>
@@ -187,9 +198,14 @@ function Entry({ entry, lessons }: { entry: GlossaryEntry; lessons: { id: string
             </p>
           )}
 
-          <button onClick={() => setOpen(false)} className="text-xs text-ink-faint hover:text-ink">
-            Less
-          </button>
+          <div className="flex items-center gap-4">
+            <Link href={`/kb/${entry.id}`} className="text-xs text-accent hover:underline">
+              Full page on {entry.term} →
+            </Link>
+            <button onClick={() => setOpen(false)} className="text-xs text-ink-faint hover:text-ink">
+              Less
+            </button>
+          </div>
         </div>
       )}
     </article>

@@ -33,6 +33,8 @@
  *  - Concrete over general. Rupees and share counts, not "an asset".
  */
 
+import { ANALOGIES } from './analogies';
+
 export type GlossaryCategory =
   | 'basics'
   | 'orders'
@@ -72,6 +74,23 @@ export interface GlossaryEntry {
   more?: string;
   /** A concrete instance with real numbers. */
   example?: string;
+  /**
+   * An everyday comparison, for the reader who has read `plain` twice and still
+   * has nothing to hang it on. Deliberately NOT a second definition: it maps the
+   * mechanism onto something the reader has already lived through — a rented
+   * shop, a queue at a counter, a property sale — and stops there.
+   *
+   * Authored in `analogies.ts` and merged in below, not typed inline here.
+   *
+   * Two rules, both enforced by `glossary.test.ts`:
+   *  - No jargon. An analogy that needs a glossary lookup has failed at the one
+   *    job it has.
+   *  - It must not be load-bearing. Everything true is in `plain` and `more`;
+   *    delete every analogy on the site and nothing becomes wrong, only harder.
+   *    So an analogy may simplify, but it may never state something false —
+   *    where the comparison breaks down, say so inside it.
+   */
+  analogy?: string;
   /** Terms whose own entries this one depends on. Checked for cycles. */
   needs?: string[];
   /**
@@ -83,7 +102,7 @@ export interface GlossaryEntry {
   tier?: 'T0' | 'T1' | 'T2' | 'T3' | 'T4' | 'T5';
 }
 
-export const GLOSSARY: GlossaryEntry[] = [
+const DEFINITIONS: GlossaryEntry[] = [
   // ---------------------------------------------------------------- basics
   {
     id: 'share',
@@ -1340,6 +1359,18 @@ export const GLOSSARY: GlossaryEntry[] = [
     needs: ['exchange', 'broker', 'depository'],
   },
 ];
+
+/**
+ * The glossary, with each entry's everyday comparison attached.
+ *
+ * The analogies live in their own file and are merged here rather than typed
+ * inline — see `analogies.ts` for why that separation is deliberate. Merging at
+ * this boundary means every consumer (the popover, the term pages, the search)
+ * sees one shape and never has to know two files were involved.
+ */
+export const GLOSSARY: GlossaryEntry[] = DEFINITIONS.map((entry) =>
+  ANALOGIES[entry.id] ? { ...entry, analogy: ANALOGIES[entry.id] } : entry,
+);
 
 export const GLOSSARY_BY_ID = new Map(GLOSSARY.map((g) => [g.id, g]));
 
