@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "verify": "pnpm typecheck && pnpm lint && pnpm test",
     "_comment_video": "Videos are a build output of the explainers, not source. `video:studio` previews and scrubs them; `video` renders every explainer to out/video. Neither runs in CI or on deploy — see docs/video.md.",
+    "narrate": "node scripts/narrate.mjs",
     "video": "node scripts/render-videos.mjs",
     "video:studio": "remotion studio"
   },
@@ -42,6 +43,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.1.10",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "remotion": "4.0.509",

@@ -39,6 +39,31 @@ export function ExplainerPlayer({ explainer }: { explainer: Explainer }) {
   const [elapsed, setElapsed] = useState(0);
   const [playing, setPlaying] = useState(false);
 
+  /**
+   * Narration, off unless asked for.
+   *
+   * Two reasons it is not the default. A page that starts speaking is the
+   * behaviour everyone has learned to resent — the same argument that already
+   * keeps this from autoplaying — and the audio is a few hundred kilobytes per
+   * explainer that nobody reading in an office wants spent on their behalf.
+   * Off by default means the files are not even requested until the toggle is
+   * pressed.
+   */
+  const [listening, setListening] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hasNarration = useMemo(() => scenes.some((s) => s.narration), [scenes]);
+
+  // `elapsed` changes sixty times a second, and the audio effects below need to
+  // read it without re-running that often. A ref is the only way to have the
+  // current value without subscribing to it — kept up to date in an effect
+  // rather than during render, which is a real rule and not a lint preference:
+  // a ref written during render is wrong under concurrent rendering, where a
+  // render can be thrown away after it has already scribbled on the ref.
+  const elapsedRef = useRef(0);
+  useEffect(() => {
+    elapsedRef.current = elapsed;
+  }, [elapsed]);
+
   // The rAF loop. Wall-clock deltas rather than a fixed increment per frame, so
   // a background tab or a slow device does not silently run the explainer in
   // slow motion.
@@ -79,9 +104,47 @@ export function ExplainerPlayer({ explainer }: { explainer: Explainer }) {
   const current = scenes[index];
   const atEnd = elapsed >= runtime - 1e-6;
 
+  /**
+   * Point the audio element at the current scene's line and put the needle
+   * where the clock is.
+   *
+   * Keyed on the scene index rather than on `elapsed`, because reassigning
+   * `currentTime` every animation frame is what makes home-made players stutter
+   * — each assignment restarts the decoder. Within a scene the audio is simply
+   * left alone to run at its own pace; it and the rAF clock are both real time,
+   * so they cannot meaningfully drift over the twelve seconds a scene lasts.
+   */
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!listening || !current.narration) {
+      audio.pause();
+      return;
+    }
+
+    const src = `/narration/${current.narration.file}`;
+    // Comparing against the resolved URL, so re-running this effect for an
+    // unrelated reason does not reload a file that is already playing.
+    if (!audio.src.endsWith(src)) audio.src = src;
+    audio.currentTime = Math.max(0, elapsedRef.current - current.startsAt);
+    if (playing) void audio.play().catch(() => undefined);
+  }, [listening, current, playing]);
+
   const seek = useCallback(
-    (seconds: number) => setElapsed(Math.max(0, Math.min(runtime, seconds))),
-    [runtime],
+    (seconds: number) => {
+      const next = Math.max(0, Math.min(runtime, seconds));
+      setElapsed(next);
+      // A seek is the only way the clock moves discontinuously, so it is the
+      // only place the audio needs dragging back into line by hand. Scrubbing
+      // across a scene boundary is handled by the effect above instead.
+      const audio = audioRef.current;
+      if (audio && listening) {
+        const scene = scenes.reduce((found, s, i) => (s.startsAt <= next + 1e-6 ? i : found), 0);
+        if (scene === index) audio.currentTime = Math.max(0, next - current.startsAt);
+      }
+    },
+    [runtime, listening, scenes, index, current],
   );
 
   const jumpScene = useCallback(
@@ -98,6 +161,15 @@ export function ExplainerPlayer({ explainer }: { explainer: Explainer }) {
     setElapsed((t) => (t >= runtime - 1e-6 ? 0 : t));
     setPlaying((p) => !p);
   }, [runtime]);
+
+  // Pausing the picture has to pause the voice too, including when the clock
+  // stops itself at the end of the last scene.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing && listening) void audio.play().catch(() => undefined);
+    else audio.pause();
+  }, [playing, listening]);
 
   return (
     <div className="rounded-2xl border border-line bg-surface">
@@ -161,7 +233,36 @@ export function ExplainerPlayer({ explainer }: { explainer: Explainer }) {
         <span className="num shrink-0 text-xs tabular-nums text-ink-faint">
           {mmss(elapsed)} / {mmss(runtime)}
         </span>
+
+        {hasNarration && (
+          <button
+            onClick={() => setListening((l) => !l)}
+            aria-pressed={listening}
+            className={`shrink-0 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+              listening
+                ? 'border-accent bg-accent/10 text-accent'
+                : 'border-line text-ink-faint hover:border-line-strong hover:text-ink'
+            }`}
+            title={listening ? 'Turn the narration off' : 'Read the captions aloud'}
+          >
+            <span aria-hidden className="mr-1">
+              {listening ? '🔊' : '🔈'}
+            </span>
+            Narrate
+          </button>
+        )}
       </div>
+
+      {/* The voice. `preload="none"` is load-bearing rather than tidy: without
+          it every explainer page pulls a few hundred kilobytes of speech that
+          most readers never play. */}
+      <audio ref={audioRef} preload="none" />
+
+      {hasNarration && listening && (
+        <p className="px-4 pb-1 text-xs text-ink-faint sm:px-6">
+          Synthetic voice, generated from the captions below — so it can only ever say what they say.
+        </p>
+      )}
 
       {/* Chapters. A list, not a menu — every one is a link into the timeline. */}
       <div className="border-t border-line px-4 py-4 sm:px-6">

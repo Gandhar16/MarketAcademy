@@ -32,6 +32,8 @@
  * explainer needs a chart, it needs real bars fetched from the real API, the
  * way `ta-tools.tsx` does it.
  */
+import narration from './narration.json';
+import { ANALOGIES } from './analogies';
 import { computeCost, roundTripCost } from '@/lib/engine/costs';
 import type { CostLine } from '@/lib/engine/costs';
 import { blackScholesPrice, daysToYears, intrinsicValue } from '@/lib/engine/options';
@@ -69,7 +71,35 @@ export interface LadderScene {
   taking?: number;
 }
 
-export type Scene = ChainScene | BarsScene | LadderScene;
+/** The line drawings a compare scene may use. Fixed set, drawn in `Scenes.tsx`. */
+export type Glyph = 'house' | 'taxi' | 'clock' | 'receipt' | 'exchange' | 'queue' | 'vault' | 'token';
+
+/**
+ * An everyday situation beside the market one it explains.
+ *
+ * This is the scene kind that only exists in the video, and it is why the video
+ * is longer than the page. On the site an analogy is a paragraph you can choose
+ * to read on a term page; in a video there is nobody to click, so the comparison
+ * has to be shown.
+ *
+ * `breaks` is not optional and never should be. An analogy that is only ever
+ * shown working teaches the analogy rather than the thing — the learner walks
+ * away confident about taxis. Naming the point where the comparison stops being
+ * true is what turns it back into a teaching aid, and it is usually the single
+ * most useful sentence in the scene.
+ */
+export interface CompareScene {
+  kind: 'compare';
+  glyph: Glyph;
+  /** The everyday comparison. Comes from `analogies.ts`, never retyped. */
+  everyday: string;
+  /** What it maps to, with the real engine-computed figure where there is one. */
+  market: string;
+  /** Where the comparison stops being true. */
+  breaks: string;
+}
+
+export type Scene = ChainScene | BarsScene | LadderScene | CompareScene;
 
 export interface ExplainerScene {
   /**
@@ -91,6 +121,20 @@ export interface ExplainerScene {
    */
   caption: string;
   scene: Scene;
+  /**
+   * Which cut this scene belongs to. Absent means both.
+   *
+   * The video and the page are not the same lesson and should not pretend to
+   * be. A reader on the page has the analogy a click away on the term page, the
+   * transcript below, and the ability to stop and think; a viewer has none of
+   * those and needs the comparison drawn, the example spelled out, and the
+   * caveat said aloud. So the video gets extra scenes.
+   *
+   * One authored list, two cuts of it — rather than two lists that drift.
+   * `timeline()` and `runtimeOf()` both take the medium and filter here, and a
+   * test asserts the page cut stays the shorter one.
+   */
+  only?: 'video';
 }
 
 export interface Chapter {
@@ -163,6 +207,7 @@ const PAYEE_LABEL: Record<CostLine['payee'], string> = {
 const TRIP_LINES = roundTripLines();
 const TRIP_TOTAL = DEMO_TRIP.total;
 const STT_TOTAL = TRIP_LINES.find((l) => l.key.toLowerCase().includes('stt'))?.amount ?? 0;
+const BROKERAGE_TOTAL = TRIP_LINES.find((l) => l.key === 'brokerage')?.amount ?? 0;
 
 const rupees = (n: number, dp = 2) =>
   `₹${n.toLocaleString('en-IN', { minimumFractionDigits: dp, maximumFractionDigits: dp })}`;
@@ -286,6 +331,32 @@ const WHERE_YOUR_MONEY_GOES: Explainer = {
           },
         },
         {
+          seconds: 9,
+          only: 'video',
+          caption: `If you have ever bought property, you have already paid this tax under another name. The registration charge is not a fee for a service and it is not a share of your profit — the state takes it because a transfer happened. STT is the same instrument pointed at shares: ${rupees(STT_TOTAL)} on this round trip, taken on the way out, owed just as fully on the day you sell at a loss.`,
+          scene: {
+            kind: 'compare',
+            glyph: 'house',
+            everyday: ANALOGIES.stt,
+            market: `${rupees(STT_TOTAL)} of the ${rupees(TRIP_TOTAL)} on this trade — the single largest line, charged on the sell leg.`,
+            breaks:
+              'A flat changes hands once in a decade. This is charged on every trade you ever place, so somebody trading weekly pays it fifty times a year on the same money.',
+          },
+        },
+        {
+          seconds: 8,
+          only: 'video',
+          caption: `Now look at what is missing from that bill. Brokerage is the estate agent's commission here — the one negotiable line — and on this trade it is ${rupees(BROKERAGE_TOTAL)}. The advert was telling the truth. You paid no brokerage whatsoever, and the trade still cost you ${rupees(TRIP_TOTAL)}, because the only charge they were ever able to waive was the smallest thing on the list.`,
+          scene: {
+            kind: 'compare',
+            glyph: 'receipt',
+            everyday: ANALOGIES.brokerage,
+            market: `Brokerage on this delivery trade: ${rupees(BROKERAGE_TOTAL)}. Total cost: ${rupees(TRIP_TOTAL)}. Every rupee of it went to somebody who was never going to negotiate.`,
+            breaks:
+              'An agent who charges nothing has no reason to sell your flat. A broker charging nothing is still paid — usually for where they send your order, which appears on no bill you will ever be shown.',
+          },
+        },
+        {
           seconds: 7,
           caption:
             'Only brokerage is yours to shop around for. STT, stamp duty, the exchange charge, the regulator fee and the depository charge are the same whichever broker you use — which is why "zero brokerage" is an advert, not a free trade.',
@@ -318,6 +389,19 @@ const WHERE_YOUR_MONEY_GOES: Explainer = {
               { label: 'Move you need just to be square', value: DEMO_TRIP.breakevenMove, tone: 'cost', note: 'per share' },
               { label: '1% move, for comparison', value: DEMO_PRICE * 0.01, tone: 'neutral', note: 'per share' },
             ],
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption: `Think of a taxi that charges fifty rupees the moment you sit down. A two-minute ride is terrible value; an hour-long one barely notices it. Traders assume costs work that way and that trading bigger dilutes them. Here they do not: almost every line on this bill is a percentage, so the starting line stays ${DEMO_TRIP.breakevenPercent.toFixed(2)}% away whether you trade a lakh or a crore.`,
+          scene: {
+            kind: 'compare',
+            glyph: 'taxi',
+            everyday: ANALOGIES.breakeven,
+            market: `${rupees(DEMO_TRIP.breakevenMove)} per share, or ${DEMO_TRIP.breakevenPercent.toFixed(2)}%, before the trade has made you anything.`,
+            breaks:
+              'The taxi fee is flat, so a longer ride dilutes it. These are mostly percentages, so a bigger trade does not — the only thing that genuinely dilutes them is trading less often.',
           },
         },
         {
@@ -418,6 +502,21 @@ const WHAT_HAPPENS_WHEN_YOU_PRESS_BUY: Explainer = {
           },
         },
         {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'The clearest version of the spread is the currency counter at an airport. It buys dollars at one figure and sells them at a higher one, and the gap is the whole business. Walk up, change rupees to dollars and immediately change them back, and you get less money than you started with — nobody cheated you and nobody handed you a bill. Every share you buy works exactly like that.',
+          scene: {
+            kind: 'compare',
+            glyph: 'exchange',
+            everyday: ANALOGIES.spread,
+            market:
+              'Best buyer ₹999.80, best seller ₹1,000.00. Buy and instantly sell 100 shares and you are ₹20 down before the market has moved at all.',
+            breaks:
+              'The airport counter posts its two figures and keeps them. A share spread widens the moment things get uncertain, so it is worst precisely when you most want out.',
+          },
+        },
+        {
           seconds: 8,
           caption: 'Ask for 500 at whatever it costs and you do not get 500 at ₹1,000. You get the 180 sitting there, then the next 320 higher up. Your average is worse than the price you saw, and the bigger your order the worse it gets.',
           scene: {
@@ -440,6 +539,21 @@ const WHAT_HAPPENS_WHEN_YOU_PRESS_BUY: Explainer = {
     {
       title: 'After the fill',
       scenes: [
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'This is the part almost nobody thinks about, and it is the reason the whole thing works. When you buy a flat, you do not hand a stranger a suitcase of cash and hope the papers turn up — the money and the deeds both go to a neutral third party that releases each only once the other has arrived. The market has exactly that, for every trade, automatically.',
+          scene: {
+            kind: 'compare',
+            glyph: 'vault',
+            everyday: ANALOGIES['clearing-corporation'],
+            market:
+              'The clearing corporation stands between you and the seller. Neither of you ever finds out who the other was, and neither of you has to care.',
+            breaks:
+              'In a property sale you choose the escrow agent and pay for it. Here it is compulsory, invisible, and already priced into the charges you just saw.',
+          },
+        },
         {
           seconds: 7,
           caption: 'Filled is not finished. Neither side hands anything to the other directly — money and shares both go to a clearing corporation in the middle, which is what stops your trade depending on a stranger keeping their word.',
@@ -496,6 +610,19 @@ const WHY_YOUR_OPTION_EXPIRED_WORTHLESS: Explainer = {
           },
         },
         {
+          seconds: 9,
+          only: 'video',
+          caption: `Before the arithmetic, the thing itself. You have seen a builder take a token to hold a flat for a month at a fixed figure. If prices jump you buy at the old figure and you have done very well. If you change your mind you lose the token and nothing more. What you bought was not the flat — it was a month of being allowed to decide, and ${rupees(OPT_PAID)} is what that month cost.`,
+          scene: {
+            kind: 'compare',
+            glyph: 'token',
+            everyday: ANALOGIES.option,
+            market: `${rupees(OPT_PAID)} buys the right — not the obligation — to pay ${rupees(OPT.strike, 0)} for a share currently worth ${rupees(OPT.spot, 0)}, any time in the next four weeks.`,
+            breaks:
+              'The builder holds your flat off the market for that month. Nobody is holding a share for you — you can be right about the direction and still be handed nothing, which is what the rest of this explains.',
+          },
+        },
+        {
           seconds: 8,
           caption: `Split apart: ${rupees(OPT_INTRINSIC)} of it is plain arithmetic — the ${rupees(OPT.spot, 0)} share against the ${rupees(OPT.strike, 0)} you agreed to pay. The other ${rupees(OPT_TIME_VALUE)} is not arithmetic at all.`,
           scene: {
@@ -526,6 +653,19 @@ const WHY_YOUR_OPTION_EXPIRED_WORTHLESS: Explainer = {
     {
       title: 'The clock',
       scenes: [
+        {
+          seconds: 9,
+          only: 'video',
+          caption: `The half that melts is the one worth understanding, and there is an everyday object that behaves identically: a carton of milk. Two weeks out nobody hesitates. On the last day it is discounted hard. One day past the date it is not worth slightly less, it is worth nothing, and no shop gives you a grace period. Your ${rupees(OPT_TIME_VALUE)} of time value is on exactly that schedule.`,
+          scene: {
+            kind: 'compare',
+            glyph: 'clock',
+            everyday: ANALOGIES['time-value'],
+            market: `${rupees(OPT_TIME_VALUE)} of the ${rupees(OPT_PAID)} you paid is time value. Held four weeks with the share completely still, all of it goes.`,
+            breaks:
+              'Milk spoils at a steady rate. Time value does not — it barely moves in the first week and falls off a cliff in the last, which is why the calendar hurts far more at the end than the beginning.',
+          },
+        },
         {
           seconds: 10,
           caption: `Here is the melting half alone, week by week, with the share price deliberately held completely still at ${rupees(OPT.spot, 0)}. It does not fall in a straight line — it goes slowly, then all at once, and the last week takes more than the first two put together.`,
@@ -598,17 +738,76 @@ export function explainersForTerm(termId: string): Explainer[] {
  */
 export const READING_CHARS_PER_SECOND = 15;
 
-/** How long a scene actually holds: long enough to look, and long enough to read. */
+/**
+ * The narration manifest, keyed on the caption text itself.
+ *
+ * Keying on the words rather than on a scene id is what makes stale audio
+ * impossible instead of merely unlikely. Reword a caption and the key stops
+ * matching: the lookup misses, the scene falls back to reading-speed timing
+ * with no voice, and `narration.test.ts` fails naming the line that now has the
+ * wrong recording behind it. An id-keyed manifest would cheerfully have gone on
+ * playing the old sentence over the new text.
+ *
+ * An empty manifest is a valid state, not a broken one — a fresh clone with no
+ * `pnpm narrate` run behaves exactly as this file did before narration existed.
+ */
+const NARRATION = narration as {
+  voice: string;
+  tailSeconds: number;
+  lines: Record<string, { file: string; seconds: number }>;
+};
+
+export interface Narration {
+  /** File under `public/narration/`. */
+  file: string;
+  /** Measured from the encoded mp3, which is what actually plays. */
+  seconds: number;
+}
+
+/** The recorded line for a caption, or null if there is not a current one. */
+export function narrationFor(caption: string): Narration | null {
+  return NARRATION.lines[caption] ?? null;
+}
+
+/** Silence allowed after the last spoken word before the scene may change. */
+export const NARRATION_TAIL_SECONDS = NARRATION.tailSeconds;
+
+/**
+ * How long a scene actually holds: long enough to look, to read, and to hear.
+ *
+ * Three floors, whichever is highest. The spoken length is the one that
+ * usually wins, because a voice at a natural pace is slower than a comfortable
+ * silent read — which is worth knowing before wondering why adding narration
+ * made every explainer longer.
+ */
 export function sceneSeconds(scene: ExplainerScene): number {
-  return Math.max(scene.seconds, scene.caption.length / READING_CHARS_PER_SECOND);
+  const spoken = narrationFor(scene.caption);
+  return Math.max(
+    scene.seconds,
+    scene.caption.length / READING_CHARS_PER_SECOND,
+    spoken ? spoken.seconds + NARRATION_TAIL_SECONDS : 0,
+  );
+}
+
+/**
+ * Which cut of an explainer is being asked for.
+ *
+ * `page` is the default everywhere, so nothing that does not care about video
+ * has to think about this.
+ */
+export type Medium = 'page' | 'video';
+
+function scenesFor(explainer: Explainer, medium: Medium): { chapter: Chapter; scene: ExplainerScene }[] {
+  return explainer.chapters.flatMap((chapter) =>
+    chapter.scenes
+      .filter((scene) => medium === 'video' || scene.only !== 'video')
+      .map((scene) => ({ chapter, scene })),
+  );
 }
 
 /** Total running time, in seconds. Derived, never typed. */
-export function runtimeOf(explainer: Explainer): number {
-  return explainer.chapters.reduce(
-    (total, ch) => total + ch.scenes.reduce((t, s) => t + sceneSeconds(s), 0),
-    0,
-  );
+export function runtimeOf(explainer: Explainer, medium: Medium = 'page'): number {
+  return scenesFor(explainer, medium).reduce((total, { scene }) => total + sceneSeconds(scene), 0);
 }
 
 /**
@@ -627,24 +826,25 @@ export interface TimelineEntry {
   chapter: string;
   chapterIndex: number;
   startsAt: number;
+  /** The spoken line, or null where none has been generated yet. */
+  narration: Narration | null;
 }
 
-export function timeline(explainer: Explainer): TimelineEntry[] {
+export function timeline(explainer: Explainer, medium: Medium = 'page'): TimelineEntry[] {
   const out: TimelineEntry[] = [];
   let t = 0;
-  explainer.chapters.forEach((chapter, chapterIndex) => {
-    for (const item of chapter.scenes) {
-      const seconds = sceneSeconds(item);
-      out.push({
-        caption: item.caption,
-        scene: item.scene,
-        seconds,
-        chapter: chapter.title,
-        chapterIndex,
-        startsAt: t,
-      });
-      t += seconds;
-    }
-  });
+  for (const { chapter, scene } of scenesFor(explainer, medium)) {
+    const seconds = sceneSeconds(scene);
+    out.push({
+      caption: scene.caption,
+      scene: scene.scene,
+      seconds,
+      chapter: chapter.title,
+      chapterIndex: explainer.chapters.indexOf(chapter),
+      startsAt: t,
+      narration: narrationFor(scene.caption),
+    });
+    t += seconds;
+  }
   return out;
 }

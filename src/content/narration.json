@@ -1,0 +1,118 @@
+{
+  "voice": "af_heart",
+  "tailSeconds": 0.7,
+  "lines": {
+    "You buy 100 shares at ₹1,000 each. That is ₹1,00,000 of your money, and nothing has gone wrong yet.": {
+      "file": "where-your-money-goes-01.mp3",
+      "seconds": 7.467
+    },
+    "Weeks later you sell the same 100 shares at exactly the same price. You are square. On paper you neither made nor lost anything.": {
+      "file": "where-your-money-goes-02.mp3",
+      "seconds": 8.043
+    },
+    "You are down ₹237.82. Not because you were wrong about anything — because a trade is not free, and you paid for two of them.": {
+      "file": "where-your-money-goes-03.mp3",
+      "seconds": 9.152
+    },
+    "Here is the whole bill, biggest first. Five separate parties took a slice, and only the first one is negotiable.": {
+      "file": "where-your-money-goes-04.mp3",
+      "seconds": 6.891
+    },
+    "The largest single line is STT — ₹200.00 of the ₹237.82. It is a tax on the transaction happening, not on you doing well. You pay it in full on a trade you lost money on.": {
+      "file": "where-your-money-goes-05.mp3",
+      "seconds": 14.123
+    },
+    "If you have ever bought property, you have already paid this tax under another name. The registration charge is not a fee for a service and it is not a share of your profit — the state takes it because a transfer happened. STT is the same instrument pointed at shares: ₹200.00 on this round trip, taken on the way out, owed just as fully on the day you sell at a loss.": {
+      "file": "where-your-money-goes-06.mp3",
+      "seconds": 21.76
+    },
+    "Now look at what is missing from that bill. Brokerage is the estate agent's commission here — the one negotiable line — and on this trade it is ₹0.00. The advert was telling the truth. You paid no brokerage whatsoever, and the trade still cost you ₹237.82, because the only charge they were ever able to waive was the smallest thing on the list.": {
+      "file": "where-your-money-goes-07.mp3",
+      "seconds": 22.485
+    },
+    "Only brokerage is yours to shop around for. STT, stamp duty, the exchange charge, the regulator fee and the depository charge are the same whichever broker you use — which is why \"zero brokerage\" is an advert, not a free trade.": {
+      "file": "where-your-money-goes-08.mp3",
+      "seconds": 15.424
+    },
+    "So the price has to rise ₹2.38 per share — 0.24% — before you have made your first rupee. That is the real starting line, and no app draws it on your screen.": {
+      "file": "where-your-money-goes-09.mp3",
+      "seconds": 12.032
+    },
+    "Think of a taxi that charges fifty rupees the moment you sit down. A two-minute ride is terrible value; an hour-long one barely notices it. Traders assume costs work that way and that trading bigger dilutes them. Here they do not: almost every line on this bill is a percentage, so the starting line stays 0.24% away whether you trade a lakh or a crore.": {
+      "file": "where-your-money-goes-10.mp3",
+      "seconds": 22.528
+    },
+    "And it changes with how you trade, not just how much. The same ₹1,00,000 sold the same day is charged ₹52.34 on the sell leg instead — different product, different tax treatment, same shares.": {
+      "file": "where-your-money-goes-11.mp3",
+      "seconds": 13.696
+    },
+    "You tap buy. What leaves your phone is an instruction, not a purchase — and an instruction can be refused, delayed, or filled at a price you did not expect.": {
+      "file": "what-happens-when-you-press-buy-01.mp3",
+      "seconds": 9.493
+    },
+    "Your broker checks it first — enough money, allowed quantity, a price the exchange will accept. Plenty of orders die right here, and the reason you get back is usually one line long.": {
+      "file": "what-happens-when-you-press-buy-02.mp3",
+      "seconds": 10.944
+    },
+    "At the exchange your order joins two facing queues. Everyone wanting to buy on one side, everyone wanting to sell on the other, each holding up a price and a quantity.": {
+      "file": "what-happens-when-you-press-buy-03.mp3",
+      "seconds": 10.091
+    },
+    "The gap between the best buyer and the best seller is the spread. It is a real cost that appears on no bill: buy and instantly sell, and you are down that gap before anything has moved.": {
+      "file": "what-happens-when-you-press-buy-04.mp3",
+      "seconds": 10.923
+    },
+    "The clearest version of the spread is the currency counter at an airport. It buys dollars at one figure and sells them at a higher one, and the gap is the whole business. Walk up, change rupees to dollars and immediately change them back, and you get less money than you started with — nobody cheated you and nobody handed you a bill. Every share you buy works exactly like that.": {
+      "file": "what-happens-when-you-press-buy-05.mp3",
+      "seconds": 21.653
+    },
+    "Ask for 500 at whatever it costs and you do not get 500 at ₹1,000. You get the 180 sitting there, then the next 320 higher up. Your average is worse than the price you saw, and the bigger your order the worse it gets.": {
+      "file": "what-happens-when-you-press-buy-06.mp3",
+      "seconds": 15.467
+    },
+    "This is the part almost nobody thinks about, and it is the reason the whole thing works. When you buy a flat, you do not hand a stranger a suitcase of cash and hope the papers turn up — the money and the deeds both go to a neutral third party that releases each only once the other has arrived. The market has exactly that, for every trade, automatically.": {
+      "file": "what-happens-when-you-press-buy-07.mp3",
+      "seconds": 21.333
+    },
+    "Filled is not finished. Neither side hands anything to the other directly — money and shares both go to a clearing corporation in the middle, which is what stops your trade depending on a stranger keeping their word.": {
+      "file": "what-happens-when-you-press-buy-08.mp3",
+      "seconds": 12.565
+    },
+    "The shares land in your account the next working day. They are yours from the moment you were filled — but until the paperwork lands, some things you might want to do with them are not available yet.": {
+      "file": "what-happens-when-you-press-buy-09.mp3",
+      "seconds": 10.688
+    },
+    "You pay ₹35.52 for the right to buy at ₹990 when the share is ₹1,000, four weeks out. That one figure is really two things stuck together, and only one of them survives to the end.": {
+      "file": "why-your-option-expired-worthless-01.mp3",
+      "seconds": 14.208
+    },
+    "Before the arithmetic, the thing itself. You have seen a builder take a token to hold a flat for a month at a fixed figure. If prices jump you buy at the old figure and you have done very well. If you change your mind you lose the token and nothing more. What you bought was not the flat — it was a month of being allowed to decide, and ₹35.52 is what that month cost.": {
+      "file": "why-your-option-expired-worthless-02.mp3",
+      "seconds": 22.357
+    },
+    "Split apart: ₹10.00 of it is plain arithmetic — the ₹1,000 share against the ₹990 you agreed to pay. The other ₹25.52 is not arithmetic at all.": {
+      "file": "why-your-option-expired-worthless-03.mp3",
+      "seconds": 13.525
+    },
+    "That second ₹25.52 is what everyone else will pay you for the fact that anything could still happen before the clock runs out. Nothing has to go wrong for it to shrink. The clock alone does it.": {
+      "file": "why-your-option-expired-worthless-04.mp3",
+      "seconds": 12.459
+    },
+    "The half that melts is the one worth understanding, and there is an everyday object that behaves identically: a carton of milk. Two weeks out nobody hesitates. On the last day it is discounted hard. One day past the date it is not worth slightly less, it is worth nothing, and no shop gives you a grace period. Your ₹25.52 of time value is on exactly that schedule.": {
+      "file": "why-your-option-expired-worthless-05.mp3",
+      "seconds": 23.552
+    },
+    "Here is the melting half alone, week by week, with the share price deliberately held completely still at ₹1,000. It does not fall in a straight line — it goes slowly, then all at once, and the last week takes more than the first two put together.": {
+      "file": "why-your-option-expired-worthless-06.mp3",
+      "seconds": 15.275
+    },
+    "So being right is not enough — you have to be right by more than ₹35.52 before the clock runs out. A share that ends at ₹1,005 rose, exactly as you said, and still hands you ₹15.00 against the ₹35.52 you paid.": {
+      "file": "why-your-option-expired-worthless-07.mp3",
+      "seconds": 17.515
+    },
+    "Every figure in this explainer is a model price, not a quote — the same Black-Scholes maths the greeks widget uses, with volatility and rates held fixed. Real premiums move for reasons this deliberately leaves out. The shape of the melt is the part that is true.": {
+      "file": "why-your-option-expired-worthless-08.mp3",
+      "seconds": 16.107
+    }
+  }
+}

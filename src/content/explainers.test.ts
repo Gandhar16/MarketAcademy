@@ -8,6 +8,7 @@ import {
   timeline,
 } from './explainers';
 import { GLOSSARY_BY_ID } from './glossary';
+import { ANALOGIES } from './analogies';
 
 describe('explainers', () => {
   it('has unique, url-safe ids', () => {
@@ -74,8 +75,61 @@ describe('explainers', () => {
 
   it('stays short enough that somebody watches it to the end', () => {
     for (const e of EXPLAINERS) {
-      expect(runtimeOf(e), `${e.id} runs ${runtimeOf(e)}s`).toBeLessThanOrEqual(240);
-      expect(runtimeOf(e), `${e.id} is barely anything`).toBeGreaterThan(20);
+      for (const medium of ['page', 'video'] as const) {
+        const runtime = runtimeOf(e, medium);
+        expect(runtime, `${e.id} ${medium} runs ${Math.round(runtime)}s`).toBeLessThanOrEqual(240);
+        expect(runtime, `${e.id} ${medium} is barely anything`).toBeGreaterThan(20);
+      }
+    }
+  });
+
+  it('gives the video more than the page, never less', () => {
+    // The two cuts exist because a viewer cannot click through to a term page
+    // or stop to think. If the video ever became the shorter one, the extra
+    // scenes would have stopped being extra.
+    for (const e of EXPLAINERS) {
+      expect(runtimeOf(e, 'video'), e.id).toBeGreaterThan(runtimeOf(e, 'page'));
+      expect(timeline(e, 'video').length, e.id).toBeGreaterThan(timeline(e, 'page').length);
+    }
+  });
+
+  it('keeps the analogy scenes out of the page cut', () => {
+    // `compare` is the video-only kind. One leaking onto the page would put a
+    // 250-word analogy inside a card sized for a diagram.
+    for (const e of EXPLAINERS) {
+      for (const entry of timeline(e, 'page')) {
+        expect(entry.scene.kind, `${e.id} shows a compare scene on the page`).not.toBe('compare');
+      }
+    }
+  });
+
+  it('never shows an analogy without saying where it breaks', () => {
+    // The rule that keeps a comparison a teaching aid rather than a new thing
+    // to be wrong about. Enforced rather than trusted, because `breaks` is the
+    // field an author in a hurry would leave for later.
+    for (const e of EXPLAINERS) {
+      for (const chapter of e.chapters) {
+        for (const s of chapter.scenes) {
+          if (s.scene.kind !== 'compare') continue;
+          expect(s.scene.breaks.length, `${e.id} / ${chapter.title}`).toBeGreaterThan(40);
+          expect(s.scene.everyday.length, `${e.id} / ${chapter.title}`).toBeGreaterThan(40);
+        }
+      }
+    }
+  });
+
+  it('takes its real-life examples from the analogies the site already teaches', () => {
+    // Not retyped. If a compare scene's everyday half drifted from the glossary
+    // analogy, a learner would meet two different versions of the same
+    // comparison — and only one of them would be under the no-jargon test.
+    const known = new Set(Object.values(ANALOGIES));
+    for (const e of EXPLAINERS) {
+      for (const chapter of e.chapters) {
+        for (const s of chapter.scenes) {
+          if (s.scene.kind !== 'compare') continue;
+          expect(known.has(s.scene.everyday), `${e.id} / ${chapter.title} invents its own analogy`).toBe(true);
+        }
+      }
     }
   });
 
@@ -95,7 +149,7 @@ describe('explainers', () => {
     // PLAN.md §7.1. There is no scene kind that could do this today, and this
     // test is what makes adding one a deliberate, visible decision rather than
     // an afternoon's convenience.
-    const allowed = new Set(['chain', 'bars', 'ladder']);
+    const allowed = new Set(['chain', 'bars', 'ladder', 'compare']);
     for (const e of EXPLAINERS) {
       for (const chapter of e.chapters) {
         for (const s of chapter.scenes) {
@@ -115,17 +169,27 @@ describe('explainers', () => {
     expect(captions).toMatch(/₹[\d,]+\.\d{2}/);
 
     // And the bill it draws has to be the real one: five distinct charges, not
-    // a rounded-off "assume 0.1%".
-    const bill = costs.chapters[1].scenes[0].scene;
-    expect(bill.kind).toBe('bars');
-    if (bill.kind === 'bars') expect(bill.bars.length).toBeGreaterThanOrEqual(5);
+    // a rounded-off "assume 0.1%". Found by shape rather than by index —
+    // inserting a scene should not be able to break an assertion about content.
+    const bill = costs.chapters
+      .flatMap((c) => c.scenes)
+      .map((s) => s.scene)
+      .find((scene) => scene.kind === 'bars' && scene.bars.length >= 5);
+    expect(bill, 'no scene draws the full itemised bill').toBeDefined();
   });
 
   it('lets the option explainer show a real melt to zero', () => {
     const opt = EXPLAINER_BY_ID.get('why-your-option-expired-worthless')!;
-    const decay = opt.chapters[1].scenes[0].scene;
-    expect(decay.kind).toBe('bars');
-    if (decay.kind !== 'bars') return;
+
+    // Identified by what it is — the week-by-week melt — rather than by where
+    // it sits, so adding a scene ahead of it cannot silently retarget this at
+    // a different chart.
+    const decay = opt.chapters
+      .flatMap((c) => c.scenes)
+      .map((s) => s.scene)
+      .find((scene) => scene.kind === 'bars' && scene.bars.some((b) => b.label.includes('Expiry')));
+    expect(decay, 'no scene shows the week-by-week melt').toBeDefined();
+    if (!decay || decay.kind !== 'bars') return;
 
     // Time value must fall monotonically and land on exactly zero at expiry.
     // Anything else means the pricer was called wrongly.

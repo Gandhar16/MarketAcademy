@@ -1941,13 +1941,92 @@ Market Academy is four people, not the day it earns money.
 
 **Still open, deliberately:**
 
-- [ ] No narration track. The captions are the script and would drive a local
-      TTS pass (Piper or Kokoro both run on this CPU), but a synthetic voice
-      reading statutory rates is a bigger honesty question than it looks.
 - [ ] Not wired into any CI. Rendering is a manual `pnpm video` after a rate
       change, by design — an 8-minute job has no business in a deploy.
 - [ ] Nothing published anywhere yet. The files exist; distribution is a
       separate decision.
+
+---
+
+#### 3fh. Narration, and the video as its own lesson — `[x]` COMPLETE
+
+Two changes that belong together, because the second is only worth doing once
+the first exists.
+
+**Narration.** Every caption is spoken by Kokoro-82M (Apache 2.0) through
+kokoro-onnx (MIT), locally, on CPU, with no network call at synthesis time.
+310s of speech in 280s — **1.11× realtime** on the i7-7700HQ. The GPU is not
+involved. Piper was the alternative and lost on quality: several times faster,
+audibly flatter, and flatness across three minutes of teaching audio is the
+same defect as a caption that jumps around.
+
+**The honesty objection dissolved rather than being overruled.** §3fg listed "a
+synthetic voice reading statutory rates" as the reason not to do this. It does
+not survive inspection: the audio is generated from the caption, which is
+generated from the engine, so the voice *cannot* say a figure the written text
+does not contain — and `speech.test.ts` asserts it, checking every digit
+survives into the spoken form. Staleness is handled the same way as everything
+else here: `narration.json` is keyed on **the caption text itself**, so
+rewording a caption misses the key, drops to silent reading-speed timing, and
+fails a test naming the line. An id-keyed manifest would have gone on playing
+the old sentence over the new text.
+
+Speaking financial writing needed its own module. Untouched, a TTS reads the
+cost explainer as "roopee one comma zero zero comma zero zero zero" and
+pronounces STT as a word. `src/content/speech.ts` says ₹1,00,000 as "one lakh
+rupees" — lakh and crore, because the audience for a lesson about STT counts in
+lakhs — spells out STT and GST, leaves SEBI alone because everyone says it as a
+word, and keeps ₹6.14 exact rather than rounding it, since the whole point of
+that scene is that the small lines are real.
+
+**The video became a different lesson from the page.** Not a mirror of it. A
+reader can click through to a term page, read the transcript, stop and think; a
+viewer can do none of that, so the comparison has to be drawn and the caveat
+said aloud. Scenes marked `only: 'video'` are skipped by the page —
+**one authored list, two cuts of it**, with `timeline()` and `runtimeOf()`
+taking a medium that defaults to `page`. That is ~70 extra seconds per
+explainer, and a test asserts the video is never the shorter cut.
+
+The extra scenes are a new kind, `compare`, in three parts: the everyday
+analogy, the market fact with its engine figure, and **where the comparison
+breaks**. That third panel is required and enforced. An analogy only ever shown
+working teaches the analogy — the learner leaves confident about taxis — and
+naming where it stops being true is what turns it back into a teaching aid.
+
+The everyday halves are **imported from `analogies.ts`, never retyped**, with a
+test asserting byte-identity, so a learner cannot meet two versions of the same
+comparison and only one of them be under the no-jargon rule. Illustrations are
+eight line drawings defined as SVG paths in `currentColor` — deliberately
+crude, because a photograph of a house would be somebody's actual house and
+would invite study rather than get out of the way.
+
+**Three things the work turned up:**
+
+- **Brokerage on the demo trade is ₹0.00.** A caption I wrote asserting
+  otherwise failed, and the true version is the better scene: the "zero
+  brokerage" advert is honest, and the trade still cost ₹237.82, because the
+  only line anyone could waive was the smallest thing on the bill.
+- **Two tests were pinned to scene indices** (`chapters[1].scenes[0]`) and broke
+  the moment a scene was inserted ahead of them. Both now find their target by
+  what it is — the bill with five charges, the melt with an expiry bar — which
+  is what they were always actually asserting.
+- **A ref written during render** in the player's audio sync. Caught by lint,
+  and correctly: it is wrong under concurrent rendering, not merely untidy.
+
+On the site narration is **off by default** behind a Narrate toggle with
+`preload="none"` — a page that starts speaking is the behaviour everyone has
+learned to resent, and nobody reading in an office wants a few hundred
+kilobytes of speech spent for them.
+
+**Still open:**
+
+- [ ] No Indian English voice exists in Kokoro v1.0. `af_heart` is the
+      highest-graded voice and it is American; the alternative was a
+      lower-graded British one. Clarity won, and it is a compromise rather than
+      a choice. Revisit when the model ships something better.
+- [ ] The compare scenes cover cost, spread, clearing, options and time decay.
+      Circuit limits and position sizing have good analogies already written and
+      no explainer to put them in.
 
 ---
 

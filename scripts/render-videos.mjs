@@ -16,16 +16,15 @@
  *     free on D:, so the default is a render that dies most of the way through
  *     with a disk-full error that reads like a Remotion bug.
  *
- *  3. **`--muted`.** These explainers have no audio, and without this Remotion
- *     still builds and muxes a silent AAC track. It is pointless bytes, and it
- *     is also the step that fails outright if you point the renderer at an
- *     ffmpeg build without an AAC encoder.
+ *  3. **Narration has to exist first.** The mp3s under `public/narration/` are
+ *     what the compositions mix in, and a missing one is a silent scene that
+ *     nothing complains about. Checked here rather than discovered on playback.
  *
  * On the GPU: see `docs/video.md`. Short version — it works, it is ~11% faster,
  * and it makes the file 2.3× bigger. It is not the default.
  */
 import { spawnSync } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import process from 'node:process';
@@ -97,13 +96,37 @@ process.env.TEMP = scratch;
 process.env.TMP = scratch;
 process.env.TMPDIR = scratch;
 
+// ── narration has to be there first ─────────────────────────────────────────
+// A missing mp3 is a silent scene, and silence is the one defect nothing in
+// the render pipeline will complain about. Checked against the manifest that
+// the compositions themselves read, so this cannot disagree with them.
+const manifest = JSON.parse(readFileSync(path.join(ROOT, 'src', 'content', 'narration.json'), 'utf8'));
+const missing = Object.values(manifest.lines)
+  .map((line) => line.file)
+  .filter((file) => !existsSync(path.join(ROOT, 'public', 'narration', file)));
+
+if (missing.length > 0) {
+  console.error(`${missing.length} narration file(s) missing, e.g. ${missing[0]}`);
+  console.error('Run `pnpm narrate` first — see docs/video.md.');
+  process.exit(1);
+}
+
 // ── what to render ──────────────────────────────────────────────────────────
 const only = flag('only', null);
 const scale = flag('scale', String(DEFAULT_SCALE));
 const concurrency = flag('concurrency', null);
 
 console.log('Asking the bundle which explainers exist…');
-const ids = run(['compositions', ENTRY, '--quiet'], { capture: true }).trim().split(/\s+/).filter(Boolean);
+
+// `--quiet` is quiet about compositions, not about everything: progress glyphs
+// and cleanup notices still reach stdout, and one of them once became a
+// composition id called "🧹". Filtering to the id shape that
+// `explainers.test.ts` already enforces is a real constraint rather than a
+// guess about which characters to strip.
+const ids = run(['compositions', ENTRY, '--quiet'], { capture: true })
+  .trim()
+  .split(/\s+/)
+  .filter((token) => /^[a-z0-9-]+$/.test(token));
 
 const targets = only ? ids.filter((id) => id === only) : ids;
 if (targets.length === 0) {
@@ -122,7 +145,6 @@ for (const [i, id] of targets.entries()) {
     id,
     path.join(OUT_DIR, `${id}.mp4`),
     `--scale=${scale}`,
-    '--muted',
     ...(concurrency ? [`--concurrency=${concurrency}`] : []),
   ]);
 }

@@ -30,7 +30,7 @@
  * It also fixed a real bug for free: scrubbing backwards used to need the scene
  * to remount so it would replay. Now scrubbing to t = 3.7s simply draws t=3.7s.
  */
-import type { BarsScene, ChainScene, LadderScene, Scene, Tone } from '@/content/explainers';
+import type { BarsScene, ChainScene, CompareScene, Glyph, LadderScene, Scene, Tone } from '@/content/explainers';
 
 const TONE_CLASS: Record<Tone, string> = {
   neutral: 'bg-ink-faint/50',
@@ -81,7 +81,139 @@ export function SceneView({ scene, elapsed, reduced = false }: SceneProps) {
       return <BarsView scene={scene} elapsed={t} />;
     case 'ladder':
       return <LadderView scene={scene} elapsed={t} />;
+    case 'compare':
+      return <CompareView scene={scene} elapsed={t} />;
   }
+}
+
+// ── compare ─────────────────────────────────────────────────────────────────
+
+/**
+ * Line drawings for the everyday half of a comparison.
+ *
+ * Drawn rather than photographed, and drawn in code rather than shipped as
+ * files, for the reason every other picture on this site is: they inherit the
+ * theme, they are sharp at any size, and they weigh nothing. They are also
+ * deliberately crude. A photograph of a house would be somebody's actual house
+ * and would invite the viewer to study it; a five-line sketch says "property"
+ * and gets out of the way of the sentence next to it, which is the part doing
+ * the teaching.
+ *
+ * `currentColor` throughout, so a glyph is whatever colour its panel is.
+ */
+const GLYPHS: Record<Glyph, React.ReactNode> = {
+  house: (
+    <>
+      <path d="M4 13 L16 4 L28 13" />
+      <path d="M7 13 V27 H25 V13" />
+      <path d="M14 27 V19 H18 V27" />
+    </>
+  ),
+  taxi: (
+    <>
+      <path d="M3 20 h26" />
+      <path d="M5 20 v-4 l3-5 h16 l3 5 v4" />
+      <path d="M12 11 v-3 h8 v3" />
+      <circle cx="9.5" cy="23" r="2.5" />
+      <circle cx="22.5" cy="23" r="2.5" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="16" cy="16" r="11" />
+      <path d="M16 9 V16 L21 19" />
+    </>
+  ),
+  receipt: (
+    <>
+      <path d="M8 4 h16 v24 l-3-2 -2.5 2 -2.5-2 -2.5 2 -2.5-2 -3 2 Z" />
+      <path d="M12 11 h8 M12 16 h8 M12 21 h5" />
+    </>
+  ),
+  exchange: (
+    <>
+      <path d="M5 11 h18 l-4-4 M5 11 l4 4" />
+      <path d="M27 21 H9 l4 4 M27 21 l-4-4" />
+    </>
+  ),
+  queue: (
+    <>
+      <circle cx="8" cy="9" r="3" />
+      <path d="M3.5 20 v-3 a4.5 4.5 0 0 1 9 0 v3" />
+      <circle cx="24" cy="9" r="3" />
+      <path d="M19.5 20 v-3 a4.5 4.5 0 0 1 9 0 v3" />
+      <path d="M13 26 h6" />
+    </>
+  ),
+  vault: (
+    <>
+      <rect x="4" y="6" width="24" height="20" rx="2" />
+      <circle cx="16" cy="16" r="5.5" />
+      <path d="M16 10.5 V6.5 M16 25.5 V21.5 M10.5 16 H6.5 M25.5 16 H21.5" />
+    </>
+  ),
+  token: (
+    <>
+      <circle cx="16" cy="16" r="10" />
+      <circle cx="16" cy="16" r="6" />
+      <path d="M16 6 V2 M16 30 V26" />
+    </>
+  ),
+};
+
+function CompareView({ scene, elapsed }: { scene: CompareScene; elapsed: number }) {
+  // The everyday side lands first, alone, for most of a second. That ordering
+  // is the entire teaching move: the viewer recognises something they already
+  // understand before being shown the thing they do not.
+  const left = easeOut(at(elapsed, 0, 0.5));
+  const right = easeOut(at(elapsed, 0.8, 0.5));
+  const caveat = at(elapsed, 1.9, 0.5);
+
+  return (
+    <div className="flex h-full flex-col justify-center gap-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div
+          style={{ opacity: left, transform: `translateY(${(1 - left) * 8}px)` }}
+          className="rounded-xl border border-line bg-surface-2 px-4 py-3"
+        >
+          <div className="flex items-center gap-2 text-ink-faint">
+            <svg
+              viewBox="0 0 32 32"
+              className="h-9 w-9 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              {GLYPHS[scene.glyph]}
+            </svg>
+            <span className="text-[10px] uppercase tracking-[0.18em]">Something you already know</span>
+          </div>
+          <p className="mt-2 text-sm leading-snug text-ink">{scene.everyday}</p>
+        </div>
+
+        <div
+          style={{ opacity: right, transform: `translateY(${(1 - right) * 8}px)` }}
+          className="rounded-xl border border-accent/40 bg-accent/5 px-4 py-3"
+        >
+          <p className="text-[10px] uppercase tracking-[0.18em] text-accent">In the market</p>
+          <p className="mt-2 text-sm leading-snug text-ink">{scene.market}</p>
+        </div>
+      </div>
+
+      {/* Where it stops being true. Always shown, never optional — an analogy
+          presented only working teaches the analogy instead of the thing. */}
+      <div
+        style={{ opacity: caveat }}
+        className="rounded-xl border border-line/60 bg-surface px-4 py-2.5"
+      >
+        <span className="text-[10px] uppercase tracking-[0.18em] text-down">Where the comparison breaks</span>
+        <p className="mt-1 text-xs leading-snug text-ink-muted">{scene.breaks}</p>
+      </div>
+    </div>
+  );
 }
 
 // ── chain ───────────────────────────────────────────────────────────────────

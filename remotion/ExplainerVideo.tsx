@@ -25,7 +25,7 @@
  * build that somebody did not re-run rather than a fact somebody has to
  * remember. `docs/video.md` records the re-render trigger.
  */
-import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { EXPLAINER_BY_ID, runtimeOf, timeline, type Explainer, type Scene } from '@/content/explainers';
 import { SceneView } from '@/components/explain/Scenes';
 
@@ -46,7 +46,7 @@ export const VIDEO = { fps: 30, width: 1280, height: 720 } as const;
  * source of truth. Nobody types a duration anywhere in this pipeline.
  */
 export function framesFor(explainer: Explainer): number {
-  return Math.ceil(runtimeOf(explainer) * VIDEO.fps);
+  return Math.ceil(runtimeOf(explainer, 'video') * VIDEO.fps);
 }
 
 /**
@@ -83,6 +83,12 @@ export function stageHeightOf(scene: Scene): number {
       return 120;
     case 'ladder':
       return 30 + Math.max(scene.bids.length, scene.asks.length) * 32 + 46;
+    case 'compare': {
+      // Two panels side by side, so the taller of the two sets the height, plus
+      // the caveat strip under them.
+      const panel = (text: string) => 58 + Math.ceil(text.length / 44) * 18;
+      return Math.max(panel(scene.everyday), panel(scene.market)) + 12 + (40 + Math.ceil(scene.breaks.length / 100) * 16);
+    }
   }
 }
 
@@ -114,8 +120,10 @@ export function ExplainerVideo({ explainerId }: ExplainerVideoProps) {
     );
   }
 
-  const scenes = timeline(explainer);
-  const runtime = runtimeOf(explainer);
+  // The video cut, which includes the scenes the page does not have. See the
+  // `only` field in `explainers.ts` for why the two differ on purpose.
+  const scenes = timeline(explainer, 'video');
+  const runtime = runtimeOf(explainer, 'video');
   const elapsed = frame / fps;
 
   // The last scene that has started. Same rule as the site player, deliberately
@@ -125,6 +133,31 @@ export function ExplainerVideo({ explainerId }: ExplainerVideoProps) {
 
   return (
     <AbsoluteFill className="bg-ground font-sans">
+      {/* Narration.
+
+          Every line is placed on the timeline at once rather than only the one
+          belonging to the current scene. The renderer mixes audio across the
+          whole composition in a separate pass from the frames, so a track that
+          only exists while its scene is on screen exists for exactly zero of
+          that pass, and the video comes out silent.
+
+          Each line is also given its scene's full length rather than its own.
+          The scene is always the longer of the two — `sceneSeconds` guarantees
+          it, with a tail of silence — so this cannot clip a word, and it means
+          a caption reworded shorter cannot let its old audio bleed into the
+          next scene. */}
+      {scenes.map((s, i) =>
+        s.narration ? (
+          <Sequence
+            key={`${s.narration.file}-${i}`}
+            from={Math.round(s.startsAt * fps)}
+            durationInFrames={Math.round(s.seconds * fps)}
+          >
+            <Audio src={staticFile(`narration/${s.narration.file}`)} />
+          </Sequence>
+        ) : null,
+      )}
+
       <div className="flex h-full flex-col justify-between px-14 pb-10 pt-9">
         {/* Header. On a page this is the <h1> and the breadcrumb above the
             player; in a file there is no page, so it has to be in frame. */}
