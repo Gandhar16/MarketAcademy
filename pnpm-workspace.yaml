@@ -1,3 +1,6 @@
 allowBuilds:
+  # Remotion's bundler shells out to the esbuild native binary, which only
+  # lands on disk if its install script is allowed to run.
+  esbuild: true
   sharp: false
   unrs-resolver: false

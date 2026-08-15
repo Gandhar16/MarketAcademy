@@ -9,11 +9,27 @@
  * invented market data, which PLAN.md §7.1 forbids outright. See the header of
  * `src/content/explainers.ts` for the full argument.
  *
- * Every scene is keyed on its index by the player, so remounting replays the
- * animation from the start. That is what makes scrubbing backwards work: the
- * scene does not have to know it has been seen before.
+ * WHY THERE IS NO ANIMATION LIBRARY IN HERE ANY MORE
+ *
+ * Every scene is a pure function of `elapsed` — seconds since this scene came
+ * on screen. Nothing in this file reads the wall clock, starts a transition, or
+ * remembers that it has been mounted before.
+ *
+ * That is not tidiness for its own sake. It is the single requirement for
+ * rendering these to a video file: a frame renderer asks for "the picture at
+ * t = 3.7s" out of order, on a machine with no clock running, and must get the
+ * same pixels every time. An animation library that tracks `performance.now()`
+ * cannot answer that question — it can only answer "the picture 3.7 seconds
+ * after you asked me to start", which is a different thing and is why
+ * time-based animation renders as a still frame or a stutter.
+ *
+ * The site player and the video renderer are therefore two clocks driving one
+ * set of components, rather than two sets of components that have to be kept
+ * looking alike. See `remotion/Root.tsx`.
+ *
+ * It also fixed a real bug for free: scrubbing backwards used to need the scene
+ * to remount so it would replay. Now scrubbing to t = 3.7s simply draws t=3.7s.
  */
-import { motion, useReducedMotion } from 'framer-motion';
 import type { BarsScene, ChainScene, LadderScene, Scene, Tone } from '@/content/explainers';
 
 const TONE_CLASS: Record<Tone, string> = {
@@ -23,22 +39,54 @@ const TONE_CLASS: Record<Tone, string> = {
   bad: 'bg-down/70',
 };
 
-export function SceneView({ scene }: { scene: Scene }) {
+/**
+ * How far through one staggered element we are, 0→1.
+ *
+ * `elapsed`, `delay` and `duration` are all in seconds, which is why the
+ * numbers at the call sites still read the way they did when a library owned
+ * them. Clamped at both ends, so a scene held past its authored length simply
+ * sits at its finished state rather than overshooting.
+ */
+function at(elapsed: number, delay: number, duration: number): number {
+  if (duration <= 0) return elapsed >= delay ? 1 : 0;
+  return Math.max(0, Math.min(1, (elapsed - delay) / duration));
+}
+
+/** Cubic ease-out. Fast start, settled end — how things stop in the physical world. */
+function easeOut(t: number): number {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+/**
+ * A scene, drawn at one moment.
+ *
+ * `elapsed` is seconds since this scene appeared. `reduced` collapses every
+ * stagger to its finished state in one place, which is both the accessibility
+ * behaviour and, conveniently, the thumbnail.
+ */
+export interface SceneProps {
+  scene: Scene;
+  elapsed: number;
+  reduced?: boolean;
+}
+
+export function SceneView({ scene, elapsed, reduced = false }: SceneProps) {
+  // One place to honour the preference: pretend the whole scene has finished.
+  const t = reduced ? Number.POSITIVE_INFINITY : elapsed;
+
   switch (scene.kind) {
     case 'chain':
-      return <ChainView scene={scene} />;
+      return <ChainView scene={scene} elapsed={t} />;
     case 'bars':
-      return <BarsView scene={scene} />;
+      return <BarsView scene={scene} elapsed={t} />;
     case 'ladder':
-      return <LadderView scene={scene} />;
+      return <LadderView scene={scene} elapsed={t} />;
   }
 }
 
 // ── chain ───────────────────────────────────────────────────────────────────
 
-function ChainView({ scene }: { scene: ChainScene }) {
-  const reduced = useReducedMotion();
-
+function ChainView({ scene, elapsed }: { scene: ChainScene; elapsed: number }) {
   return (
     <div className="flex h-full flex-col justify-center gap-3">
       {scene.token && (
@@ -51,26 +99,42 @@ function ChainView({ scene }: { scene: ChainScene }) {
         {scene.steps.map((step, i) => {
           const reached = i <= scene.at;
           const current = i === scene.at;
+
+          // Steps light up in order, so the eye follows the token along the
+          // chain rather than being handed the finished picture at once.
+          const p = easeOut(at(elapsed, Math.min(i, scene.at) * 0.18, 0.4));
+          const opacity = reached ? 0.4 + 0.6 * p : 0.4;
+          const scale = current ? 0.97 + 0.03 * p : 0.97;
+
           return (
             <li key={step.label} className="flex flex-1 items-center gap-1 sm:flex-col sm:gap-2">
-              <motion.div
-                initial={reduced ? false : { opacity: 0.4, scale: 0.97 }}
-                animate={{ opacity: reached ? 1 : 0.4, scale: current ? 1 : 0.97 }}
-                transition={{ duration: 0.4, delay: reduced ? 0 : Math.min(i, scene.at) * 0.18 }}
+              <div
+                style={{ opacity, transform: `scale(${scale})` }}
                 className={`flex-1 rounded-xl border px-3 py-2.5 text-center sm:w-full ${
-                  current ? 'border-accent bg-accent/10' : reached ? 'border-line-strong bg-surface-2' : 'border-line bg-surface'
+                  current
+                    ? 'border-accent bg-accent/10'
+                    : reached
+                      ? 'border-line-strong bg-surface-2'
+                      : 'border-line bg-surface'
                 }`}
               >
                 <span className={`block text-sm ${current ? 'text-accent' : 'text-ink'}`}>{step.label}</span>
                 {step.sub && <span className="mt-0.5 block text-xs leading-snug text-ink-faint">{step.sub}</span>}
-              </motion.div>
+              </div>
 
-              {i < scene.steps.length - 1 && (
-                <span aria-hidden className={`text-lg ${i < scene.at ? 'text-accent' : 'text-ink-faint/40'}`}>
-                  <span className="sm:hidden">↓</span>
-                  <span className="hidden sm:inline">→</span>
-                </span>
-              )}
+              {/* The last step keeps the arrow's space rather than dropping it.
+                  Without this the final box stretches to fill the row on its
+                  own and ends up visibly taller than its neighbours — barely
+                  noticeable in a card, obvious in a 1080p frame. */}
+              <span
+                aria-hidden
+                className={`text-lg ${
+                  i === scene.steps.length - 1 ? 'invisible' : i < scene.at ? 'text-accent' : 'text-ink-faint/40'
+                }`}
+              >
+                <span className="sm:hidden">↓</span>
+                <span className="hidden sm:inline">→</span>
+              </span>
             </li>
           );
         })}
@@ -81,8 +145,7 @@ function ChainView({ scene }: { scene: ChainScene }) {
 
 // ── bars ────────────────────────────────────────────────────────────────────
 
-function BarsView({ scene }: { scene: BarsScene }) {
-  const reduced = useReducedMotion();
+function BarsView({ scene, elapsed }: { scene: BarsScene; elapsed: number }) {
   const scale = Math.max(scene.scaleTo, ...scene.bars.map((b) => b.value), 1);
   const dp = scene.precision ?? 2;
 
@@ -90,26 +153,22 @@ function BarsView({ scene }: { scene: BarsScene }) {
     <div className="flex h-full flex-col justify-center gap-3">
       {scene.bars.map((bar, i) => {
         const pct = Math.max(0, Math.min(100, (bar.value / scale) * 100));
+        const grow = easeOut(at(elapsed, i * 0.12, 0.7));
+        const label = at(elapsed, 0.15 + i * 0.12, 0.3);
+
         return (
           <div key={`${bar.label}-${i}`}>
             <div className="flex items-baseline justify-between gap-3">
               <span className="min-w-0 text-sm text-ink">{bar.label}</span>
-              <motion.span
-                initial={reduced ? false : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3, delay: reduced ? 0 : 0.15 + i * 0.12 }}
-                className="num shrink-0 text-sm text-ink-muted"
-              >
+              <span style={{ opacity: label }} className="num shrink-0 text-sm text-ink-muted">
                 {scene.unit ?? ''}
                 {bar.value.toLocaleString('en-IN', { minimumFractionDigits: dp, maximumFractionDigits: dp })}
-              </motion.span>
+              </span>
             </div>
 
             <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-surface-2">
-              <motion.div
-                initial={reduced ? { width: `${pct}%` } : { width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ duration: reduced ? 0 : 0.7, delay: reduced ? 0 : i * 0.12, ease: 'easeOut' }}
+              <div
+                style={{ width: `${pct * grow}%` }}
                 className={`h-full rounded-full ${TONE_CLASS[bar.tone ?? 'neutral']}`}
               />
             </div>
@@ -143,23 +202,21 @@ function consumeLevels(levels: { qty: number }[], taking: number): number[] {
   ).taken;
 }
 
-function LadderView({ scene }: { scene: LadderScene }) {
-  const reduced = useReducedMotion();
+function LadderView({ scene, elapsed }: { scene: LadderScene; elapsed: number }) {
   const eaten = consumeLevels(scene.asks, scene.taking ?? 0);
-
   const maxQty = Math.max(...scene.bids.map((b) => b.qty), ...scene.asks.map((a) => a.qty));
 
   return (
     <div className="flex h-full flex-col justify-center gap-4">
       <div className="grid grid-cols-2 gap-3">
-        <Side heading="Wanting to buy" levels={scene.bids} maxQty={maxQty} tone="up" align="right" reduced={reduced} />
+        <Side heading="Wanting to buy" levels={scene.bids} maxQty={maxQty} tone="up" align="right" elapsed={elapsed} />
         <Side
           heading="Wanting to sell"
           levels={scene.asks}
           maxQty={maxQty}
           tone="down"
           align="left"
-          reduced={reduced}
+          elapsed={elapsed}
           eaten={eaten}
         />
       </div>
@@ -180,7 +237,7 @@ function Side({
   maxQty,
   tone,
   align,
-  reduced,
+  elapsed,
   eaten,
 }: {
   heading: string;
@@ -188,7 +245,7 @@ function Side({
   maxQty: number;
   tone: 'up' | 'down';
   align: 'left' | 'right';
-  reduced: boolean | null;
+  elapsed: number;
   eaten?: number[];
 }) {
   return (
@@ -199,26 +256,29 @@ function Side({
       <div className="mt-1.5 space-y-1">
         {levels.map((level, i) => {
           const consumed = eaten?.[i] ?? 0;
+
+          // The resting depth draws first; only once it is there does the order
+          // visibly eat into it. Reversing that reads as the book appearing
+          // already half-consumed, which is the wrong story.
+          const depth = easeOut(at(elapsed, i * 0.08, 0.5));
+          const bite = easeOut(at(elapsed, 0.5 + i * 0.15, 0.5));
+
           return (
             <div
               key={level.price}
               className={`relative overflow-hidden rounded px-2 py-1 ${align === 'right' ? 'text-right' : ''}`}
             >
-              <motion.div
+              <div
                 aria-hidden
-                initial={reduced ? false : { width: 0 }}
-                animate={{ width: `${(level.qty / maxQty) * 100}%` }}
-                transition={{ duration: reduced ? 0 : 0.5, delay: reduced ? 0 : i * 0.08 }}
+                style={{ width: `${(level.qty / maxQty) * 100 * depth}%` }}
                 className={`absolute inset-y-0 ${align === 'right' ? 'right-0' : 'left-0'} ${
                   tone === 'up' ? 'bg-up/15' : 'bg-down/15'
                 }`}
               />
               {consumed > 0 && (
-                <motion.div
+                <div
                   aria-hidden
-                  initial={reduced ? false : { width: 0 }}
-                  animate={{ width: `${(consumed / maxQty) * 100}%` }}
-                  transition={{ duration: reduced ? 0 : 0.5, delay: reduced ? 0 : 0.5 + i * 0.15 }}
+                  style={{ width: `${(consumed / maxQty) * 100 * bite}%` }}
                   className={`absolute inset-y-0 ${align === 'right' ? 'right-0' : 'left-0'} bg-accent/35`}
                 />
               )}

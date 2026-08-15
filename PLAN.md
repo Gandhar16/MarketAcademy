@@ -1867,6 +1867,90 @@ the real API, the way `ta-tools.tsx` already does.
 
 ---
 
+#### 3fg. The explainers as actual video files — `[x]` COMPLETE
+
+§3ff argued against video files. This does not reverse that argument; it
+removes the thing the argument was actually about.
+
+The objection was never "video is bad". It was that **a recorded video keeps
+stating a repealed STT rate, confidently, in a picture, and nothing about the
+file looks wrong.** That objection dies if the file is a *build output of the
+engines* rather than a recording of a person. It is now. `pnpm video` renders
+every explainer from the same components, the same captions and the same
+`computeCost` / `blackScholesPrice` calls that the site uses, so a rate change
+re-derives the video including its words.
+
+The site keeps everything it had — theme-aware, responsive, zero bytes,
+captioned by construction. The mp4s exist for the places a web page cannot go:
+YouTube, Instagram, a WhatsApp forward, a classroom projector with no wifi.
+They are gitignored build artefacts, never committed.
+
+**Tool choice — Remotion, and it was not close.** Full research and every
+measurement is in `docs/video.md`. The short version:
+
+| | Verdict |
+| --- | --- |
+| **Manim** | Runs fine on this hardware (Cairo is CPU-only, 0.21 supports Python 3.14). Rejected because adopting it means **re-authoring every explainer in Python**, forking the content away from the TypeScript cost engine. A beautiful video confidently stating a repealed rate is §7's failure mode wearing a friendlier face. |
+| **Motion Canvas / Revideo** | MIT and TypeScript, genuinely attractive. But canvas scene-graph APIs — existing React components do not transfer, so same duplication cost, minus the Python. |
+| **Remotion** | Imports `Scenes.tsx` and `explainers.ts` as they already exist. The mp4 is a render target of the source of truth, not a copy of it. |
+
+**The one real cost, paid up front.** Remotion requires every visual change to
+be a pure function of the frame number. framer-motion tracks wall-clock through
+`performance.now()`, so `Scenes.tsx` had to stop self-animating and take an
+`elapsed` prop instead: the site player feeds it from its rAF clock, the
+renderer feeds it `frame / fps`. **Two clocks, one set of components** — rather
+than two sets of components somebody keeps looking alike.
+
+That refactor paid for itself twice. Scrubbing backwards no longer needs a
+remount to replay, because seeking to 0:47 simply *draws* 0:47. And the
+property is now tested: `Scenes.test.ts` fails the build if an animation
+import, a timer or a `Date.now` comes back.
+
+**What the hardware said.** Measured on the i7-7700HQ / GTX 1050 Ti this is
+built on, not estimated:
+
+- **The GPU is nearly irrelevant, and that is fine.** Headless Chromium
+  disables it, and GPU acceleration only pays for WebGL/Skia/video decoding.
+  These scenes are divs and widths. Rendering is CPU-bound at ~16 fps with
+  concurrency 4 — about six minutes for a three-minute explainer.
+- **NVENC works and still lost.** 11% faster, 2.3× larger file (519 KB vs
+  227 KB for identical content). For learners on Indian mobile data, bytes beat
+  four seconds of render time on a machine that renders these a few times a
+  year. Documented in `docs/video.md` rather than wired in.
+- **The expensive mistake was fonts, not silicon.** The first working render
+  managed 2 fps because an unpinned `loadFont()` pulls every weight of every
+  alphabet — 222 network requests *per browser tab*, one tab per unit of
+  concurrency. Pinning to two weights of latin: 16 fps, same pixels. Tested.
+- **Scratch space moved off C:.** 7 GB free there against 530 GB on D:, and
+  the default temp directory would have killed long renders with a disk-full
+  error that reads like a Remotion bug.
+
+**One thing a frame does that a page does not: it cannot grow.** The seven-line
+cost breakdown overflowed into the title and under the caption rule, which read
+as a bug in the cost engine rather than a layout overflow. Scenes now scale to
+fit a fixed stage — shrinking is the lesser harm, since clipping silently drops
+the last row, and the last row of a cost breakdown is the SEBI fee, whose entire
+point is that it is tiny and still real. The fit factor is *estimated* from the
+scene rather than measured from the DOM, because measuring means a second render
+pass whose result the renderer has no reason to resolve identically twice.
+
+**Licence, recorded before it is load-bearing:** Remotion is not MIT. Free for
+an individual or a company of **up to three employees**, paid beyond that. The
+threshold is headcount, not revenue — so this becomes a decision on the day
+Market Academy is four people, not the day it earns money.
+
+**Still open, deliberately:**
+
+- [ ] No narration track. The captions are the script and would drive a local
+      TTS pass (Piper or Kokoro both run on this CPU), but a synthetic voice
+      reading statutory rates is a bigger honesty question than it looks.
+- [ ] Not wired into any CI. Rendering is a manual `pnpm video` after a rate
+      change, by design — an 8-minute job has no business in a deploy.
+- [ ] Nothing published anywhere yet. The files exist; distribution is a
+      separate decision.
+
+---
+
 ### M4 · Polish — `[ ]`
 
 - [x] Mobile layout pass across header, pages, leaderboard, widgets — see §3k

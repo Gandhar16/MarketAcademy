@@ -12,7 +12,10 @@
     "_comment_test_live": "Set MARKET_LIVE=1 in your shell first — these hit the live provider and are excluded from `verify` on purpose.",
     "test:live": "vitest run src/lib/market/live.integration.test.ts",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test"
+    "verify": "pnpm typecheck && pnpm lint && pnpm test",
+    "_comment_video": "Videos are a build output of the explainers, not source. `video:studio` previews and scrubs them; `video` renders every explainer to out/video. Neither runs in CI or on deploy — see docs/video.md.",
+    "video": "node scripts/render-videos.mjs",
+    "video:studio": "remotion studio"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
@@ -29,6 +32,11 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@remotion/bundler": "4.0.509",
+    "@remotion/cli": "4.0.509",
+    "@remotion/google-fonts": "4.0.509",
+    "@remotion/renderer": "4.0.509",
+    "@remotion/tailwind-v4": "4.0.509",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.13.3",
     "@types/react": "^19",
@@ -36,6 +44,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
+    "remotion": "4.0.509",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"

@@ -22,7 +22,7 @@
  *    than its final frame. That falls out of keying on the scene index.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useReducedMotion } from 'framer-motion';
 import { runtimeOf, timeline, type Explainer } from '@/content/explainers';
 import { SceneView } from './Scenes';
 
@@ -34,6 +34,7 @@ function mmss(seconds: number): string {
 export function ExplainerPlayer({ explainer }: { explainer: Explainer }) {
   const scenes = useMemo(() => timeline(explainer), [explainer]);
   const runtime = useMemo(() => runtimeOf(explainer), [explainer]);
+  const reduced = useReducedMotion();
 
   const [elapsed, setElapsed] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -101,20 +102,14 @@ export function ExplainerPlayer({ explainer }: { explainer: Explainer }) {
   return (
     <div className="rounded-2xl border border-line bg-surface">
       {/* The stage. Fixed minimum height so the page does not jump between a
-          four-step chain and a five-bar breakdown. */}
+          four-step chain and a five-bar breakdown.
+
+          There is no crossfade between scenes and no remount on scrub. The
+          scene is a pure function of how far into itself it is, so seeking to
+          0:47 draws 0:47 — the same picture the video renderer draws for that
+          moment, which is the point. */}
       <div className="min-h-[19rem] px-4 py-6 sm:min-h-[17rem] sm:px-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={index}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="h-full"
-          >
-            <SceneView scene={current.scene} key={index} />
-          </motion.div>
-        </AnimatePresence>
+        <SceneView scene={current.scene} elapsed={elapsed - current.startsAt} reduced={Boolean(reduced)} />
       </div>
 
       {/* The caption. Live region so a screen reader announces each new line as
