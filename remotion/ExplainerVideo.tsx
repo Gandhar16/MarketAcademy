@@ -83,6 +83,10 @@ export function stageHeightOf(scene: Scene): number {
       return 120;
     case 'ladder':
       return 30 + Math.max(scene.bids.length, scene.asks.length) * 32 + 46;
+    case 'band':
+      // Header, then the three stacked rows of the track (marker / band /
+      // edge labels), then the verdict strip.
+      return 24 + 20 + 120 + (scene.verdict ? 20 + 48 : 0);
     case 'compare': {
       // Two panels side by side, so the taller of the two sets the height, plus
       // the caveat strip under them.

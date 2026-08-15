@@ -40,6 +40,23 @@ The extra scenes are a scene kind of their own — `compare` — with three part
 | **In the market** | What it maps to, with the engine-computed figure. |
 | **Where the comparison breaks** | Required, not optional. |
 
+### Scene kinds, and the line they must not cross
+
+`chain` · `bars` · `ladder` · `compare` · `band`. A test asserts the set, so
+adding to it is a deliberate, visible decision.
+
+`band` is the one that comes closest to drawing a market, and the distinction
+worth holding is this: **a band is arithmetic** (±10% of a stated reference) and
+**one `at` marker is a stated hypothetical**, exactly the status the order-book
+ladder has always had. What stays forbidden — and what there is deliberately no
+field for — is a *sequence* of prices. One point is an example; a line joining
+several is a chart of a day that never happened. PLAN.md §7.1.
+
+A `ladder` side may also be empty, which is not an edge case but the entire
+picture of a locked circuit: orders stacked on one side, "nobody" on the other.
+That needed a real fix — `Math.max()` of an empty side is `-Infinity`, which
+would have made every bar `NaN` wide rather than failing loudly.
+
 That third panel is the one worth defending. An analogy only ever shown working
 teaches the analogy — the learner leaves confident about taxis. Naming the point
 where it stops being true is what turns it back into a teaching aid, and it is

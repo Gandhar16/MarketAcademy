@@ -30,7 +30,16 @@
  * It also fixed a real bug for free: scrubbing backwards used to need the scene
  * to remount so it would replay. Now scrubbing to t = 3.7s simply draws t=3.7s.
  */
-import type { BarsScene, ChainScene, CompareScene, Glyph, LadderScene, Scene, Tone } from '@/content/explainers';
+import type {
+  BandScene,
+  BarsScene,
+  ChainScene,
+  CompareScene,
+  Glyph,
+  LadderScene,
+  Scene,
+  Tone,
+} from '@/content/explainers';
 
 const TONE_CLASS: Record<Tone, string> = {
   neutral: 'bg-ink-faint/50',
@@ -83,7 +92,104 @@ export function SceneView({ scene, elapsed, reduced = false }: SceneProps) {
       return <LadderView scene={scene} elapsed={t} />;
     case 'compare':
       return <CompareView scene={scene} elapsed={t} />;
+    case 'band':
+      return <BandView scene={scene} elapsed={t} />;
   }
+}
+
+// ── band ────────────────────────────────────────────────────────────────────
+
+function BandView({ scene, elapsed }: { scene: BandScene; elapsed: number }) {
+  // Drawn a little wider than the band itself, so the edges are visibly edges
+  // rather than the ends of the picture. A band that fills the frame reads as
+  // "anything can happen"; the whole lesson is that it cannot.
+  const pad = (scene.upper - scene.lower) * 0.18;
+  const min = scene.lower - pad;
+  const span = scene.upper + pad - min;
+  const pos = (price: number) => ((price - min) / span) * 100;
+
+  const open = easeOut(at(elapsed, 0.1, 0.7));
+  const marker = easeOut(at(elapsed, 1.0, 0.5));
+  const verdict = at(elapsed, 1.7, 0.5);
+
+  return (
+    <div className="flex h-full flex-col justify-center gap-5">
+      <div className="flex items-baseline justify-between text-xs text-ink-faint">
+        <span>
+          Allowed range today: <span className="num text-ink">±{scene.bandPercent}%</span> of yesterday&apos;s close
+        </span>
+        <span className="num">
+          reference {scene.reference.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </span>
+      </div>
+
+      {/* Three bands of vertical space that never overlap: the marker sits
+          above the track, the edge labels below it. Stacking them by hand
+          rather than by flow, because every element is positioned by price and
+          only the container knows where that is. */}
+      <div className="relative h-[7.5rem]">
+        {/* Everything outside the band. Where trading simply cannot happen. */}
+        <div className="absolute inset-x-0 top-11 h-6 rounded-full bg-surface-2" />
+
+        {/* The band itself, opening outward from the reference — the shape of
+            the arithmetic that produced it. */}
+        <div
+          className="absolute top-11 h-6 rounded-full bg-accent/25"
+          style={{
+            left: `${pos(scene.reference) - (pos(scene.reference) - pos(scene.lower)) * open}%`,
+            right: `${100 - pos(scene.reference) - (pos(scene.upper) - pos(scene.reference)) * open}%`,
+          }}
+        />
+
+        {/* The reference itself — the close everything today is measured from. */}
+        <div
+          className="absolute top-11 h-6 w-px bg-ink-faint/50"
+          style={{ left: `${pos(scene.reference)}%`, opacity: open }}
+        />
+
+        {[
+          { price: scene.lower, label: 'lower circuit' },
+          { price: scene.upper, label: 'upper circuit' },
+        ].map((edge) => (
+          <div
+            key={edge.label}
+            className="absolute top-10 -translate-x-1/2"
+            style={{ left: `${pos(edge.price)}%`, opacity: open }}
+          >
+            <div className="mx-auto h-8 w-0.5 bg-down" />
+            <p className="mt-1.5 whitespace-nowrap text-center text-[10px] uppercase tracking-wider text-down">
+              {edge.label}
+            </p>
+            <p className="num whitespace-nowrap text-center text-xs text-ink">
+              {edge.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+          </div>
+        ))}
+
+        {scene.at != null && (
+          <div
+            className="absolute top-0"
+            style={{ left: `${pos(scene.at)}%`, opacity: marker, transform: `translateX(-50%) scale(${marker})` }}
+          >
+            <p className="num whitespace-nowrap text-center text-xs text-accent">
+              where it is:{' '}
+              {scene.at.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <div className="mx-auto mt-1 h-2.5 w-2.5 rotate-45 border-b-2 border-r-2 border-accent" />
+          </div>
+        )}
+      </div>
+
+      {scene.verdict && (
+        <p
+          style={{ opacity: verdict }}
+          className="rounded-xl border border-down/40 bg-down/5 px-4 py-2.5 text-center text-sm text-ink"
+        >
+          {scene.verdict}
+        </p>
+      )}
+    </div>
+  );
 }
 
 // ── compare ─────────────────────────────────────────────────────────────────
@@ -336,7 +442,12 @@ function consumeLevels(levels: { qty: number }[], taking: number): number[] {
 
 function LadderView({ scene, elapsed }: { scene: LadderScene; elapsed: number }) {
   const eaten = consumeLevels(scene.asks, scene.taking ?? 0);
-  const maxQty = Math.max(...scene.bids.map((b) => b.qty), ...scene.asks.map((a) => a.qty));
+
+  // A side can be empty, and that is not an edge case — it is the whole picture
+  // of a locked circuit: orders stacked on one side and nobody at all on the
+  // other. The `, 1` floor matters because `Math.max()` of nothing is -Infinity,
+  // which would silently make every bar NaN wide.
+  const maxQty = Math.max(...scene.bids.map((b) => b.qty), ...scene.asks.map((a) => a.qty), 1);
 
   return (
     <div className="flex h-full flex-col justify-center gap-4">
@@ -386,6 +497,11 @@ function Side({
         {heading}
       </p>
       <div className="mt-1.5 space-y-1">
+        {levels.length === 0 && (
+          <p className="rounded border border-dashed border-line px-2 py-3 text-center text-xs text-ink-faint">
+            nobody
+          </p>
+        )}
         {levels.map((level, i) => {
           const consumed = eaten?.[i] ?? 0;
 

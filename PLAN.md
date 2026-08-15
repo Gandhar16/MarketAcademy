@@ -2024,9 +2024,63 @@ kilobytes of speech spent for them.
       highest-graded voice and it is American; the alternative was a
       lower-graded British one. Clarity won, and it is a compromise rather than
       a choice. Revisit when the model ships something better.
-- [ ] The compare scenes cover cost, spread, clearing, options and time decay.
-      Circuit limits and position sizing have good analogies already written and
-      no explainer to put them in.
+- [x] Circuit limits and position sizing — done, see §3fi.
+
+---
+
+#### 3fi. Circuit limits, position sizing, and the coverage question — `[x]` COMPLETE
+
+Two explainers, both diagram-first rather than narrated text.
+
+**`why-you-could-not-sell`** teaches circuit limits through the thing that
+actually costs money: a stop-loss that fired correctly and still did not fill.
+**`how-much-should-you-buy`** teaches position sizing around the two numbers
+people confuse — what you put in against what you can lose.
+
+Both are built on engines that already existed. `indiaPriceBand` and
+`canTradeAtBand` from `halts.ts`; `sizeFromStop` from `portfolio.ts`. The
+verdict on screen at a locked circuit is the **engine's own sentence**, and a
+test asserts it is quoted rather than paraphrased — so a rule change rewrites
+the explainer instead of leaving it confidently wrong.
+
+**A new scene kind, `band`,** and the line it must not cross. A band is
+arithmetic (±10% of a stated reference) and one marker is a stated
+hypothetical — the same status the order-book ladder has always had. There is
+deliberately no field for a *sequence* of prices: one point is an example, a
+line joining several is a chart of a day that never happened. The scene-kind
+allowlist test now carries that reasoning.
+
+**A real bug found on the way.** A `ladder` side may be empty — that is not an
+edge case, it is the whole picture of a locked circuit, orders stacked on one
+side and nobody on the other. `Math.max()` of an empty side returns `-Infinity`,
+which would have made every bar `NaN` wide and rendered silently blank rather
+than failing.
+
+Three tests pin the arithmetic the scenes claim on screen: the band matches a
+fresh `indiaPriceBand` call, the three stop distances give distinct quantities
+at *identical* risk, and a tighter stop buys **more** — which is the
+counter-intuitive part the scene exists to teach.
+
+**On "explainers for all the lessons", measured rather than guessed.** There
+are **87 registered lessons**; five explainers now cover **37 distinct glossary
+terms**, touching **51 of 87 lessons (59%)**:
+
+| Tier | Lessons touching an explained term |
+| --- | --- |
+| T0 | 3/8 |
+| T1 | 12/13 |
+| T2 | **7/34** |
+| T3 | 12/12 |
+| T4 | 6/8 |
+| T5 | 11/12 |
+
+**T2 is the entire remaining gap.** Every other tier is close to done. The
+work does not parallelise cheaply — each explainer is hand-authored content
+wired to a real engine, plus narration, plus a render, and five explainers now
+take ~19 minutes to render — so the plan is themed batches of two or three
+through T2 rather than a sweep.
+
+- [ ] T2 coverage: 27 lessons with no explainer touching anything they teach.
 
 ---
 

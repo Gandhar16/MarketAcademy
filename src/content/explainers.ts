@@ -37,6 +37,8 @@ import { ANALOGIES } from './analogies';
 import { computeCost, roundTripCost } from '@/lib/engine/costs';
 import type { CostLine } from '@/lib/engine/costs';
 import { blackScholesPrice, daysToYears, intrinsicValue } from '@/lib/engine/options';
+import { canTradeAtBand, checkBand, indiaPriceBand } from '@/lib/engine/halts';
+import { sizeFromStop } from '@/lib/engine/portfolio';
 
 export type Tone = 'neutral' | 'cost' | 'good' | 'bad';
 
@@ -71,6 +73,31 @@ export interface LadderScene {
   taking?: number;
 }
 
+/**
+ * A price band with its two edges, and optionally one stated price inside it.
+ *
+ * This is the closest any scene comes to drawing a market, so the line is worth
+ * stating precisely. A band is ARITHMETIC — 10% either side of a reference — and
+ * a single `at` marker is a stated hypothetical of the same kind the order-book
+ * ladder already uses ("suppose it opens here"). Neither claims anything was
+ * observed.
+ *
+ * What is still forbidden, and what there is deliberately no field for, is a
+ * SEQUENCE of prices. One point is an example; a line joining several is a
+ * chart of a day that never happened. See PLAN.md §7.1.
+ */
+export interface BandScene {
+  kind: 'band';
+  reference: number;
+  lower: number;
+  upper: number;
+  bandPercent: number;
+  /** One stated price, to show where it falls relative to the edges. */
+  at?: number;
+  /** What is true at that price — comes from the halts engine, never typed. */
+  verdict?: string;
+}
+
 /** The line drawings a compare scene may use. Fixed set, drawn in `Scenes.tsx`. */
 export type Glyph = 'house' | 'taxi' | 'clock' | 'receipt' | 'exchange' | 'queue' | 'vault' | 'token';
 
@@ -99,7 +126,7 @@ export interface CompareScene {
   breaks: string;
 }
 
-export type Scene = ChainScene | BarsScene | LadderScene | CompareScene;
+export type Scene = ChainScene | BarsScene | LadderScene | CompareScene | BandScene;
 
 export interface ExplainerScene {
   /**
@@ -242,6 +269,47 @@ const AT_EXPIRY = {
   rightByEnough: intrinsicValue(1_040, OPT.strike, OPT.type),
   wrong: intrinsicValue(970, OPT.strike, OPT.type),
 };
+
+// ── Circuit limits, from the halts engine ───────────────────────────────────
+//
+// The same `indiaPriceBand` / `canTradeAtBand` the simulator enforces. The
+// verdict sentences below are the engine's own words, not a paraphrase — if the
+// rule ever changed, the explainer would say the new thing.
+
+const BAND_REF = 1_000;
+const BAND = indiaPriceBand(BAND_REF, 10);
+const BAND_AT = BAND.lower;
+const BAND_BREACH = checkBand(BAND_AT, BAND);
+const BAND_VERDICT = canTradeAtBand(BAND_BREACH, 'sell');
+
+// ── Position sizing, from the portfolio engine ──────────────────────────────
+//
+// One account, one risk budget, three stop distances. The point of the scene is
+// that the quantity is an OUTPUT — so it is computed here rather than chosen.
+
+const ACCOUNT = 500_000;
+const RISK_FRACTION = 0.01;
+const ENTRY = 1_000;
+
+const SIZINGS = [2, 5, 10].map((stopPercent) => {
+  const stop = ENTRY * (1 - stopPercent / 100);
+  const sized = sizeFromStop({ equity: ACCOUNT, riskFraction: RISK_FRACTION, entry: ENTRY, stop });
+  return { stopPercent, stop, ...sized, deployed: sized.quantity * ENTRY };
+});
+
+const TIGHT = SIZINGS[0];
+
+/** Equity left after `n` consecutive losses of `fraction` each. Compounding down. */
+const afterLosses = (fraction: number, n: number) => ACCOUNT * Math.pow(1 - fraction, n);
+
+/** How far a fall of `lost` from `ACCOUNT` must climb, in percent, to get back. */
+const climbBack = (remaining: number) => (ACCOUNT / remaining - 1) * 100;
+
+const RUIN = [0.01, 0.02, 0.05, 0.1].map((fraction) => ({
+  fraction,
+  remaining: afterLosses(fraction, 10),
+  climb: climbBack(afterLosses(fraction, 10)),
+}));
 
 // ── The explainers ──────────────────────────────────────────────────────────
 
@@ -715,10 +783,249 @@ const WHY_YOUR_OPTION_EXPIRED_WORTHLESS: Explainer = {
   ],
 };
 
+const WHY_YOU_COULD_NOT_SELL: Explainer = {
+  id: 'why-you-could-not-sell',
+  title: 'Why you could not sell',
+  blurb: `A stock can only move ±${BAND.bandPercent}% in a day. At the edge, the exit you were counting on stops existing.`,
+  question: 'My stop-loss was set. Why did it never fill?',
+  terms: ['circuit-limit', 'stop-loss', 'order-book', 'liquidity', 'exchange', 'bid', 'ask'],
+  chapters: [
+    {
+      title: 'The fence around the day',
+      scenes: [
+        {
+          seconds: 8,
+          caption: `Every Indian stock trades inside a fence drawn before the day starts. Yesterday it closed at ${rupees(BAND_REF, 0)}; today it is allowed anywhere between ${rupees(BAND.lower)} and ${rupees(BAND.upper)} and nowhere else. Not "unlikely to" — not allowed to. The exchange will refuse an order outside it.`,
+          scene: {
+            kind: 'band',
+            reference: BAND.reference,
+            lower: BAND.lower,
+            upper: BAND.upper,
+            bandPercent: BAND.bandPercent,
+          },
+        },
+        {
+          seconds: 8,
+          caption: `Now bad news arrives and the price falls all the way to the bottom of the fence, ${rupees(BAND.lower)}. Everybody who wants out today is looking at the same number, because there is no lower number to look at. This is what people mean when they say a stock is at its lower circuit.`,
+          scene: {
+            kind: 'band',
+            reference: BAND.reference,
+            lower: BAND.lower,
+            upper: BAND.upper,
+            bandPercent: BAND.bandPercent,
+            at: BAND_AT,
+            verdict: BAND_VERDICT.reason,
+          },
+        },
+      ],
+    },
+    {
+      title: 'Locked, and what that means',
+      scenes: [
+        {
+          seconds: 8,
+          caption:
+            'Look at the queues and the problem becomes obvious. Every seller in the market is stacked on one side. The other side is empty — not thin, empty. A trade needs two people, and today there is only one kind of person.',
+          scene: {
+            kind: 'ladder',
+            bids: [],
+            asks: [
+              { price: BAND.lower, qty: 48_000 },
+              { price: BAND.lower, qty: 92_000 },
+              { price: BAND.lower, qty: 210_000 },
+            ],
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'The comparison people reach for is a referee stopping play, and it is a good one as far as it goes. The crowd is out of hand, so everything pauses until it calms down. What the comparison hides is who is standing where when the whistle blows — because the pause is not neutral. It costs whoever needed the next few seconds most.',
+          scene: {
+            kind: 'compare',
+            glyph: 'queue',
+            everyday: ANALOGIES['circuit-limit'],
+            market: `Locked at ${rupees(BAND.lower)}: sell orders stacked up, no buy orders at all. Your order joins a queue that is not moving.`,
+            breaks:
+              'A referee restarts the same match. The exchange restarts tomorrow, with a new fence drawn around a much lower close — so the fall you could not escape today has already happened by the time you can act.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'What it does to your stop-loss',
+      scenes: [
+        {
+          seconds: 9,
+          caption:
+            'Here is where the money goes. Your stop-loss did everything it promised: it watched, it triggered, it sent a sell order. It just arrived in a market with nobody on the other side. A stop-loss is a request to trade, and a request needs somebody to accept it.',
+          scene: {
+            kind: 'chain',
+            token: 'your stop-loss',
+            steps: [
+              { label: 'Price falls', sub: 'to your trigger' },
+              { label: 'Stop fires', sub: 'exactly as set' },
+              { label: 'Order reaches the book', sub: 'sell, at the circuit' },
+              { label: 'No buyer', sub: 'it simply waits' },
+            ],
+            at: 3,
+          },
+        },
+        {
+          seconds: 8,
+          caption:
+            'So the honest way to hold a stop-loss is as a plan that usually works, not a floor under your losses. It protects you on ordinary days, which is most days. The days it fails are exactly the days you needed it — and that is not a flaw in your broker, it is what a fence around the day does.',
+          scene: {
+            kind: 'chain',
+            token: 'the next morning',
+            steps: [
+              { label: 'Still holding', sub: 'the stop never filled' },
+              { label: 'New close', sub: 'a new reference price' },
+              { label: 'New fence', sub: `±${BAND.bandPercent}% around it` },
+              { label: 'Try again', sub: 'lower down' },
+            ],
+            at: 3,
+          },
+        },
+      ],
+    },
+  ],
+};
+
+const HOW_MUCH_SHOULD_YOU_BUY: Explainer = {
+  id: 'how-much-should-you-buy',
+  title: 'How much should you buy',
+  blurb: `The one calculation that decides whether being wrong is survivable. On a ${rupees(ACCOUNT, 0)} account, the answer is arithmetic, not instinct.`,
+  question: 'I found a stock I like. How many shares do I actually buy?',
+  terms: ['position-size', 'risk-per-trade', 'stop-loss', 'position', 'drawdown', 'risk-of-ruin'],
+  chapters: [
+    {
+      title: 'Two numbers people confuse',
+      scenes: [
+        {
+          seconds: 8,
+          caption: `Almost everyone answers "how much should I buy" with a rupee amount they are comfortable spending. That is the wrong number. What you put in and what you can lose are two different figures, and only the second one should decide the first.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: TIGHT.deployed,
+            unit: '₹',
+            precision: 0,
+            bars: [
+              { label: 'Money you put to work', value: TIGHT.deployed, tone: 'neutral', note: 'the number people pick' },
+              { label: 'Money actually at risk', value: TIGHT.riskAmount, tone: 'cost', note: 'the number that matters' },
+            ],
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption: `The gap between those two bars is the whole idea, and it exists because you have a stop-loss. You are not betting ${rupees(TIGHT.deployed, 0)} on this company being right. You are betting ${rupees(TIGHT.riskAmount, 0)} on it not falling ${TIGHT.stopPercent}% first — and if it does, you leave. Everything else is still yours.`,
+          scene: {
+            kind: 'compare',
+            glyph: 'receipt',
+            everyday: ANALOGIES['position-size'],
+            market: `${rupees(ACCOUNT, 0)} account, ${(RISK_FRACTION * 100).toFixed(0)}% risk budget: ${rupees(TIGHT.riskAmount, 0)} is what a wrong answer costs you.`,
+            breaks:
+              'A bet settles when the match ends. A position can gap past your stop overnight and take more than you agreed to lose, which is why the risk budget is a plan rather than a guarantee.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'The arithmetic',
+      scenes: [
+        {
+          seconds: 9,
+          caption: `Once the risk is fixed, the quantity is not a decision — it falls out. Divide what you are willing to lose by how far away your stop is. Same ${rupees(TIGHT.riskAmount, 0)} of risk, three different stop distances, three completely different order sizes.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: Math.max(...SIZINGS.map((s) => s.quantity)),
+            precision: 0,
+            bars: SIZINGS.map((s) => ({
+              label: `Stop ${s.stopPercent}% away (${rupees(s.stop, 0)})`,
+              value: s.quantity,
+              tone: 'good' as const,
+              note: `${s.quantity} shares — ${rupees(s.deployed, 0)} deployed`,
+            })),
+          },
+        },
+        {
+          seconds: 9,
+          caption: `Notice what that means. A tighter stop lets you buy more, not less — ${SIZINGS[0].quantity} shares at a ${SIZINGS[0].stopPercent}% stop against ${SIZINGS[2].quantity} at ${SIZINGS[2].stopPercent}%. The risk is identical in every case. That is the entire trick, and it is why "how confident am I" is not one of the inputs.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: Math.max(...SIZINGS.map((s) => s.riskAmount)) * 1.4,
+            unit: '₹',
+            precision: 0,
+            bars: SIZINGS.map((s) => ({
+              label: `Stop ${s.stopPercent}% away`,
+              value: s.riskAmount,
+              tone: 'cost' as const,
+              note: 'identical, by construction',
+            })),
+          },
+        },
+      ],
+    },
+    {
+      title: 'Why the percentage is small',
+      scenes: [
+        {
+          seconds: 10,
+          caption: `Everything above assumed a ${(RISK_FRACTION * 100).toFixed(0)}% risk budget. Here is what that choice is really for. Ten losing trades in a row happens to everyone eventually — this is what is left of the account afterwards at four different budgets.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: ACCOUNT,
+            unit: '₹',
+            precision: 0,
+            bars: RUIN.map((r) => ({
+              label: `${(r.fraction * 100).toFixed(0)}% risked per trade`,
+              value: r.remaining,
+              tone: r.fraction <= 0.02 ? ('good' as const) : ('bad' as const),
+              note: 'left after 10 losses in a row',
+            })),
+          },
+        },
+        {
+          seconds: 10,
+          caption: `And the part that finishes people off is the climb back, because losses and gains are not symmetrical. After ten losses at ${(RUIN[0].fraction * 100).toFixed(0)}% you need ${RUIN[0].climb.toFixed(0)}% to be whole again. At ${(RUIN[3].fraction * 100).toFixed(0)}% you need ${RUIN[3].climb.toFixed(0)}%. The small number is not timidity — it is the only version where being wrong ten times is survivable.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: Math.max(...RUIN.map((r) => r.climb)),
+            precision: 0,
+            bars: RUIN.map((r) => ({
+              label: `${(r.fraction * 100).toFixed(0)}% risked per trade`,
+              value: r.climb,
+              tone: r.fraction <= 0.02 ? ('good' as const) : ('bad' as const),
+              note: `% gain needed to get back to ${rupees(ACCOUNT, 0)}`,
+            })),
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'Which is why the risk budget is decided once, while nothing is happening, and then left alone. It is not a view about this trade. Every argument about whether a particular stock is a good idea sits downstream of a number you should already have chosen — and the moment you raise it because you feel sure, you have replaced the arithmetic with a feeling.',
+          scene: {
+            kind: 'compare',
+            glyph: 'vault',
+            everyday: ANALOGIES['risk-per-trade'],
+            market: `${(RISK_FRACTION * 100).toFixed(0)}% of ${rupees(ACCOUNT, 0)} is ${rupees(TIGHT.riskAmount, 0)} per trade, whatever the trade is and however good it looks.`,
+            breaks:
+              'At a table you can stand up and walk away. A position held overnight can gap, so the amount you agreed to lose is the floor of what you might lose, not the ceiling.',
+          },
+        },
+      ],
+    },
+  ],
+};
+
 export const EXPLAINERS: Explainer[] = [
   WHERE_YOUR_MONEY_GOES,
   WHAT_HAPPENS_WHEN_YOU_PRESS_BUY,
   WHY_YOUR_OPTION_EXPIRED_WORTHLESS,
+  WHY_YOU_COULD_NOT_SELL,
+  HOW_MUCH_SHOULD_YOU_BUY,
 ];
 
 export const EXPLAINER_BY_ID = new Map(EXPLAINERS.map((e) => [e.id, e]));

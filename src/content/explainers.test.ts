@@ -10,6 +10,7 @@ import {
 } from './explainers';
 import { GLOSSARY_BY_ID } from './glossary';
 import { ANALOGIES } from './analogies';
+import { canTradeAtBand, indiaPriceBand } from '@/lib/engine/halts';
 
 describe('explainers', () => {
   it('has unique, url-safe ids', () => {
@@ -185,7 +186,10 @@ describe('explainers', () => {
     // PLAN.md §7.1. There is no scene kind that could do this today, and this
     // test is what makes adding one a deliberate, visible decision rather than
     // an afternoon's convenience.
-    const allowed = new Set(['chain', 'bars', 'ladder', 'compare']);
+    // `band` draws a price RANGE and at most one stated price inside it, which
+    // is arithmetic plus a hypothetical — the same status as the order-book
+    // ladder. What stays forbidden is a sequence of prices joined into a line.
+    const allowed = new Set(['chain', 'bars', 'ladder', 'compare', 'band']);
     for (const e of EXPLAINERS) {
       for (const chapter of e.chapters) {
         for (const s of chapter.scenes) {
@@ -212,6 +216,67 @@ describe('explainers', () => {
       .map((s) => s.scene)
       .find((scene) => scene.kind === 'bars' && scene.bars.length >= 5);
     expect(bill, 'no scene draws the full itemised bill').toBeDefined();
+  });
+
+  it('draws circuit bands the halts engine actually computes', () => {
+    // The band is the one scene that looks most like a chart, so it is the one
+    // most worth pinning to the engine. Recomputing it here rather than
+    // comparing to a typed number means a rule change fails this test instead
+    // of quietly producing a confident, wrong picture.
+    const circuits = EXPLAINER_BY_ID.get('why-you-could-not-sell')!;
+    const bands = circuits.chapters.flatMap((c) => c.scenes).map((s) => s.scene).filter((s) => s.kind === 'band');
+    expect(bands.length).toBeGreaterThan(0);
+
+    for (const band of bands) {
+      const engine = indiaPriceBand(band.reference, band.bandPercent as 2 | 5 | 10 | 20);
+      expect(band.lower).toBe(engine.lower);
+      expect(band.upper).toBe(engine.upper);
+      // And a marker, where present, has to sit inside or on the fence it is
+      // being drawn against.
+      if (band.at != null) {
+        expect(band.at).toBeGreaterThanOrEqual(engine.lower);
+        expect(band.at).toBeLessThanOrEqual(engine.upper);
+      }
+    }
+  });
+
+  it('quotes the engine on what you can do at a circuit, rather than paraphrasing it', () => {
+    const circuits = EXPLAINER_BY_ID.get('why-you-could-not-sell')!;
+    const verdicts = circuits.chapters
+      .flatMap((c) => c.scenes)
+      .map((s) => s.scene)
+      .filter((s) => s.kind === 'band')
+      .map((s) => s.verdict)
+      .filter((v): v is string => Boolean(v));
+
+    expect(verdicts.length).toBeGreaterThan(0);
+    const engineWords = [
+      canTradeAtBand('lower_circuit', 'sell').reason,
+      canTradeAtBand('upper_circuit', 'buy').reason,
+    ];
+    for (const verdict of verdicts) expect(engineWords).toContain(verdict);
+  });
+
+  it('sizes positions with the portfolio engine, and keeps the risk identical', () => {
+    // The claim the sizing explainer makes on screen is that three different
+    // stop distances produce three different quantities at the SAME risk. If
+    // that stopped being true the scene would be teaching the opposite lesson.
+    const sizing = EXPLAINER_BY_ID.get('how-much-should-you-buy')!;
+    const quantities = sizing.chapters[1].scenes[0].scene;
+    const risks = sizing.chapters[1].scenes[1].scene;
+
+    expect(quantities.kind).toBe('bars');
+    expect(risks.kind).toBe('bars');
+    if (quantities.kind !== 'bars' || risks.kind !== 'bars') return;
+
+    // Distinct sizes…
+    expect(new Set(quantities.bars.map((b) => b.value)).size).toBe(quantities.bars.length);
+    // …identical risk.
+    expect(new Set(risks.bars.map((b) => Math.round(b.value))).size).toBe(1);
+    // …and a tighter stop must buy MORE, which is the counter-intuitive part.
+    expect(quantities.bars[0].value).toBeGreaterThan(quantities.bars.at(-1)!.value);
+
+    for (const bar of quantities.bars) expect(Number.isInteger(bar.value)).toBe(true);
   });
 
   it('lets the option explainer show a real melt to zero', () => {

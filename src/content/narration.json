@@ -113,6 +113,58 @@
     "Every figure in this explainer is a model price, not a quote — the same Black-Scholes maths the greeks widget uses, with volatility and rates held fixed. Real premiums move for reasons this deliberately leaves out. The shape of the melt is the part that is true.": {
       "file": "why-your-option-expired-worthless-08.mp3",
       "seconds": 16.107
+    },
+    "Every Indian stock trades inside a fence drawn before the day starts. Yesterday it closed at ₹1,000; today it is allowed anywhere between ₹900.00 and ₹1,100.00 and nowhere else. Not \"unlikely to\" — not allowed to. The exchange will refuse an order outside it.": {
+      "file": "why-you-could-not-sell-01.mp3",
+      "seconds": 19.221
+    },
+    "Now bad news arrives and the price falls all the way to the bottom of the fence, ₹900.00. Everybody who wants out today is looking at the same number, because there is no lower number to look at. This is what people mean when they say a stock is at its lower circuit.": {
+      "file": "why-you-could-not-sell-02.mp3",
+      "seconds": 16.789
+    },
+    "Look at the queues and the problem becomes obvious. Every seller in the market is stacked on one side. The other side is empty — not thin, empty. A trade needs two people, and today there is only one kind of person.": {
+      "file": "why-you-could-not-sell-03.mp3",
+      "seconds": 13.163
+    },
+    "The comparison people reach for is a referee stopping play, and it is a good one as far as it goes. The crowd is out of hand, so everything pauses until it calms down. What the comparison hides is who is standing where when the whistle blows — because the pause is not neutral. It costs whoever needed the next few seconds most.": {
+      "file": "why-you-could-not-sell-04.mp3",
+      "seconds": 19.712
+    },
+    "Here is where the money goes. Your stop-loss did everything it promised: it watched, it triggered, it sent a sell order. It just arrived in a market with nobody on the other side. A stop-loss is a request to trade, and a request needs somebody to accept it.": {
+      "file": "why-you-could-not-sell-05.mp3",
+      "seconds": 16.256
+    },
+    "So the honest way to hold a stop-loss is as a plan that usually works, not a floor under your losses. It protects you on ordinary days, which is most days. The days it fails are exactly the days you needed it — and that is not a flaw in your broker, it is what a fence around the day does.": {
+      "file": "why-you-could-not-sell-06.mp3",
+      "seconds": 17.515
+    },
+    "Almost everyone answers \"how much should I buy\" with a rupee amount they are comfortable spending. That is the wrong number. What you put in and what you can lose are two different figures, and only the second one should decide the first.": {
+      "file": "how-much-should-you-buy-01.mp3",
+      "seconds": 13.312
+    },
+    "The gap between those two bars is the whole idea, and it exists because you have a stop-loss. You are not betting ₹2,50,000 on this company being right. You are betting ₹5,000 on it not falling 2% first — and if it does, you leave. Everything else is still yours.": {
+      "file": "how-much-should-you-buy-02.mp3",
+      "seconds": 17.515
+    },
+    "Once the risk is fixed, the quantity is not a decision — it falls out. Divide what you are willing to lose by how far away your stop is. Same ₹5,000 of risk, three different stop distances, three completely different order sizes.": {
+      "file": "how-much-should-you-buy-03.mp3",
+      "seconds": 14.869
+    },
+    "Notice what that means. A tighter stop lets you buy more, not less — 250 shares at a 2% stop against 50 at 10%. The risk is identical in every case. That is the entire trick, and it is why \"how confident am I\" is not one of the inputs.": {
+      "file": "how-much-should-you-buy-04.mp3",
+      "seconds": 16.96
+    },
+    "Everything above assumed a 1% risk budget. Here is what that choice is really for. Ten losing trades in a row happens to everyone eventually — this is what is left of the account afterwards at four different budgets.": {
+      "file": "how-much-should-you-buy-05.mp3",
+      "seconds": 13.653
+    },
+    "And the part that finishes people off is the climb back, because losses and gains are not symmetrical. After ten losses at 1% you need 11% to be whole again. At 10% you need 187%. The small number is not timidity — it is the only version where being wrong ten times is survivable.": {
+      "file": "how-much-should-you-buy-06.mp3",
+      "seconds": 20.203
+    },
+    "Which is why the risk budget is decided once, while nothing is happening, and then left alone. It is not a view about this trade. Every argument about whether a particular stock is a good idea sits downstream of a number you should already have chosen — and the moment you raise it because you feel sure, you have replaced the arithmetic with a feeling.": {
+      "file": "how-much-should-you-buy-07.mp3",
+      "seconds": 19.904
     }
   }
 }
