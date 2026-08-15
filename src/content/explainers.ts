@@ -805,6 +805,27 @@ function scenesFor(explainer: Explainer, medium: Medium): { chapter: Chapter; sc
   );
 }
 
+/**
+ * The same explainer with only one medium's scenes left in it.
+ *
+ * Needed because the player is a client component, so whatever it is handed is
+ * serialised into the page for the browser. Passing the whole explainer meant
+ * every reader downloaded the video-only analogy scenes — several paragraphs of
+ * prose per page — which nothing would ever render. Nothing looked wrong; it
+ * was simply weight nobody asked for.
+ */
+export function forMedium(explainer: Explainer, medium: Medium): Explainer {
+  if (medium === 'video') return explainer;
+  return {
+    ...explainer,
+    chapters: explainer.chapters
+      .map((chapter) => ({ ...chapter, scenes: chapter.scenes.filter((s) => s.only !== 'video') }))
+      // A chapter that was entirely video-only would otherwise survive as an
+      // empty heading in the chapter list, linking to nothing.
+      .filter((chapter) => chapter.scenes.length > 0),
+  };
+}
+
 /** Total running time, in seconds. Derived, never typed. */
 export function runtimeOf(explainer: Explainer, medium: Medium = 'page'): number {
   return scenesFor(explainer, medium).reduce((total, { scene }) => total + sceneSeconds(scene), 0);

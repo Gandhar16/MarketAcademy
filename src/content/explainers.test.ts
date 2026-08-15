@@ -3,6 +3,7 @@ import {
   EXPLAINERS,
   EXPLAINER_BY_ID,
   explainersForTerm,
+  forMedium,
   READING_CHARS_PER_SECOND,
   runtimeOf,
   timeline,
@@ -100,6 +101,41 @@ describe('explainers', () => {
       for (const entry of timeline(e, 'page')) {
         expect(entry.scene.kind, `${e.id} shows a compare scene on the page`).not.toBe('compare');
       }
+    }
+  });
+
+  it('strips video-only scenes out of what the page is handed', () => {
+    // The player is a client component, so whatever it receives is serialised
+    // into the HTML. Without this the analogy scenes would be downloaded by
+    // every reader and rendered by none of them — invisible, so nothing would
+    // ever have complained.
+    for (const e of EXPLAINERS) {
+      const page = forMedium(e, 'page');
+      const prose = JSON.stringify(page);
+
+      for (const chapter of e.chapters) {
+        for (const s of chapter.scenes) {
+          if (s.only !== 'video') continue;
+          expect(prose.includes(s.caption.slice(0, 40)), `${e.id} ships a video caption to the page`).toBe(false);
+          if (s.scene.kind === 'compare') {
+            expect(prose.includes(s.scene.breaks.slice(0, 40)), `${e.id} ships an analogy to the page`).toBe(false);
+          }
+        }
+      }
+    }
+
+    // And the video cut is handed back untouched.
+    for (const e of EXPLAINERS) expect(forMedium(e, 'video')).toBe(e);
+  });
+
+  it('keeps the page cut playable after stripping', () => {
+    // Filtering must not leave an empty chapter behind — that is a heading in
+    // the chapter list that jumps nowhere.
+    for (const e of EXPLAINERS) {
+      const page = forMedium(e, 'page');
+      expect(page.chapters.length, e.id).toBeGreaterThan(0);
+      for (const c of page.chapters) expect(c.scenes.length, `${e.id} / ${c.title}`).toBeGreaterThan(0);
+      expect(runtimeOf(page), e.id).toBeCloseTo(runtimeOf(e, 'page'), 6);
     }
   });
 

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { EXPLAINER_BY_ID, EXPLAINERS } from '@/content/explainers';
+import { EXPLAINER_BY_ID, EXPLAINERS, forMedium } from '@/content/explainers';
 import { GLOSSARY_BY_ID } from '@/content/glossary';
 import { ExplainerPlayer, ExplainerTranscript } from '@/components/explain/ExplainerPlayer';
 
@@ -17,8 +17,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ExplainerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const explainer = EXPLAINER_BY_ID.get(id);
-  if (!explainer) notFound();
+  const full = EXPLAINER_BY_ID.get(id);
+  if (!full) notFound();
+
+  // The page cut, not the whole thing. The player and the transcript are both
+  // handed this, so the video-only scenes are never serialised into the page
+  // for a browser that has no way to show them.
+  const explainer = forMedium(full, 'page');
 
   const terms = explainer.terms.map((t) => GLOSSARY_BY_ID.get(t)).filter((e) => e != null);
 
