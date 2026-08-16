@@ -1,0 +1,9 @@
+# Build outputs of the video pipeline. None of this belongs in a deployment,
+# and uploading it is not merely wasteful: `out/.render-tmp` holds a live
+# Chromium profile while `pnpm video` is running, and a deploy that walks into
+# it fails with a file lock rather than anything that reads like the real cause.
+#
+# The narration mp3s the site actually serves live in `public/narration/` and
+# are NOT covered by this.
+out
+vendor
