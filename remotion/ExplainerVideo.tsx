@@ -83,6 +83,9 @@ export function stageHeightOf(scene: Scene): number {
       return 120;
     case 'ladder':
       return 30 + Math.max(scene.bids.length, scene.asks.length) * 32 + 46;
+    case 'candle':
+      // The glyph and its labelled levels, plus a row of read-outs.
+      return 208 + (scene.readouts?.length ? 16 + 56 : 0);
     case 'band':
       // Header, then the three stacked rows of the track (marker / band /
       // edge labels), then the verdict strip.

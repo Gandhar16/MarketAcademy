@@ -33,6 +33,7 @@
 import type {
   BandScene,
   BarsScene,
+  CandleScene,
   ChainScene,
   CompareScene,
   Glyph,
@@ -94,7 +95,86 @@ export function SceneView({ scene, elapsed, reduced = false }: SceneProps) {
       return <CompareView scene={scene} elapsed={t} />;
     case 'band':
       return <BandView scene={scene} elapsed={t} />;
+    case 'candle':
+      return <CandleView scene={scene} elapsed={t} />;
   }
+}
+
+// ── candle ──────────────────────────────────────────────────────────────────
+
+function CandleView({ scene, elapsed }: { scene: CandleScene; elapsed: number }) {
+  const { open, high, low, close } = scene;
+  const span = Math.max(high - low, 0.01);
+  // Percentage down from the high, so the top of the picture is the high —
+  // which is how everyone reads a chart and how the numbers line up.
+  const y = (price: number) => ((high - price) / span) * 100;
+
+  const up = close >= open;
+  const bodyTop = y(Math.max(open, close));
+  const bodyHeight = Math.abs(y(open) - y(close));
+
+  const wick = easeOut(at(elapsed, 0, 0.5));
+  const body = easeOut(at(elapsed, 0.4, 0.5));
+  const labels = at(elapsed, 0.9, 0.4);
+  const reads = at(elapsed, 1.6, 0.5);
+
+  const levels = [
+    { key: 'high', label: 'high', price: high },
+    { key: 'open', label: 'open', price: open },
+    { key: 'close', label: 'close', price: close },
+    { key: 'low', label: 'low', price: low },
+  ];
+
+  return (
+    <div className="flex h-full flex-col justify-center gap-4">
+      <div className="flex items-stretch justify-center gap-8">
+        {/* The glyph. Deliberately wide-bodied — this is a diagram of a shape,
+            not a bar on a chart, and it should not look like one. */}
+        <div className="relative h-52 w-28">
+          <div
+            className={`absolute left-1/2 w-0.5 -translate-x-1/2 ${up ? 'bg-up' : 'bg-down'}`}
+            style={{ top: 0, height: `${100 * wick}%` }}
+          />
+          <div
+            className={`absolute left-1/2 w-16 -translate-x-1/2 rounded-sm ${up ? 'bg-up/70' : 'bg-down/70'}`}
+            style={{ top: `${bodyTop}%`, height: `${Math.max(bodyHeight * body, 0.8)}%` }}
+          />
+        </div>
+
+        {/* The four numbers, at the height each one actually sits. This is the
+            whole point of the scene: the shape IS these four facts. */}
+        <div className="relative h-52 w-52" style={{ opacity: labels }}>
+          {levels.map((level) => (
+            <div
+              key={level.key}
+              className="absolute flex -translate-y-1/2 items-center gap-2"
+              style={{ top: `${y(level.price)}%` }}
+            >
+              <span className="h-px w-6 bg-line-strong" />
+              <span className="text-[10px] uppercase tracking-wider text-ink-faint">{level.label}</span>
+              <span className="num text-sm text-ink">{level.price.toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {scene.readouts && scene.readouts.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-2" style={{ opacity: reads }}>
+          {scene.readouts.map((r) => (
+            <div
+              key={r.label}
+              className={`rounded-xl border px-3 py-2 text-center ${
+                r.tone === 'bad' ? 'border-down/40 bg-down/5' : 'border-line bg-surface-2'
+              }`}
+            >
+              <p className="text-[10px] uppercase tracking-wider text-ink-faint">{r.label}</p>
+              <p className="num mt-0.5 text-sm text-ink">{r.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── band ────────────────────────────────────────────────────────────────────

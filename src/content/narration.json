@@ -165,6 +165,66 @@
     "Which is why the risk budget is decided once, while nothing is happening, and then left alone. It is not a view about this trade. Every argument about whether a particular stock is a good idea sits downstream of a number you should already have chosen — and the moment you raise it because you feel sure, you have replaced the arithmetic with a feeling.": {
       "file": "how-much-should-you-buy-07.mp3",
       "seconds": 19.904
+    },
+    "A pattern is announced: it works 54% of the time. That sounds like an edge until you ask the only question that matters — how often would you have been right by guessing \"up\" every single day? Suppose the answer is 52%. The pattern is now worth 2 percentage points, not 54.": {
+      "file": "why-the-backtest-lied-01.mp3",
+      "seconds": 18.411
+    },
+    "Medicine has known this for a century and never states a result without it. Nobody accepts \"eighty percent of patients improved\" on its own, because the first question back is always how many would have improved anyway. A market has a base rate too, and almost nothing published about patterns quotes it.": {
+      "file": "why-the-backtest-lied-02.mp3",
+      "seconds": 17.643
+    },
+    "This is the part that does the damage, and it is pure arithmetic. Take an idea with no merit at all and test it at the usual 5% threshold: a 1 in 20 chance it looks significant by luck. Now test 5 ideas, then 20, then 100. The chance that at least one worthless idea passes climbs to 99%.": {
+      "file": "why-the-backtest-lied-03.mp3",
+      "seconds": 21.013
+    },
+    "Nobody sets out to do this. You try a 20-day average, then 50, then 200; you try it on large caps, then mid caps; you add a volume filter. That is dozens of tests, and you only ever report the one that worked. The result is not the best rule — it is the luckiest one, and luck does not repeat.": {
+      "file": "why-the-backtest-lied-04.mp3",
+      "seconds": 19.221
+    },
+    "A tailor fits a suit to one body. Every extra measurement makes it fit that person better and everybody else worse, and past a point the suit is a description of one afternoon rather than a garment. A rule tuned until it fits ten years of history exactly has become a description of those ten years.": {
+      "file": "why-the-backtest-lied-05.mp3",
+      "seconds": 18.752
+    },
+    "The first is using information that had not arrived yet. It happens by accident constantly: you decide to buy on days that closed strong, and record the trade at that day's open. The decision used the close. The trade used the open. On the day itself, the close had not happened.": {
+      "file": "why-the-backtest-lied-06.mp3",
+      "seconds": 17.557
+    },
+    "The second is subtler and it is baked into most data. Test a strategy on the fifty companies in the index today, and every company that was in it and got thrown out is missing from your sample. You have tested it exclusively on survivors, and survivors are not a random selection.": {
+      "file": "why-the-backtest-lied-07.mp3",
+      "seconds": 16.768
+    },
+    "And when a rule does survive all of that, judge it on expectancy rather than on how often it is right. These three are the same idea reached three ways: being right seldom and large beats being right often and small, and a high hit rate can be the worst of the set.": {
+      "file": "why-the-backtest-lied-08.mp3",
+      "seconds": 15.509
+    },
+    "A candle is not a picture of a day. It is four numbers from a day, arranged into a shape: where it opened, where it closed, and the furthest it got in each direction. The thick part is open-to-close. The thin line is everything else that happened.": {
+      "file": "what-one-candle-hides-01.mp3",
+      "seconds": 14.763
+    },
+    "Now read what those four numbers actually say. The price covered 8.00 points of ground between its lowest and highest moment, and finished 1.00 above where it started. Almost everything that happened cancelled out — and the shape shows you the 1.00, not the 8.00.": {
+      "file": "what-one-candle-hides-02.mp3",
+      "seconds": 19.051
+    },
+    "Here is the part that matters for every rule anyone builds on candles. This one is consistent with a day that opened, sank to 98 first while everyone panicked, then climbed all the way to 106 before easing back.": {
+      "file": "what-one-candle-hides-03.mp3",
+      "seconds": 13.888
+    },
+    "It is equally consistent with the exact opposite: a day that ran to 106 in the first hour, gave all of it back and more, and only recovered to 101 at the very end. Two completely different days. One identical candle. Nothing in the shape distinguishes them.": {
+      "file": "what-one-candle-hides-04.mp3",
+      "seconds": 17.195
+    },
+    "Which is why a candle is best thought of as a weather summary rather than a recording. High of thirty-four, low of nineteen, ended mild. True, useful, and it cannot tell you whether the cold came before the heat — and if your plan depended on being outside at the right moment, that is the only thing you needed.": {
+      "file": "what-one-candle-hides-05.mp3",
+      "seconds": 17.963
+    },
+    "Volume gets read the same hopeful way. It counts how many shares changed hands and nothing else — not who was keen, not which side was in a hurry. Every share sold was also bought, so a heavy day cannot tell you that selling outweighed buying. It only tells you a lot of people disagreed about the price.": {
+      "file": "what-one-candle-hides-06.mp3",
+      "seconds": 18.091
+    },
+    "So use the candle for what it holds — four honest numbers — and stop asking it for the fifth. If your rule depends on which came first, the high or the low, it depends on something this data does not contain, and testing it on this data will not find that out.": {
+      "file": "what-one-candle-hides-07.mp3",
+      "seconds": 15.296
     }
   }
 }

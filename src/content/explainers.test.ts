@@ -189,7 +189,11 @@ describe('explainers', () => {
     // `band` draws a price RANGE and at most one stated price inside it, which
     // is arithmetic plus a hypothetical — the same status as the order-book
     // ladder. What stays forbidden is a sequence of prices joined into a line.
-    const allowed = new Set(['chain', 'bars', 'ladder', 'compare', 'band']);
+    // `candle` draws ONE candle from four stated numbers — the glyph as a
+    // structure, in the explainer about what that structure discards. There is
+    // no array field, because a list of candles is a chart of a week that never
+    // happened.
+    const allowed = new Set(['chain', 'bars', 'ladder', 'compare', 'band', 'candle']);
     for (const e of EXPLAINERS) {
       for (const chapter of e.chapters) {
         for (const s of chapter.scenes) {
@@ -277,6 +281,61 @@ describe('explainers', () => {
     expect(quantities.bars[0].value).toBeGreaterThan(quantities.bars.at(-1)!.value);
 
     for (const bar of quantities.bars) expect(Number.isInteger(bar.value)).toBe(true);
+  });
+
+  it('never draws a candle that could not exist', () => {
+    // The high has to be the highest thing and the low the lowest, or the
+    // picture teaches a shape the market cannot produce — in the one explainer
+    // whose entire subject is reading that shape correctly.
+    for (const e of EXPLAINERS) {
+      for (const chapter of e.chapters) {
+        for (const s of chapter.scenes) {
+          if (s.scene.kind !== 'candle') continue;
+          const { open, high, low, close } = s.scene;
+          const where = `${e.id} / ${chapter.title}`;
+          expect(high, where).toBeGreaterThanOrEqual(Math.max(open, close));
+          expect(low, where).toBeLessThanOrEqual(Math.min(open, close));
+          expect(high, where).toBeGreaterThan(low);
+        }
+      }
+    }
+  });
+
+  it('keeps every candle in an explainer identical, because that is the lesson', () => {
+    // "Two different days, one identical candle" only works if the candle is
+    // genuinely identical every time it is drawn. Four numbers retyped per
+    // scene would eventually drift and quietly gut the argument.
+    const candles = EXPLAINER_BY_ID.get('what-one-candle-hides')!.chapters
+      .flatMap((c) => c.scenes)
+      .map((s) => s.scene)
+      .filter((s) => s.kind === 'candle')
+      .map((s) => `${s.open}/${s.high}/${s.low}/${s.close}`);
+
+    expect(candles.length).toBeGreaterThan(1);
+    expect(new Set(candles).size).toBe(1);
+  });
+
+  it('does the multiple-testing arithmetic correctly', () => {
+    // The scene's whole claim is that testing more worthless ideas makes a
+    // false positive near-certain. Recomputed here rather than eyeballed,
+    // because a wrong number in this particular scene would be the site
+    // committing the exact error it is warning about.
+    const backtest = EXPLAINER_BY_ID.get('why-the-backtest-lied')!;
+    const chances = backtest.chapters
+      .flatMap((c) => c.scenes)
+      .map((s) => s.scene)
+      .find((s) => s.kind === 'bars' && s.bars.some((b) => b.label.includes('idea')));
+
+    expect(chances?.kind).toBe('bars');
+    if (chances?.kind !== 'bars') return;
+
+    for (const bar of chances.bars) {
+      const n = Number(bar.label.match(/^(\d+)/)![1]);
+      expect(bar.value).toBeCloseTo((1 - Math.pow(0.95, n)) * 100, 6);
+    }
+    // And it must be monotonic — more tries, more chance.
+    const values = chances.bars.map((b) => b.value);
+    for (let i = 1; i < values.length; i++) expect(values[i]).toBeGreaterThan(values[i - 1]);
   });
 
   it('lets the option explainer show a real melt to zero', () => {

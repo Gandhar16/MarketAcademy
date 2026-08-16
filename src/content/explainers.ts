@@ -39,6 +39,7 @@ import type { CostLine } from '@/lib/engine/costs';
 import { blackScholesPrice, daysToYears, intrinsicValue } from '@/lib/engine/options';
 import { canTradeAtBand, checkBand, indiaPriceBand } from '@/lib/engine/halts';
 import { sizeFromStop } from '@/lib/engine/portfolio';
+import { expectancy } from '@/lib/games/ruin';
 
 export type Tone = 'neutral' | 'cost' | 'good' | 'bad';
 
@@ -98,6 +99,31 @@ export interface BandScene {
   verdict?: string;
 }
 
+/**
+ * One candle, drawn from four stated numbers.
+ *
+ * This is a STRUCTURE diagram, not a chart. It draws the glyph — wick, body,
+ * open, close — so a learner can see what the shape encodes, and the explainer
+ * it exists for is specifically about what the shape throws away. Four stated
+ * numbers is the same status as the ladder's stated order book: an example, not
+ * a claim that any day looked like this.
+ *
+ * There is one candle and there is no array. The moment this took a list it
+ * would be a price chart of a week that never happened, which PLAN.md §7.1
+ * forbids and which the scene-kind test guards.
+ */
+export interface CandleScene {
+  kind: 'candle';
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  /** What this candle is being used to show. */
+  caption?: string;
+  /** Optional labelled read-outs derived from the four numbers. */
+  readouts?: { label: string; value: string; tone?: Tone }[];
+}
+
 /** The line drawings a compare scene may use. Fixed set, drawn in `Scenes.tsx`. */
 export type Glyph = 'house' | 'taxi' | 'clock' | 'receipt' | 'exchange' | 'queue' | 'vault' | 'token';
 
@@ -126,7 +152,7 @@ export interface CompareScene {
   breaks: string;
 }
 
-export type Scene = ChainScene | BarsScene | LadderScene | CompareScene | BandScene;
+export type Scene = ChainScene | BarsScene | LadderScene | CompareScene | BandScene | CandleScene;
 
 export interface ExplainerScene {
   /**
@@ -310,6 +336,37 @@ const RUIN = [0.01, 0.02, 0.05, 0.1].map((fraction) => ({
   remaining: afterLosses(fraction, 10),
   climb: climbBack(afterLosses(fraction, 10)),
 }));
+
+// ── Evidence arithmetic ─────────────────────────────────────────────────────
+//
+// All exact, none of it claimed about any real market. The base rate is a
+// STATED assumption — "suppose this stock rises the next day 52% of the time" —
+// and every figure downstream is arithmetic on that assumption. Real base rates
+// come from real bars in `analysis/patterns.ts`, which needs data this module
+// does not have and must never invent.
+
+const BASE_RATE = 0.52;
+const PATTERN_HIT = 0.54;
+
+/** Chance of at least one "significant at 5%" result from `n` worthless ideas. */
+const falsePositiveChance = (n: number) => 1 - Math.pow(0.95, n);
+const IDEAS_TRIED = [1, 5, 20, 100].map((n) => ({ n, chance: falsePositiveChance(n) * 100 }));
+
+/** Two strategies with the same expectancy reached from opposite directions. */
+const EXPECTANCIES = [
+  { label: 'Right 54% of the time, 1:1', value: expectancy(0.54, 1) },
+  { label: 'Right 40% of the time, 2:1', value: expectancy(0.4, 2) },
+  { label: 'Right 70% of the time, 0.4:1', value: expectancy(0.7, 0.4) },
+];
+
+// ── One candle, as a structure ──────────────────────────────────────────────
+//
+// Four stated numbers. The scene exists to show what the shape encodes and,
+// more importantly, what it discards.
+
+const CANDLE = { open: 100, high: 106, low: 98, close: 101 };
+const CANDLE_RANGE = CANDLE.high - CANDLE.low;
+const CANDLE_NET = CANDLE.close - CANDLE.open;
 
 // ── The explainers ──────────────────────────────────────────────────────────
 
@@ -1020,12 +1077,279 @@ const HOW_MUCH_SHOULD_YOU_BUY: Explainer = {
   ],
 };
 
+const WHY_THE_BACKTEST_LIED: Explainer = {
+  id: 'why-the-backtest-lied',
+  title: 'Why the backtest lied',
+  blurb: `Test ${IDEAS_TRIED[2].n} worthless ideas and there is a ${IDEAS_TRIED[2].chance.toFixed(0)}% chance one of them looks significant. Here is how a result appears out of nothing.`,
+  question: 'It worked on ten years of data. Why did it stop working on mine?',
+  terms: ['backtest', 'base-rate', 'statistical-significance', 'overfitting', 'lookahead-bias', 'survivorship-bias', 'expectancy'],
+  chapters: [
+    {
+      title: 'The number nobody compares against',
+      scenes: [
+        {
+          seconds: 8,
+          caption: `A pattern is announced: it works ${(PATTERN_HIT * 100).toFixed(0)}% of the time. That sounds like an edge until you ask the only question that matters — how often would you have been right by guessing "up" every single day? Suppose the answer is ${(BASE_RATE * 100).toFixed(0)}%. The pattern is now worth ${((PATTERN_HIT - BASE_RATE) * 100).toFixed(0)} percentage points, not ${(PATTERN_HIT * 100).toFixed(0)}.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: 100,
+            precision: 0,
+            bars: [
+              { label: 'The pattern is right', value: PATTERN_HIT * 100, tone: 'good', note: '% of the time' },
+              { label: 'Guessing "up" every day is right', value: BASE_RATE * 100, tone: 'neutral', note: 'the base rate' },
+              {
+                label: 'What the pattern actually adds',
+                value: (PATTERN_HIT - BASE_RATE) * 100,
+                tone: 'cost',
+                note: 'percentage points',
+              },
+            ],
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'Medicine has known this for a century and never states a result without it. Nobody accepts "eighty percent of patients improved" on its own, because the first question back is always how many would have improved anyway. A market has a base rate too, and almost nothing published about patterns quotes it.',
+          scene: {
+            kind: 'compare',
+            glyph: 'receipt',
+            everyday: ANALOGIES['base-rate'],
+            market: `A pattern that fires ${(PATTERN_HIT * 100).toFixed(0)}% right, against a ${(BASE_RATE * 100).toFixed(0)}% base rate, has to earn its costs out of ${((PATTERN_HIT - BASE_RATE) * 100).toFixed(0)} points.`,
+            breaks:
+              'A trial fixes its question before collecting data. A chart lets you look first and decide what you were testing afterwards, which is the next problem.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'Finding an edge that was never there',
+      scenes: [
+        {
+          seconds: 10,
+          caption: `This is the part that does the damage, and it is pure arithmetic. Take an idea with no merit at all and test it at the usual 5% threshold: a 1 in 20 chance it looks significant by luck. Now test ${IDEAS_TRIED[1].n} ideas, then ${IDEAS_TRIED[2].n}, then ${IDEAS_TRIED[3].n}. The chance that at least one worthless idea passes climbs to ${IDEAS_TRIED[3].chance.toFixed(0)}%.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: 100,
+            precision: 0,
+            bars: IDEAS_TRIED.map((r) => ({
+              label: `${r.n} idea${r.n === 1 ? '' : 's'} tested`,
+              value: r.chance,
+              tone: r.chance > 50 ? ('bad' as const) : ('neutral' as const),
+              note: '% chance at least one looks significant anyway',
+            })),
+          },
+        },
+        {
+          seconds: 8,
+          caption: `Nobody sets out to do this. You try a 20-day average, then 50, then 200; you try it on large caps, then mid caps; you add a volume filter. That is dozens of tests, and you only ever report the one that worked. The result is not the best rule — it is the luckiest one, and luck does not repeat.`,
+          scene: {
+            kind: 'chain',
+            token: 'the search',
+            steps: [
+              { label: 'Try a rule', sub: 'it does not work' },
+              { label: 'Tweak it', sub: 'and try again' },
+              { label: 'One finally works', sub: 'beautifully' },
+              { label: 'Publish that one', sub: 'the others are forgotten' },
+            ],
+            at: 3,
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'A tailor fits a suit to one body. Every extra measurement makes it fit that person better and everybody else worse, and past a point the suit is a description of one afternoon rather than a garment. A rule tuned until it fits ten years of history exactly has become a description of those ten years.',
+          scene: {
+            kind: 'compare',
+            glyph: 'receipt',
+            everyday: ANALOGIES.overfitting,
+            market:
+              'Every parameter you tune is another measurement. The fit to the past improves; the fit to next year does not.',
+            breaks:
+              'A suit that fits badly is obvious the moment you put it on. An overfitted rule looks perfect right up until it is running on your money.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'Two ways the past lies about itself',
+      scenes: [
+        {
+          seconds: 9,
+          caption:
+            'The first is using information that had not arrived yet. It happens by accident constantly: you decide to buy on days that closed strong, and record the trade at that day\'s open. The decision used the close. The trade used the open. On the day itself, the close had not happened.',
+          scene: {
+            kind: 'chain',
+            token: 'one backtested trade',
+            steps: [
+              { label: '09:15 — the open', sub: 'you record the buy here' },
+              { label: 'The day happens', sub: 'you do not know this yet' },
+              { label: '15:30 — the close', sub: 'strong, so the rule fires' },
+              { label: 'Recorded as a win', sub: 'using tomorrow to trade today' },
+            ],
+            at: 3,
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'The second is subtler and it is baked into most data. Test a strategy on the fifty companies in the index today, and every company that was in it and got thrown out is missing from your sample. You have tested it exclusively on survivors, and survivors are not a random selection.',
+          scene: {
+            kind: 'compare',
+            glyph: 'queue',
+            everyday: ANALOGIES['survivorship-bias'],
+            market:
+              'Today\'s index members are the ones that did well enough to still be there. The delisted and demoted are not in the file you downloaded.',
+            breaks:
+              'A marathon has a finish line and a known list of starters. Nobody publishes a convenient list of the companies quietly removed from an index over twenty years, which is why this bias is the easiest one to import without noticing.',
+          },
+        },
+        {
+          seconds: 10,
+          caption: `And when a rule does survive all of that, judge it on expectancy rather than on how often it is right. These three are the same idea reached three ways: being right seldom and large beats being right often and small, and a high hit rate can be the worst of the set.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: Math.max(...EXPECTANCIES.map((e) => Math.abs(e.value))),
+            precision: 2,
+            bars: EXPECTANCIES.map((e) => ({
+              label: e.label,
+              value: e.value,
+              tone: e.value > 0 ? ('good' as const) : ('bad' as const),
+              note: 'expected R per trade',
+            })),
+          },
+        },
+      ],
+    },
+  ],
+};
+
+const WHAT_ONE_CANDLE_HIDES: Explainer = {
+  id: 'what-one-candle-hides',
+  title: 'What one candle hides',
+  blurb: `Four numbers in one shape — and ${CANDLE_RANGE.toFixed(0)} points of movement compressed into a ${CANDLE_NET.toFixed(0)}-point result.`,
+  question: 'What is a candle actually telling me?',
+  terms: ['candle', 'ohlc', 'volume', 'gap'],
+  chapters: [
+    {
+      title: 'Four facts in one shape',
+      scenes: [
+        {
+          seconds: 8,
+          caption: `A candle is not a picture of a day. It is four numbers from a day, arranged into a shape: where it opened, where it closed, and the furthest it got in each direction. The thick part is open-to-close. The thin line is everything else that happened.`,
+          scene: {
+            kind: 'candle',
+            ...CANDLE,
+          },
+        },
+        {
+          seconds: 9,
+          caption: `Now read what those four numbers actually say. The price covered ${CANDLE_RANGE.toFixed(2)} points of ground between its lowest and highest moment, and finished ${CANDLE_NET.toFixed(2)} above where it started. Almost everything that happened cancelled out — and the shape shows you the ${CANDLE_NET.toFixed(2)}, not the ${CANDLE_RANGE.toFixed(2)}.`,
+          scene: {
+            kind: 'candle',
+            ...CANDLE,
+            readouts: [
+              { label: 'Ground covered', value: `${CANDLE_RANGE.toFixed(2)} points`, tone: 'bad' },
+              { label: 'Net change', value: `${CANDLE_NET > 0 ? '+' : ''}${CANDLE_NET.toFixed(2)} points` },
+              { label: 'Cancelled out', value: `${(CANDLE_RANGE - Math.abs(CANDLE_NET)).toFixed(2)} points`, tone: 'bad' },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      title: 'The order it does not record',
+      scenes: [
+        {
+          seconds: 9,
+          caption: `Here is the part that matters for every rule anyone builds on candles. This one is consistent with a day that opened, sank to ${CANDLE.low.toFixed(0)} first while everyone panicked, then climbed all the way to ${CANDLE.high.toFixed(0)} before easing back.`,
+          scene: {
+            kind: 'chain',
+            token: 'one possible day',
+            steps: [
+              { label: `Opens ${CANDLE.open.toFixed(0)}`, sub: 'the day begins' },
+              { label: `Falls to ${CANDLE.low.toFixed(0)}`, sub: 'the low comes first' },
+              { label: `Rallies to ${CANDLE.high.toFixed(0)}`, sub: 'the high comes later' },
+              { label: `Closes ${CANDLE.close.toFixed(0)}`, sub: 'eases back at the end' },
+            ],
+            at: 3,
+          },
+        },
+        {
+          seconds: 9,
+          caption: `It is equally consistent with the exact opposite: a day that ran to ${CANDLE.high.toFixed(0)} in the first hour, gave all of it back and more, and only recovered to ${CANDLE.close.toFixed(0)} at the very end. Two completely different days. One identical candle. Nothing in the shape distinguishes them.`,
+          scene: {
+            kind: 'chain',
+            token: 'the other possible day',
+            steps: [
+              { label: `Opens ${CANDLE.open.toFixed(0)}`, sub: 'the same open' },
+              { label: `Runs to ${CANDLE.high.toFixed(0)}`, sub: 'the high comes first' },
+              { label: `Slides to ${CANDLE.low.toFixed(0)}`, sub: 'gives it all back' },
+              { label: `Closes ${CANDLE.close.toFixed(0)}`, sub: 'the same close' },
+            ],
+            at: 3,
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'Which is why a candle is best thought of as a weather summary rather than a recording. High of thirty-four, low of nineteen, ended mild. True, useful, and it cannot tell you whether the cold came before the heat — and if your plan depended on being outside at the right moment, that is the only thing you needed.',
+          scene: {
+            kind: 'compare',
+            glyph: 'clock',
+            everyday: ANALOGIES.candle,
+            market: `Open ${CANDLE.open.toFixed(2)}, high ${CANDLE.high.toFixed(2)}, low ${CANDLE.low.toFixed(2)}, close ${CANDLE.close.toFixed(2)} — and no ordering at all.`,
+            breaks:
+              'A weather summary is nobody\'s trading signal. Named candle patterns are, and a great many of them are claims about a sequence the data does not contain.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'And the number beside it',
+      scenes: [
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'Volume gets read the same hopeful way. It counts how many shares changed hands and nothing else — not who was keen, not which side was in a hurry. Every share sold was also bought, so a heavy day cannot tell you that selling outweighed buying. It only tells you a lot of people disagreed about the price.',
+          scene: {
+            kind: 'compare',
+            glyph: 'queue',
+            everyday: ANALOGIES.volume,
+            market: 'Every trade has a buyer and a seller. Volume is the count of agreements, not a balance of opinion.',
+            breaks:
+              'Footfall through a shop at least tells you people walked in. Volume does not even tell you that much about direction — the same figure appears on the day something is dumped and the day it is snapped up.',
+          },
+        },
+        {
+          seconds: 8,
+          caption: `So use the candle for what it holds — four honest numbers — and stop asking it for the fifth. If your rule depends on which came first, the high or the low, it depends on something this data does not contain, and testing it on this data will not find that out.`,
+          scene: {
+            kind: 'candle',
+            ...CANDLE,
+            readouts: [
+              { label: 'Recorded', value: 'open · high · low · close' },
+              { label: 'Not recorded', value: 'the order any of it happened', tone: 'bad' },
+            ],
+          },
+        },
+      ],
+    },
+  ],
+};
+
 export const EXPLAINERS: Explainer[] = [
   WHERE_YOUR_MONEY_GOES,
   WHAT_HAPPENS_WHEN_YOU_PRESS_BUY,
   WHY_YOUR_OPTION_EXPIRED_WORTHLESS,
   WHY_YOU_COULD_NOT_SELL,
   HOW_MUCH_SHOULD_YOU_BUY,
+  WHY_THE_BACKTEST_LIED,
+  WHAT_ONE_CANDLE_HIDES,
 ];
 
 export const EXPLAINER_BY_ID = new Map(EXPLAINERS.map((e) => [e.id, e]));
