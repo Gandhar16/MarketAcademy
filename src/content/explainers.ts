@@ -40,6 +40,15 @@ import { blackScholesPrice, daysToYears, intrinsicValue } from '@/lib/engine/opt
 import { canTradeAtBand, checkBand, indiaPriceBand } from '@/lib/engine/halts';
 import { sizeFromStop } from '@/lib/engine/portfolio';
 import { expectancy } from '@/lib/games/ruin';
+import {
+  accrualGap,
+  cashConversion,
+  debtToEquity,
+  interestCoverage,
+  returnOnCapitalEmployed,
+  returnOnEquity,
+  type Financials,
+} from '@/lib/engine/fundamentals';
 
 export type Tone = 'neutral' | 'cost' | 'good' | 'bad';
 
@@ -368,6 +377,73 @@ const CANDLE = { open: 100, high: 106, low: 98, close: 101 };
 const CANDLE_RANGE = CANDLE.high - CANDLE.low;
 const CANDLE_NET = CANDLE.close - CANDLE.open;
 
+// ── One company, two ways of describing it ──────────────────────────────────
+//
+// A STATED set of figures — not any real company — run through the ratio engine
+// so the explainer can show the arithmetic rather than assert the conclusion.
+// The two versions have identical operations and differ only in how they were
+// funded, which is the entire point of the scene they appear in.
+
+const UNLEVERED: Financials = {
+  netProfit: 140,
+  operatingCashFlow: 140,
+  operatingProfit: 140,
+  interestCost: 0,
+  equity: 1_000,
+  debt: 0,
+  totalAssets: 1_250,
+  currentAssets: 400,
+  currentLiabilities: 200,
+};
+
+const LEVERED: Financials = {
+  ...UNLEVERED,
+  equity: 400,
+  debt: 600,
+  interestCost: 48,
+  netProfit: 140 - 48,
+  operatingCashFlow: 140 - 48,
+};
+
+/** Same reported profit, half of it still sitting in unpaid invoices. */
+const PAPER_PROFIT: Financials = { ...UNLEVERED, operatingCashFlow: 70 };
+
+const COVER = [14, 47, 93, 127].map((interestCost) => ({
+  interestCost,
+  times: interestCoverage({ ...UNLEVERED, interestCost }),
+}));
+
+// ── How much of a chart is "near a level" ───────────────────────────────────
+//
+// Arithmetic, on a chart with an ordinary number of tools switched on. No claim
+// about any real chart — the point is that the coverage figure is a consequence
+// of how many lines you drew, which is a decision rather than a discovery.
+
+const LEVEL_SOURCES = [
+  { label: 'Fibonacci retracements', count: 5 },
+  { label: 'Pivot points', count: 7 },
+  { label: 'Two moving averages', count: 2 },
+  { label: 'Round numbers', count: 3 },
+];
+const LEVEL_COUNT = LEVEL_SOURCES.reduce((n, s) => n + s.count, 0);
+/** How close counts as "respecting" a level, either side, in percent. */
+const LEVEL_TOLERANCE = 0.4;
+/** How much ground the visible chart covers, top to bottom, in percent. */
+const CHART_RANGE = 20;
+const CHART_COVERED = Math.min(100, ((LEVEL_COUNT * LEVEL_TOLERANCE * 2) / CHART_RANGE) * 100);
+
+/** Distinct straight lines you can draw through `n` marked points. */
+const linesThrough = (n: number) => (n * (n - 1)) / 2;
+const SWINGS = 12;
+
+// ── The contract that owes more than you have ───────────────────────────────
+
+const LOT_SIZE = 250;
+const OPT_STRIKE = 2_800;
+const CONTRACT_VALUE = LOT_SIZE * OPT_STRIKE;
+const PREMIUM_PER_SHARE = 8;
+const PREMIUM_PAID = LOT_SIZE * PREMIUM_PER_SHARE;
+
 // ── The explainers ──────────────────────────────────────────────────────────
 
 const WHERE_YOUR_MONEY_GOES: Explainer = {
@@ -457,7 +533,6 @@ const WHERE_YOUR_MONEY_GOES: Explainer = {
         },
         {
           seconds: 9,
-          only: 'video',
           caption: `If you have ever bought property, you have already paid this tax under another name. The registration charge is not a fee for a service and it is not a share of your profit — the state takes it because a transfer happened. STT is the same instrument pointed at shares: ${rupees(STT_TOTAL)} on this round trip, taken on the way out, owed just as fully on the day you sell at a loss.`,
           scene: {
             kind: 'compare',
@@ -628,7 +703,6 @@ const WHAT_HAPPENS_WHEN_YOU_PRESS_BUY: Explainer = {
         },
         {
           seconds: 9,
-          only: 'video',
           caption:
             'The clearest version of the spread is the currency counter at an airport. It buys dollars at one figure and sells them at a higher one, and the gap is the whole business. Walk up, change rupees to dollars and immediately change them back, and you get less money than you started with — nobody cheated you and nobody handed you a bill. Every share you buy works exactly like that.',
           scene: {
@@ -736,7 +810,6 @@ const WHY_YOUR_OPTION_EXPIRED_WORTHLESS: Explainer = {
         },
         {
           seconds: 9,
-          only: 'video',
           caption: `Before the arithmetic, the thing itself. You have seen a builder take a token to hold a flat for a month at a fixed figure. If prices jump you buy at the old figure and you have done very well. If you change your mind you lose the token and nothing more. What you bought was not the flat — it was a month of being allowed to decide, and ${rupees(OPT_PAID)} is what that month cost.`,
           scene: {
             kind: 'compare',
@@ -895,7 +968,6 @@ const WHY_YOU_COULD_NOT_SELL: Explainer = {
         },
         {
           seconds: 9,
-          only: 'video',
           caption:
             'The comparison people reach for is a referee stopping play, and it is a good one as far as it goes. The crowd is out of hand, so everything pauses until it calms down. What the comparison hides is who is standing where when the whistle blows — because the pause is not neutral. It costs whoever needed the next few seconds most.',
           scene: {
@@ -926,6 +998,20 @@ const WHY_YOU_COULD_NOT_SELL: Explainer = {
               { label: 'No buyer', sub: 'it simply waits' },
             ],
             at: 3,
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'And the same thing happens overnight without any circuit at all. You leave an instruction to sell at ninety-five; the shutters come down; the world changes; the shop reopens at eighty-five. Nothing traded at ninety-five because there was no ninety-five. A stop protects you against a price falling THROUGH your level, not against there never being one.',
+          scene: {
+            kind: 'compare',
+            glyph: 'clock',
+            everyday: ANALOGIES.gap,
+            market: `Locked at ${rupees(BAND.lower)} or gapped open beneath your stop — the same failure. Your order needed a price that never existed.`,
+            breaks:
+              'A shop reopens at a price it chose. A market reopens at whatever the first matched order agrees, which can be well below where anyone expected to be able to sell.',
           },
         },
         {
@@ -975,7 +1061,6 @@ const HOW_MUCH_SHOULD_YOU_BUY: Explainer = {
         },
         {
           seconds: 9,
-          only: 'video',
           caption: `The gap between those two bars is the whole idea, and it exists because you have a stop-loss. You are not betting ${rupees(TIGHT.deployed, 0)} on this company being right. You are betting ${rupees(TIGHT.riskAmount, 0)} on it not falling ${TIGHT.stopPercent}% first — and if it does, you leave. Everything else is still yours.`,
           scene: {
             kind: 'compare',
@@ -1108,7 +1193,6 @@ const WHY_THE_BACKTEST_LIED: Explainer = {
         },
         {
           seconds: 9,
-          only: 'video',
           caption:
             'Medicine has known this for a century and never states a result without it. Nobody accepts "eighty percent of patients improved" on its own, because the first question back is always how many would have improved anyway. A market has a base rate too, and almost nothing published about patterns quotes it.',
           scene: {
@@ -1294,7 +1378,6 @@ const WHAT_ONE_CANDLE_HIDES: Explainer = {
         },
         {
           seconds: 9,
-          only: 'video',
           caption:
             'Which is why a candle is best thought of as a weather summary rather than a recording. High of thirty-four, low of nineteen, ended mild. True, useful, and it cannot tell you whether the cold came before the heat — and if your plan depended on being outside at the right moment, that is the only thing you needed.',
           scene: {
@@ -1342,6 +1425,558 @@ const WHAT_ONE_CANDLE_HIDES: Explainer = {
   ],
 };
 
+const WHAT_YOU_ACTUALLY_OWN: Explainer = {
+  id: 'what-you-actually-own',
+  title: 'What you actually own',
+  blurb: 'A share is a slice of a business, not a ticket on a price. Where your money goes depends entirely on who you bought it from.',
+  question: 'I bought a share. What is it, and where did my money go?',
+  terms: ['share', 'shareholder', 'primary-market', 'secondary-market', 'ipo', 'dividend', 'price'],
+  chapters: [
+    {
+      title: 'A slice of something real',
+      scenes: [
+        {
+          seconds: 9,
+          caption:
+            'Start with what the thing is, because the price chart makes everyone forget. A share is a slice of ownership in a business that has employees, sells something, and pays tax. If the business does well over years, the slice is worth more. That is the whole mechanism, and everything else on this site is detail hanging off it.',
+          scene: {
+            kind: 'compare',
+            glyph: 'receipt',
+            everyday: ANALOGIES.share,
+            market:
+              'One share of a company with a million shares outstanding is one millionth of the business — its profits, its debts and its future.',
+            breaks:
+              'A pizza slice is yours to eat. A share entitles you to a vote nobody notices and a share of profits only if the company decides to hand any out.',
+          },
+        },
+        {
+          seconds: 8,
+          only: 'video',
+          caption:
+            'And it makes you an owner rather than a customer, which sounds like a technicality until something goes wrong. Owners are paid last. Staff, suppliers, tax and lenders all come before you, in that order — which is why the same business can survive perfectly well while your slice of it becomes worthless.',
+          scene: {
+            kind: 'chain',
+            token: 'a rupee the business earns',
+            steps: [
+              { label: 'Suppliers and staff', sub: 'paid first' },
+              { label: 'Lenders', sub: 'interest is a promise' },
+              { label: 'Tax', sub: 'not optional' },
+              { label: 'You', sub: 'whatever is left' },
+            ],
+            at: 3,
+          },
+        },
+      ],
+    },
+    {
+      title: 'Where the money actually went',
+      scenes: [
+        {
+          seconds: 9,
+          caption:
+            'Now the part almost nobody is told. When you buy a share on an ordinary day, none of your money reaches the company. It goes to whoever sold it to you — another investor, cashing out. The company is not involved and does not receive a rupee.',
+          scene: {
+            kind: 'chain',
+            token: 'your money, on a normal day',
+            steps: [
+              { label: 'You buy', sub: 'through your broker' },
+              { label: 'Another investor sells', sub: 'a stranger, exiting' },
+              { label: 'They receive your money', sub: 'all of it' },
+              { label: 'The company', sub: 'receives nothing' },
+            ],
+            at: 3,
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'There is exactly one occasion when your money does reach the company: when the shares are being sold for the first time. That is what an IPO is — the business raising money to build something. Every trade after that is second-hand, and second-hand is almost everything you will ever do.',
+          scene: {
+            kind: 'compare',
+            glyph: 'house',
+            everyday: ANALOGIES['secondary-market'],
+            market:
+              'First sale — an IPO — funds the company. Every trade afterwards moves ownership between investors and funds nobody but the seller.',
+            breaks:
+              'A flat is bought from the builder by one person. An IPO sells to thousands at once, and if it is oversubscribed you are allotted by lottery rather than by turning up early.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'What being an owner pays',
+      scenes: [
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'Ownership can pay you in two ways and only one of them is a decision anybody makes. The business can hand out part of its profit as a dividend — an actual payment, arriving in your account. That is a choice the directors make each year, and they can stop making it.',
+          scene: {
+            kind: 'compare',
+            glyph: 'receipt',
+            everyday: ANALOGIES.dividend,
+            market:
+              'A dividend is cash paid out of profit. It is not interest, it is not owed to you, and a company having paid one for twenty years does not oblige it to pay a twenty-first.',
+            breaks:
+              'Rent arrives because a contract says so and you can sue if it does not. A dividend arrives because a board voted for it, and there is nobody to sue when they vote otherwise.',
+          },
+        },
+        {
+          seconds: 8,
+          caption:
+            'The other way is that somebody later pays more for your slice than you did — and that is not a payment, it is an opinion, held by a stranger, that can change. Which of those two you are actually relying on is worth being honest with yourself about before you buy anything.',
+          scene: {
+            kind: 'chain',
+            token: 'what you are owed',
+            steps: [
+              { label: 'A dividend, if declared', sub: 'real money, not promised' },
+              { label: 'A vote', sub: 'proportional, and tiny' },
+              { label: 'A claim on what is left', sub: 'after everyone else' },
+              { label: 'A higher price', sub: 'owed by nobody at all' },
+            ],
+            at: 3,
+          },
+        },
+      ],
+    },
+  ],
+};
+
+const PROFIT_IS_AN_OPINION: Explainer = {
+  id: 'profit-is-an-opinion',
+  title: 'Profit is an opinion, cash is a fact',
+  blurb: `Two companies with identical profit and completely different health. The ratios that tell them apart, and the one that flatters itself.`,
+  question: 'The company is profitable. Why is that not enough to know?',
+  terms: [
+    'quality-of-earnings',
+    'roe',
+    'roce',
+    'roa',
+    'debt-to-equity',
+    'interest-coverage-ratio',
+    'current-ratio',
+    'moat',
+    'promoter-shareholding',
+    'pledged-shares',
+  ],
+  chapters: [
+    {
+      title: 'Profit that never arrived',
+      scenes: [
+        {
+          seconds: 9,
+          caption: `Two businesses report the same ${UNLEVERED.netProfit} of profit. One collected all of it in cash. The other collected ${PAPER_PROFIT.operatingCashFlow} — the rest is invoices customers have not paid. Both are legally profitable. Only one of them can pay a bill this month.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: UNLEVERED.netProfit,
+            precision: 0,
+            bars: [
+              { label: 'Reported profit — both companies', value: UNLEVERED.netProfit, tone: 'neutral', note: 'identical' },
+              { label: 'Cash the first one collected', value: UNLEVERED.operatingCashFlow, tone: 'good', note: `${cashConversion(UNLEVERED).toFixed(2)}x conversion` },
+              { label: 'Cash the second one collected', value: PAPER_PROFIT.operatingCashFlow, tone: 'bad', note: `${accrualGap(PAPER_PROFIT).toFixed(0)}% never showed up` },
+            ],
+          },
+        },
+        {
+          seconds: 9,
+          caption:
+            'This is not fraud and usually is not even a warning sign on its own — selling on credit is how most business works. It becomes one when the gap persists and widens, because profit can be recognised for years on business that never pays, and the accounts stay perfectly legal the entire time.',
+          scene: {
+            kind: 'compare',
+            glyph: 'receipt',
+            everyday: ANALOGIES['quality-of-earnings'],
+            market: `A ${accrualGap(PAPER_PROFIT).toFixed(0)}% gap between profit and cash, one year, means little. The same gap for four years running is the thing to go and understand.`,
+            breaks:
+              'A shopkeeper knows exactly who owes them. A public company tells you the total and not the names, so you are judging the trend rather than the debtors.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'The ratio that flatters itself',
+      scenes: [
+        {
+          seconds: 10,
+          caption: `Return on equity is the headline number on every screener, and it can be improved without improving anything. Here is one business, funded two ways. Replace ${rupees(UNLEVERED.equity - LEVERED.equity, 0)} of owners' money with borrowing and return on equity jumps from ${returnOnEquity(UNLEVERED).toFixed(1)}% to ${returnOnEquity(LEVERED).toFixed(1)}% — while the business does exactly the same thing it did before.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: returnOnEquity(LEVERED),
+            precision: 1,
+            bars: [
+              { label: 'Return on equity — funded by owners', value: returnOnEquity(UNLEVERED), tone: 'neutral', note: 'no borrowing' },
+              { label: 'Return on equity — funded by debt', value: returnOnEquity(LEVERED), tone: 'bad', note: `debt-to-equity ${debtToEquity(LEVERED).toFixed(1)}x` },
+            ],
+          },
+        },
+        {
+          seconds: 9,
+          caption: `Ask the same question of every rupee in the business instead — borrowed or not — and the flattery disappears. Return on capital employed is ${returnOnCapitalEmployed(UNLEVERED).toFixed(1)}% both times, because the operations never changed. When those two numbers diverge, the gap is the borrowing, and the borrowing is a promise with a schedule.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: returnOnEquity(LEVERED),
+            precision: 1,
+            bars: [
+              { label: 'Return on capital — funded by owners', value: returnOnCapitalEmployed(UNLEVERED), tone: 'good', note: 'unchanged' },
+              { label: 'Return on capital — funded by debt', value: returnOnCapitalEmployed(LEVERED), tone: 'good', note: 'identical, by construction' },
+            ],
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'Which is why the pair is worth more than either one. A high return on equity beside a much lower return on capital is not a great business — it is an ordinary business with a lot of borrowed money, and the two behave very differently the first time a year goes badly.',
+          scene: {
+            kind: 'compare',
+            glyph: 'vault',
+            everyday: ANALOGIES.roce,
+            market: `${returnOnEquity(LEVERED).toFixed(1)}% return on equity against ${returnOnCapitalEmployed(LEVERED).toFixed(1)}% on capital. The difference is entirely the ${rupees(LEVERED.debt, 0)} of debt.`,
+            breaks:
+              'A shopkeeper can choose to stop borrowing next month. A company\'s debts have fixed dates, and refusing to roll them over is the lender\'s decision rather than the company\'s.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'When borrowing turns dangerous',
+      scenes: [
+        {
+          seconds: 10,
+          caption: `Debt is not a problem until the interest bill stops being comfortably covered. Same operating profit of ${UNLEVERED.operatingProfit}, four different interest bills. At ${COVER[0].times.toFixed(0)} times over, nobody thinks about it. At ${COVER[3].times.toFixed(1)} times, one bad quarter stops being a disappointment and becomes a solvency question.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: COVER[0].times,
+            precision: 1,
+            bars: COVER.map((c) => ({
+              label: `Interest bill of ${c.interestCost}`,
+              value: c.times,
+              tone: c.times >= 3 ? ('good' as const) : ('bad' as const),
+              note: 'times covered by operating profit',
+            })),
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'And there is one Indian signal worth knowing that has no equivalent on a Western screener. Founders can borrow against their own stake. If the price falls far enough, the lender sells that stake into the market that is already falling — which pushes it lower, which triggers more selling. The trouble feeds itself.',
+          scene: {
+            kind: 'compare',
+            glyph: 'house',
+            everyday: ANALOGIES['pledged-shares'],
+            market:
+              'Pledged promoter holding is disclosed every quarter. A high and rising figure is not proof of anything — it is a reason to find out why they needed the money.',
+            breaks:
+              'A mortgaged flat is sold slowly, to one buyer, at a negotiated figure. Pledged shares are sold into the open market at whatever it will bear, on the worst possible day.',
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'None of these ratios tells you whether the business will still be worth owning in ten years. That question is about whether anything stops a competitor doing the same thing more cheaply — and unlike everything else here, it cannot be computed. It can only be argued, which is why it is the part most worth thinking about yourself.',
+          scene: {
+            kind: 'compare',
+            glyph: 'queue',
+            everyday: ANALOGIES.moat,
+            market:
+              'Ratios describe the last twelve months. Whether they will still hold is a judgement about competition, and no screener has a column for it.',
+            breaks:
+              'A barber\'s advantage is visible from the street. A company\'s is usually an argument about switching costs and habit, and the argument is easiest to believe about companies that have already done well.',
+          },
+        },
+      ],
+    },
+  ],
+};
+
+const EVERY_LEVEL_LOOKS_LIKE_IT_WORKED: Explainer = {
+  id: 'every-level-looks-like-it-worked',
+  title: 'Why every level looks like it worked',
+  blurb: `Switch on the usual tools and ${CHART_COVERED.toFixed(0)}% of the chart ends up within a whisker of some line. Then anything that happens has respected one.`,
+  question: 'The levels always seem to work when I look back. Why not when I trade them?',
+  terms: [
+    'trendline',
+    'swing-point',
+    'fibonacci-retracement',
+    'confluence',
+    'elliott-wave',
+    'pivot-point',
+    'rsi-divergence',
+    'adx',
+    'volume-profile',
+    'head-and-shoulders',
+    'double-top',
+    'neckline',
+    'measured-move',
+    'ohlc-bar-chart',
+    'heikin-ashi',
+    'hollow-candle',
+    'support',
+    'resistance',
+  ],
+  chapters: [
+    {
+      title: 'The line drawn after the walk',
+      scenes: [
+        {
+          seconds: 9,
+          caption:
+            'A drawn level is a description of where something has already been. That is not an insult — descriptions are useful. The trouble starts the moment it is read as a rail, because you chose where to put it knowing everything that had already happened, and there was nothing there to choose wrongly.',
+          scene: {
+            kind: 'compare',
+            glyph: 'house',
+            everyday: ANALOGIES.trendline,
+            market:
+              'You picked which two points to join after seeing all of them. A line that fits the past is the one thing you were guaranteed to be able to draw.',
+            breaks:
+              'A map records a walk somebody took. A chart line is also watched by thousands of other people, which can genuinely make it matter — for exactly as long as they keep watching it.',
+          },
+        },
+        {
+          seconds: 9,
+          caption: `And there is nothing scarce about them. Mark ${SWINGS} turning points on a chart — an ordinary number — and there are ${linesThrough(SWINGS)} distinct straight lines you could draw through pairs of them. You will keep three or four. The other ${linesThrough(SWINGS) - 4} are not wrong; they simply did not get drawn, and nobody counts them.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: linesThrough(SWINGS),
+            precision: 0,
+            bars: [
+              { label: `Turning points marked`, value: SWINGS, tone: 'neutral', note: 'an ordinary chart' },
+              { label: 'Lines you could draw through them', value: linesThrough(SWINGS), tone: 'bad', note: 'every pair joins' },
+              { label: 'Lines you will keep', value: 4, tone: 'good', note: 'the ones that already fit' },
+            ],
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'The points themselves have the same problem. A turning point is only identifiable once the turn has finished — which means every one of them was invisible at the moment it would have been useful, and obvious by the time it was not.',
+          scene: {
+            kind: 'compare',
+            glyph: 'clock',
+            everyday: ANALOGIES['swing-point'],
+            market:
+              'The most recent turning point on any chart is provisional. It is a turning point only if the move does not continue, and you find out afterwards.',
+            breaks:
+              'A staircase stops. A market has no top step, so the last one always looks like it might be — and looks obviously like it was, a week later.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'Draw enough lines and everything lands on one',
+      scenes: [
+        {
+          seconds: 10,
+          caption: `Now switch on the usual toolkit. Fibonacci gives you five levels, pivots another seven, a couple of averages, the round numbers. That is ${LEVEL_COUNT} lines on one screen. Allow half a percent either side as "respecting" a level, and ${CHART_COVERED.toFixed(0)}% of the visible chart is now within a whisker of something.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: LEVEL_COUNT,
+            precision: 0,
+            bars: LEVEL_SOURCES.map((s) => ({
+              label: s.label,
+              value: s.count,
+              tone: 'cost' as const,
+              note: 'levels added to the screen',
+            })),
+          },
+        },
+        {
+          seconds: 9,
+          caption: `At which point the observation "it bounced off a level" has stopped carrying information. It could hardly have done anything else. This is the same arithmetic as testing twenty ideas and keeping the one that worked — the levels are the ideas, and you are grading them after the fact.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: 100,
+            precision: 0,
+            bars: [
+              { label: 'Chart within a whisker of some level', value: CHART_COVERED, tone: 'bad', note: `${LEVEL_COUNT} levels, ±${LEVEL_TOLERANCE}% each` },
+              { label: 'Chart genuinely far from any level', value: 100 - CHART_COVERED, tone: 'good', note: 'where a hit would mean something' },
+            ],
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'Which is also why agreement between tools feels so much stronger than it is. Several lines landing together is genuinely more interesting when the tools are independent — and Fibonacci levels, pivots and round numbers are all functions of the same recent high and low, so they are not independent at all.',
+          scene: {
+            kind: 'compare',
+            glyph: 'queue',
+            everyday: ANALOGIES.confluence,
+            market:
+              'Fibonacci levels, pivots and a moving average are three different arrangements of the same recent prices. They agree partly because they were always going to.',
+            breaks:
+              'Friends can at least be asked whether they read the same review. Two indicators cannot tell you they share an input — you have to know how each one is built.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'The ones that are claims about the future',
+      scenes: [
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'Some tools describe; others predict, and the predicting ones deserve a harder look. A named shape is a claim that a particular arrangement of the past implies a particular future — and named shapes are found by eye, which is the least reliable instrument anyone owns.',
+          scene: {
+            kind: 'compare',
+            glyph: 'clock',
+            everyday: ANALOGIES['head-and-shoulders'],
+            market:
+              'Shapes are identified after they complete. Ask how many that looked identical halfway through went on to do nothing, and almost nobody has counted.',
+            breaks:
+              'Nobody trades toast. These shapes are watched by enough people that acting on one can briefly move things — which is a fact about the crowd, not about the shape.',
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption:
+            'And the most elaborate ones are the hardest to be wrong about, which sounds like a strength and is the opposite. A framework flexible enough to fit whatever happened cannot be tested, and something that cannot fail a test has not passed one either.',
+          scene: {
+            kind: 'compare',
+            glyph: 'token',
+            everyday: ANALOGIES['elliott-wave'],
+            market:
+              'If two careful people applying the same rules to the same chart reach opposite conclusions, the rules are not doing the work — the person is.',
+            breaks:
+              'A cloud is harmless. A framework that always has an explanation ready is actively dangerous, because it never produces the one useful thing: a moment where you were plainly wrong.',
+          },
+        },
+        {
+          seconds: 9,
+          caption: `None of this makes the tools useless. It makes them descriptions, which is a real job — the levels tell you where other people are looking. The rule of thumb worth keeping is that a tool earns trust by being testable, and any level you cannot state in advance, in writing, before the move, was never tested at all.`,
+          scene: {
+            kind: 'chain',
+            token: 'a level worth trusting',
+            steps: [
+              { label: 'Stated in advance', sub: 'before the move, in writing' },
+              { label: 'Counted both ways', sub: 'the misses too' },
+              { label: 'Compared to a base rate', sub: 'against doing nothing' },
+              { label: 'Then believed', sub: 'and only a little' },
+            ],
+            at: 3,
+          },
+        },
+      ],
+    },
+  ],
+};
+
+const THE_OPTION_THAT_OWES_A_LORRY: Explainer = {
+  id: 'the-option-that-owes-a-lorry',
+  title: `The ${rupees(PREMIUM_PAID, 0)} option that owes ${rupees(CONTRACT_VALUE, 0)}`,
+  blurb: `Let a stock option expire in the money in India and you do not get a payout. You get a delivery obligation for the full contract value.`,
+  question: 'My option expired slightly profitable. Why is my broker asking for lakhs?',
+  terms: ['physical-settlement', 'lot-size', 'expiry', 'margin', 'moneyness'],
+  chapters: [
+    {
+      title: 'What you paid for, and what it controls',
+      scenes: [
+        {
+          seconds: 9,
+          caption: `You buy one lot of a stock option: ${LOT_SIZE} shares at a strike of ${rupees(OPT_STRIKE, 0)}, for ${rupees(PREMIUM_PER_SHARE, 0)} a share. Total outlay ${rupees(PREMIUM_PAID, 0)}. What that small payment controls is ${LOT_SIZE} shares worth ${rupees(CONTRACT_VALUE, 0)} — and the gap between those two numbers is the entire story.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: CONTRACT_VALUE,
+            unit: '₹',
+            precision: 0,
+            bars: [
+              { label: 'What you paid', value: PREMIUM_PAID, tone: 'neutral', note: `${LOT_SIZE} shares x ${rupees(PREMIUM_PER_SHARE, 0)}` },
+              { label: 'What it controls', value: CONTRACT_VALUE, tone: 'bad', note: `${LOT_SIZE} shares x ${rupees(OPT_STRIKE, 0)} strike` },
+            ],
+          },
+        },
+        {
+          seconds: 9,
+          caption:
+            'Options are not sold by the share. They come in fixed bundles set by the exchange, and you cannot buy a third of one. That is why the number you are exposed to is never a number you chose — it was chosen for you, and it is usually much larger than it feels.',
+          scene: {
+            kind: 'compare',
+            glyph: 'receipt',
+            everyday: ANALOGIES['lot-size'],
+            market: `One lot is ${LOT_SIZE} shares. There is no smaller unit, so ${rupees(CONTRACT_VALUE, 0)} of exposure is the minimum this contract comes in.`,
+            breaks:
+              'A crate of mangoes costs what a crate costs, and you know the price at the till. Here the obligation only becomes payable if the contract finishes in the money, so most of the time it never appears at all.',
+          },
+        },
+      ],
+    },
+    {
+      title: 'What happens at expiry',
+      scenes: [
+        {
+          seconds: 10,
+          only: 'video',
+          caption:
+            'In India, stock options do not settle in cash. If yours finishes in the money — even by a rupee — it converts into an actual delivery of actual shares. Not a payout of the difference. A trade for the full contract value, on which the money is genuinely due.',
+          scene: {
+            kind: 'compare',
+            glyph: 'vault',
+            everyday: ANALOGIES['physical-settlement'],
+            market: `In the money at expiry means buying ${LOT_SIZE} shares for ${rupees(CONTRACT_VALUE, 0)}, in cash, on settlement day.`,
+            breaks:
+              'A market stall hands you the goods there and then. Here the obligation lands after the market has closed, on a contract you may well have stopped watching.',
+          },
+        },
+        {
+          seconds: 9,
+          caption: `So the trade that looked like a small bet becomes a large one on the last day, and the size of the obligation has nothing to do with how right you were. Finish ${rupees(1, 0)} in the money and you owe the same ${rupees(CONTRACT_VALUE, 0)} as somebody who finished ${rupees(200, 0)} in the money.`,
+          scene: {
+            kind: 'chain',
+            token: 'expiry day',
+            steps: [
+              { label: 'In the money', sub: 'by any amount at all' },
+              { label: 'No cash settlement', sub: 'not an option in India' },
+              { label: 'Delivery obligation', sub: `${LOT_SIZE} shares` },
+              { label: 'Full value due', sub: rupees(CONTRACT_VALUE, 0) },
+            ],
+            at: 3,
+          },
+        },
+      ],
+    },
+    {
+      title: 'What to actually do about it',
+      scenes: [
+        {
+          seconds: 9,
+          caption: `The fix is simple and almost nobody is told it: close the position before expiry. Sell the option back on the last trading day and you take your profit or loss in cash and walk away with no obligation at all. Holding to expiry is a decision, and it is rarely the one anybody meant to make.`,
+          scene: {
+            kind: 'chain',
+            token: 'the last trading day',
+            steps: [
+              { label: 'Notice it is expiring', sub: 'the part people miss' },
+              { label: 'Sell the option', sub: 'to anyone who wants it' },
+              { label: 'Settled in cash', sub: 'profit or loss, done' },
+              { label: 'No delivery', sub: 'nothing owed' },
+            ],
+            at: 3,
+          },
+        },
+        {
+          seconds: 9,
+          only: 'video',
+          caption: `And brokers protect themselves rather than you. Many will close your position for you near expiry, at whatever the market offers, or demand the cash upfront days in advance. Neither is a rescue — one takes the exit decision out of your hands, and the other asks for ${rupees(CONTRACT_VALUE, 0)} you may not have.`,
+          scene: {
+            kind: 'bars',
+            scaleTo: CONTRACT_VALUE,
+            unit: '₹',
+            precision: 0,
+            bars: [
+              { label: 'What you thought was at stake', value: PREMIUM_PAID, tone: 'neutral', note: 'the premium' },
+              { label: 'What the broker may ask for', value: CONTRACT_VALUE, tone: 'bad', note: 'days before expiry' },
+            ],
+          },
+        },
+      ],
+    },
+  ],
+};
+
 export const EXPLAINERS: Explainer[] = [
   WHERE_YOUR_MONEY_GOES,
   WHAT_HAPPENS_WHEN_YOU_PRESS_BUY,
@@ -1350,6 +1985,10 @@ export const EXPLAINERS: Explainer[] = [
   HOW_MUCH_SHOULD_YOU_BUY,
   WHY_THE_BACKTEST_LIED,
   WHAT_ONE_CANDLE_HIDES,
+  WHAT_YOU_ACTUALLY_OWN,
+  PROFIT_IS_AN_OPINION,
+  EVERY_LEVEL_LOOKS_LIKE_IT_WORKED,
+  THE_OPTION_THAT_OWES_A_LORRY,
 ];
 
 export const EXPLAINER_BY_ID = new Map(EXPLAINERS.map((e) => [e.id, e]));

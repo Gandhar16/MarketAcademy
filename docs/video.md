@@ -40,10 +40,36 @@ The extra scenes are a scene kind of their own — `compare` — with three part
 | **In the market** | What it maps to, with the engine-computed figure. |
 | **Where the comparison breaks** | Required, not optional. |
 
+Every explainer carries at least one `compare` scene **in the page cut**, not
+only in the video — enforced by a test. An explainer that reaches a learner
+purely through mechanism diagrams has skipped the step where they attach it to
+something they already understand, and that is the step that makes it stick.
+The video then gets further ones on top.
+
+### Coverage
+
+```bash
+pnpm coverage          # how many lessons an explainer reaches
+pnpm coverage --list   # the gap, and the terms that would close most of it
+```
+
+A lesson declares the terms it `introduces`; an explainer declares the terms it
+covers; a lesson is *reached* when they overlap — the same relation the term
+pages already use to surface an explainer. Currently **81/81**.
+
+Worth being precise about what that measures: it is "everything this lesson
+teaches is explained somewhere", not "this lesson has a bespoke explainer".
+That is the right bar for surfacing help and it is not the same claim.
+
 ### Scene kinds, and the line they must not cross
 
-`chain` · `bars` · `ladder` · `compare` · `band`. A test asserts the set, so
-adding to it is a deliberate, visible decision.
+`chain` · `bars` · `ladder` · `compare` · `band` · `candle`. A test asserts the
+set, so adding to it is a deliberate, visible decision.
+
+`candle` draws exactly ONE candle from four stated numbers — the glyph as a
+structure, in the explainer about what that structure discards. There is no
+array field, for the same reason `band` has no sequence: a list of candles is a
+chart of a week that never happened.
 
 `band` is the one that comes closest to drawing a market, and the distinction
 worth holding is this: **a band is arithmetic** (±10% of a stated reference) and

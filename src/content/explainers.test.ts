@@ -95,13 +95,22 @@ describe('explainers', () => {
     }
   });
 
-  it('keeps the analogy scenes out of the page cut', () => {
-    // `compare` is the video-only kind. One leaking onto the page would put a
-    // 250-word analogy inside a card sized for a diagram.
+  it('always gives a reader at least one real-world comparison, on the page too', () => {
+    // Not a video extra. An explainer that reaches a learner only through
+    // mechanism diagrams has skipped the step where they attach it to something
+    // they already understand — which is the step that makes it stick. So every
+    // explainer carries at least one `compare` scene in the PAGE cut, and the
+    // video gets further ones on top.
     for (const e of EXPLAINERS) {
-      for (const entry of timeline(e, 'page')) {
-        expect(entry.scene.kind, `${e.id} shows a compare scene on the page`).not.toBe('compare');
-      }
+      const onPage = timeline(e, 'page').filter((s) => s.scene.kind === 'compare');
+      expect(onPage.length, `${e.id} has no analogy a reader on the page would ever see`).toBeGreaterThan(0);
+    }
+  });
+
+  it('still gives the video something the page does not have', () => {
+    for (const e of EXPLAINERS) {
+      const extra = e.chapters.flatMap((c) => c.scenes).filter((s) => s.only === 'video');
+      expect(extra.length, `${e.id} has no video-only scenes`).toBeGreaterThan(0);
     }
   });
 

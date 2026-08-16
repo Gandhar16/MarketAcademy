@@ -2080,7 +2080,71 @@ wired to a real engine, plus narration, plus a render, and five explainers now
 take ~19 minutes to render — so the plan is themed batches of two or three
 through T2 rather than a sweep.
 
-- [ ] T2 coverage: 27 lessons with no explainer touching anything they teach.
+- [x] T2 coverage closed — see §3fj.
+
+---
+
+#### 3fj. Every lesson reached — `[x]` COMPLETE
+
+**81 of 81 lessons, every tier at 100%.** Six more explainers, taking the set
+from 5 to 11 and from 37 glossary terms to 86.
+
+Coverage is measured, not asserted. `pnpm coverage` bundles the real content and
+reports the same relation the site already uses: a lesson declares the terms it
+`introduces`, an explainer declares the terms it covers, and a lesson is reached
+when they overlap — which is exactly when the term pages surface that explainer
+to somebody studying that lesson. `--list` names the gap and ranks the terms
+that would close the most of it, which is how each batch was chosen rather than
+by taste.
+
+| Explainer | Reaches |
+| --- | --- |
+| `why-the-backtest-lied` | base rate, multiple testing, overfitting, lookahead, survivorship |
+| `what-one-candle-hides` | candles, OHLC, volume, chart types |
+| `what-you-actually-own` | shares, primary vs secondary market, IPOs, dividends |
+| `profit-is-an-opinion` | cash quality, ROE/ROCE, debt, moats, promoter signals |
+| `every-level-looks-like-it-worked` | trendlines, Fibonacci, pivots, Elliott, named shapes — 10 lessons on its own |
+| `the-option-that-owes-a-lorry` | physical settlement, lot size |
+
+**Analogies became structural rather than a habit.** Every explainer now carries
+at least one real-world comparison **in the page cut**, not only in the video —
+a test enforces it, and a second test keeps the video ahead. Seven existing
+explainers had all their analogies marked video-only and were promoted;
+`why-you-could-not-sell` gained a second one (the overnight gap, which is the
+same failure as a locked circuit reached another way). Sixteen new analogies
+were written for the chart-tool terms, all passing the existing no-jargon and
+no-promised-outcome rules first time.
+
+**A new engine, because the alternative was asserting.** `fundamentals.ts` — the
+four or five divisions every screener performs and then presents as a verdict.
+It exists so `profit-is-an-opinion` can *show* that swapping equity for debt
+lifts return on equity while return on capital does not move, computed from one
+balance sheet described two ways. Its test asserts that exact property, so the
+scene cannot start teaching something the arithmetic does not do.
+
+**Two scene kinds added, with the line held.** `candle` draws ONE candle from
+four stated numbers — the glyph as a structure, in the explainer about what the
+structure discards — and has no array field, because a list of candles is a
+chart of a week that never happened. Both new kinds are in the allowlist test
+with that reasoning written down.
+
+**The best arithmetic in the batch, and it is all exact.** Twenty worthless
+ideas tested at the usual 5% threshold gives a 64% chance one looks significant;
+a hundred gives 99%. Twelve marked turning points support 66 distinct
+trendlines, of which you keep four. Seventeen levels at ±0.4% cover 68% of a
+20% chart, at which point "it bounced off a level" carries no information at
+all. None of these are claims about any real market — every one is a
+consequence of a stated assumption, which is what makes them arguable rather
+than merely alarming.
+
+**Still open:**
+
+- [ ] Coverage is "a lesson's terms are explained somewhere", not "this lesson
+      has its own explainer". That is the right bar for surfacing help, and it
+      is not the same as bespoke coverage — `in-t2-elliott-wave` is reached by a
+      section of a broader explainer rather than by its own.
+- [ ] No Indian English voice in Kokoro v1.0; narration is 23.5 minutes across
+      11 explainers, all in the same American voice.
 
 ---
 

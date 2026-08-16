@@ -121,6 +121,39 @@ export const ANALOGIES: Record<string, string> = {
   atr: 'How much this particular road usually shakes the car. A road that always rattles is not having an emergency today just because it rattled.',
   vwap: 'The average figure paid across the whole day by everybody, weighted so a huge purchase counts more than a tiny one. Large institutions are graded against it — beat it and you bought well, miss it and you explain yourself.',
 
+  // ------------------------------------------------------- drawn on the chart
+  'ohlc-bar-chart':
+    'The same four facts as the fat shape, drawn as a thin stick with two notches instead. Nothing has been added or removed — it is the identical information wearing different clothes, which is worth knowing before anyone tells you one of them reveals more.',
+  'hollow-candle':
+    'Colouring the shape by whether today finished above yesterday, rather than above this morning. A small change of question, and it quietly makes some days look like the opposite of what the usual colouring says.',
+  'heikin-ashi':
+    'A photograph of a crowd taken with a slow shutter. Everything looks smooth and purposeful because the blur has removed the jostling — and the figures you are reading are averages of averages, not anything anybody actually paid.',
+  'swing-point':
+    'The highest step on a staircase before it starts going down again. Obvious once you have walked past it. The one you are standing on right now might be it, and you will not know until later.',
+  trendline:
+    'A line drawn on a map after the walk, joining the places you happened to stop. It describes where you went. It is not a rail, and the ground does not know it is there.',
+  'fibonacci-retracement':
+    'Marking a hill at the halfway point, the third, and the two-thirds, then noticing that walkers often pause near one of them. Some of that is real — people rest at obvious spots. Some of it is that you drew enough lines to catch a pause anywhere.',
+  confluence:
+    'Three unreliable friends all recommending the same restaurant. It feels far more convincing than one recommendation, and it is only genuinely stronger if the three of them did not just read the same review.',
+  'elliott-wave':
+    'A shape in the clouds that everybody can see once you point it out, and nobody can agree on before you do. The rules bend enough that any cloud can be made to fit, which is why two experts on the same cloud reach opposite conclusions.',
+  'pivot-point':
+    'The meeting point everyone in a group agreed on before setting off, calculated the same way by all of them. It matters mostly because everybody is watching the same spot, not because the spot is special.',
+  'rsi-divergence':
+    'The runner is still edging forward but is visibly breathing harder than a lap ago. Sometimes it means the finish is near. Sometimes they simply carry on for another twenty minutes.',
+  adx: 'How firmly the wind is blowing, with nothing at all about which way. A strong reading means committed movement, and a committed movement downhill is exactly as strong as one uphill.',
+  'volume-profile':
+    'Wear on a stone staircase. The dips show where feet actually landed over the years, which tells you where the traffic really was — and says nothing about where anyone is going tomorrow.',
+  'head-and-shoulders':
+    'A face in a piece of toast. Everyone sees it once it is circled, half the room sees nothing beforehand, and the toast was never trying to communicate.',
+  'double-top':
+    'A jar lid that would not turn on two separate attempts. It might genuinely be stuck. You might also have tried twice in the same minute with the same tired grip.',
+  neckline:
+    'The line somebody draws under the face in the toast to prove it is a face. Move it a little and the proof moves with it.',
+  'measured-move':
+    'Guessing how far the ball will roll past the bottom of the hill from how high up you dropped it. A reasonable rule of thumb on a smooth lawn, and merely a hope on a real one.',
+
   // -------------------------------------------------------------------- risk
   position:
     'What you are currently holding, and therefore what the world can currently do to you. Owning nothing is a perfectly good place to stand, and it is the only place where tomorrow cannot cost you anything.',

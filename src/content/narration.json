@@ -134,8 +134,12 @@
       "file": "why-you-could-not-sell-05.mp3",
       "seconds": 16.256
     },
-    "So the honest way to hold a stop-loss is as a plan that usually works, not a floor under your losses. It protects you on ordinary days, which is most days. The days it fails are exactly the days you needed it — and that is not a flaw in your broker, it is what a fence around the day does.": {
+    "And the same thing happens overnight without any circuit at all. You leave an instruction to sell at ninety-five; the shutters come down; the world changes; the shop reopens at eighty-five. Nothing traded at ninety-five because there was no ninety-five. A stop protects you against a price falling THROUGH your level, not against there never being one.": {
       "file": "why-you-could-not-sell-06.mp3",
+      "seconds": 20.629
+    },
+    "So the honest way to hold a stop-loss is as a plan that usually works, not a floor under your losses. It protects you on ordinary days, which is most days. The days it fails are exactly the days you needed it — and that is not a flaw in your broker, it is what a fence around the day does.": {
+      "file": "why-you-could-not-sell-07.mp3",
       "seconds": 17.515
     },
     "Almost everyone answers \"how much should I buy\" with a rupee amount they are comfortable spending. That is the wrong number. What you put in and what you can lose are two different figures, and only the second one should decide the first.": {
@@ -225,6 +229,122 @@
     "So use the candle for what it holds — four honest numbers — and stop asking it for the fifth. If your rule depends on which came first, the high or the low, it depends on something this data does not contain, and testing it on this data will not find that out.": {
       "file": "what-one-candle-hides-07.mp3",
       "seconds": 15.296
+    },
+    "Start with what the thing is, because the price chart makes everyone forget. A share is a slice of ownership in a business that has employees, sells something, and pays tax. If the business does well over years, the slice is worth more. That is the whole mechanism, and everything else on this site is detail hanging off it.": {
+      "file": "what-you-actually-own-01.mp3",
+      "seconds": 19.051
+    },
+    "And it makes you an owner rather than a customer, which sounds like a technicality until something goes wrong. Owners are paid last. Staff, suppliers, tax and lenders all come before you, in that order — which is why the same business can survive perfectly well while your slice of it becomes worthless.": {
+      "file": "what-you-actually-own-02.mp3",
+      "seconds": 17.728
+    },
+    "Now the part almost nobody is told. When you buy a share on an ordinary day, none of your money reaches the company. It goes to whoever sold it to you — another investor, cashing out. The company is not involved and does not receive a rupee.": {
+      "file": "what-you-actually-own-03.mp3",
+      "seconds": 15.253
+    },
+    "There is exactly one occasion when your money does reach the company: when the shares are being sold for the first time. That is what an IPO is — the business raising money to build something. Every trade after that is second-hand, and second-hand is almost everything you will ever do.": {
+      "file": "what-you-actually-own-04.mp3",
+      "seconds": 17.088
+    },
+    "Ownership can pay you in two ways and only one of them is a decision anybody makes. The business can hand out part of its profit as a dividend — an actual payment, arriving in your account. That is a choice the directors make each year, and they can stop making it.": {
+      "file": "what-you-actually-own-05.mp3",
+      "seconds": 15.872
+    },
+    "The other way is that somebody later pays more for your slice than you did — and that is not a payment, it is an opinion, held by a stranger, that can change. Which of those two you are actually relying on is worth being honest with yourself about before you buy anything.": {
+      "file": "what-you-actually-own-06.mp3",
+      "seconds": 16.128
+    },
+    "Two businesses report the same 140 of profit. One collected all of it in cash. The other collected 70 — the rest is invoices customers have not paid. Both are legally profitable. Only one of them can pay a bill this month.": {
+      "file": "profit-is-an-opinion-01.mp3",
+      "seconds": 15.531
+    },
+    "This is not fraud and usually is not even a warning sign on its own — selling on credit is how most business works. It becomes one when the gap persists and widens, because profit can be recognised for years on business that never pays, and the accounts stay perfectly legal the entire time.": {
+      "file": "profit-is-an-opinion-02.mp3",
+      "seconds": 17.749
+    },
+    "Return on equity is the headline number on every screener, and it can be improved without improving anything. Here is one business, funded two ways. Replace ₹600 of owners' money with borrowing and return on equity jumps from 14.0% to 23.0% — while the business does exactly the same thing it did before.": {
+      "file": "profit-is-an-opinion-03.mp3",
+      "seconds": 21.163
+    },
+    "Ask the same question of every rupee in the business instead — borrowed or not — and the flattery disappears. Return on capital employed is 14.0% both times, because the operations never changed. When those two numbers diverge, the gap is the borrowing, and the borrowing is a promise with a schedule.": {
+      "file": "profit-is-an-opinion-04.mp3",
+      "seconds": 19.84
+    },
+    "Which is why the pair is worth more than either one. A high return on equity beside a much lower return on capital is not a great business — it is an ordinary business with a lot of borrowed money, and the two behave very differently the first time a year goes badly.": {
+      "file": "profit-is-an-opinion-05.mp3",
+      "seconds": 15.829
+    },
+    "Debt is not a problem until the interest bill stops being comfortably covered. Same operating profit of 140, four different interest bills. At 10 times over, nobody thinks about it. At 1.1 times, one bad quarter stops being a disappointment and becomes a solvency question.": {
+      "file": "profit-is-an-opinion-06.mp3",
+      "seconds": 18.453
+    },
+    "And there is one Indian signal worth knowing that has no equivalent on a Western screener. Founders can borrow against their own stake. If the price falls far enough, the lender sells that stake into the market that is already falling — which pushes it lower, which triggers more selling. The trouble feeds itself.": {
+      "file": "profit-is-an-opinion-07.mp3",
+      "seconds": 18.091
+    },
+    "None of these ratios tells you whether the business will still be worth owning in ten years. That question is about whether anything stops a competitor doing the same thing more cheaply — and unlike everything else here, it cannot be computed. It can only be argued, which is why it is the part most worth thinking about yourself.": {
+      "file": "profit-is-an-opinion-08.mp3",
+      "seconds": 18.645
+    },
+    "A drawn level is a description of where something has already been. That is not an insult — descriptions are useful. The trouble starts the moment it is read as a rail, because you chose where to put it knowing everything that had already happened, and there was nothing there to choose wrongly.": {
+      "file": "every-level-looks-like-it-worked-01.mp3",
+      "seconds": 15.787
+    },
+    "And there is nothing scarce about them. Mark 12 turning points on a chart — an ordinary number — and there are 66 distinct straight lines you could draw through pairs of them. You will keep three or four. The other 62 are not wrong; they simply did not get drawn, and nobody counts them.": {
+      "file": "every-level-looks-like-it-worked-02.mp3",
+      "seconds": 17.045
+    },
+    "The points themselves have the same problem. A turning point is only identifiable once the turn has finished — which means every one of them was invisible at the moment it would have been useful, and obvious by the time it was not.": {
+      "file": "every-level-looks-like-it-worked-03.mp3",
+      "seconds": 13.355
+    },
+    "Now switch on the usual toolkit. Fibonacci gives you five levels, pivots another seven, a couple of averages, the round numbers. That is 17 lines on one screen. Allow half a percent either side as \"respecting\" a level, and 68% of the visible chart is now within a whisker of something.": {
+      "file": "every-level-looks-like-it-worked-04.mp3",
+      "seconds": 18.56
+    },
+    "At which point the observation \"it bounced off a level\" has stopped carrying information. It could hardly have done anything else. This is the same arithmetic as testing twenty ideas and keeping the one that worked — the levels are the ideas, and you are grading them after the fact.": {
+      "file": "every-level-looks-like-it-worked-05.mp3",
+      "seconds": 16.213
+    },
+    "Which is also why agreement between tools feels so much stronger than it is. Several lines landing together is genuinely more interesting when the tools are independent — and Fibonacci levels, pivots and round numbers are all functions of the same recent high and low, so they are not independent at all.": {
+      "file": "every-level-looks-like-it-worked-06.mp3",
+      "seconds": 17.984
+    },
+    "Some tools describe; others predict, and the predicting ones deserve a harder look. A named shape is a claim that a particular arrangement of the past implies a particular future — and named shapes are found by eye, which is the least reliable instrument anyone owns.": {
+      "file": "every-level-looks-like-it-worked-07.mp3",
+      "seconds": 16.533
+    },
+    "And the most elaborate ones are the hardest to be wrong about, which sounds like a strength and is the opposite. A framework flexible enough to fit whatever happened cannot be tested, and something that cannot fail a test has not passed one either.": {
+      "file": "every-level-looks-like-it-worked-08.mp3",
+      "seconds": 14.229
+    },
+    "None of this makes the tools useless. It makes them descriptions, which is a real job — the levels tell you where other people are looking. The rule of thumb worth keeping is that a tool earns trust by being testable, and any level you cannot state in advance, in writing, before the move, was never tested at all.": {
+      "file": "every-level-looks-like-it-worked-09.mp3",
+      "seconds": 18.496
+    },
+    "You buy one lot of a stock option: 250 shares at a strike of ₹2,800, for ₹8 a share. Total outlay ₹2,000. What that small payment controls is 250 shares worth ₹7,00,000 — and the gap between those two numbers is the entire story.": {
+      "file": "the-option-that-owes-a-lorry-01.mp3",
+      "seconds": 19.499
+    },
+    "Options are not sold by the share. They come in fixed bundles set by the exchange, and you cannot buy a third of one. That is why the number you are exposed to is never a number you chose — it was chosen for you, and it is usually much larger than it feels.": {
+      "file": "the-option-that-owes-a-lorry-02.mp3",
+      "seconds": 15.467
+    },
+    "In India, stock options do not settle in cash. If yours finishes in the money — even by a rupee — it converts into an actual delivery of actual shares. Not a payout of the difference. A trade for the full contract value, on which the money is genuinely due.": {
+      "file": "the-option-that-owes-a-lorry-03.mp3",
+      "seconds": 16.747
+    },
+    "So the trade that looked like a small bet becomes a large one on the last day, and the size of the obligation has nothing to do with how right you were. Finish ₹1 in the money and you owe the same ₹7,00,000 as somebody who finished ₹200 in the money.": {
+      "file": "the-option-that-owes-a-lorry-04.mp3",
+      "seconds": 15.936
+    },
+    "The fix is simple and almost nobody is told it: close the position before expiry. Sell the option back on the last trading day and you take your profit or loss in cash and walk away with no obligation at all. Holding to expiry is a decision, and it is rarely the one anybody meant to make.": {
+      "file": "the-option-that-owes-a-lorry-05.mp3",
+      "seconds": 18.475
+    },
+    "And brokers protect themselves rather than you. Many will close your position for you near expiry, at whatever the market offers, or demand the cash upfront days in advance. Neither is a rescue — one takes the exit decision out of your hands, and the other asks for ₹7,00,000 you may not have.": {
+      "file": "the-option-that-owes-a-lorry-06.mp3",
+      "seconds": 18.133
     }
   }
 }
