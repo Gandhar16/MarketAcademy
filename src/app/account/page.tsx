@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation';
 import { AccountPanel } from '@/components/auth/AccountPanel';
+import { SignInMethodsPanel } from '@/components/auth/SignInMethodsPanel';
 import { PlanPanel } from '@/components/payments/PlanPanel';
 import { currentUser } from '@/lib/auth/session';
+import { enabledProviders } from '@/lib/auth/oauth';
 import { getDb } from '@/lib/db';
+import { linkedProviders } from '@/lib/db/oauthAccounts';
 import { getLatestSubscriptionForUser, getUserPlan } from '@/lib/db/payments';
 import { hasProAccess } from '@/lib/payments/access';
 import { PLANS, type PlanId } from '@/lib/payments/plans';
@@ -15,9 +18,10 @@ export default async function AccountPage() {
   if (!user) redirect('/login');
 
   const db = await getDb();
-  const [planState, latestSubscription] = await Promise.all([
+  const [planState, latestSubscription, linked] = await Promise.all([
     getUserPlan(db, user.id),
     getLatestSubscriptionForUser(db, user.id),
+    linkedProviders(db, user.id),
   ]);
   const isPro = hasProAccess(planState);
   const planLabel =
@@ -36,6 +40,17 @@ export default async function AccountPage() {
           canCancel={Boolean(
             isPro && latestSubscription?.status === 'active' && latestSubscription.razorpaySubscriptionId != null,
           )}
+        />
+        <SignInMethodsPanel
+          methods={{
+            email: user.email,
+            emailVerified: user.emailVerifiedAt != null,
+            linked: linked.map((l) => l.provider),
+            // Only what this deployment has credentials for, so the page never
+            // offers a button that would land on a provider error page.
+            available: enabledProviders().map((p) => ({ id: p.id, label: p.label })),
+            hasPassword: user.hasPassword,
+          }}
         />
         <AccountPanel
           user={{

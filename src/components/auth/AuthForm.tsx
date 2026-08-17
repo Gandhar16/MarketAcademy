@@ -69,7 +69,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         </p>
       )}
 
-      <Field label="Email" hint="Only used to sign you in. Nothing is sent to it.">
+      <Field label="Email" hint="Used to sign you in, and to send only what you ask for — a confirmation link, or a password reset.">
         <input
           type="email"
           required
@@ -133,6 +133,14 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
       <button type="submit" disabled={busy} className="btn-primary w-full justify-center">
         {busy ? 'Working…' : isRegister ? 'Create account' : 'Sign in'}
       </button>
+
+      {!isRegister && (
+        <p className="text-center text-sm">
+          <Link href="/forgot-password" className="text-ink-muted hover:text-ink hover:underline">
+            Forgotten your password?
+          </Link>
+        </p>
+      )}
 
       <p className="text-center text-sm text-ink-muted">
         {isRegister ? (

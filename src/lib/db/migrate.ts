@@ -46,7 +46,17 @@ const ADDITIONS: AddColumn[] = [
   { table: 'user_stats', column: 'best_process', definition: 'REAL NOT NULL DEFAULT 0' },
   { table: 'users', column: 'plan', definition: "TEXT NOT NULL DEFAULT 'free'" },
   { table: 'users', column: 'plan_expires_at', definition: 'INTEGER' },
+  { table: 'users', column: 'email_verified_at', definition: 'INTEGER' },
+  { table: 'users', column: 'has_password', definition: 'INTEGER NOT NULL DEFAULT 1' },
 ];
+
+/**
+ * New TABLES need nothing here. schema.ts is executed in full on every boot and
+ * every statement in it is `CREATE TABLE IF NOT EXISTS`, so an added table
+ * appears on an existing database by itself. Only added COLUMNS need a line
+ * above, because `CREATE TABLE IF NOT EXISTS` does nothing at all to a table
+ * that already exists — including adding the column you just wrote into it.
+ */
 
 async function columnsOf(db: Db, table: string): Promise<Set<string>> {
   // The table name is a literal from ADDITIONS above, never from a request.

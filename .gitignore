@@ -47,6 +47,9 @@ next-env.d.ts
 
 .vercel
 .env*
+# ...except the template, which is the documentation of what the others should
+# contain. It holds names and comments, never a value.
+!.env.example
 
 # Local model weights for narration. ~340 MB of Kokoro, downloaded once by hand
 # (see docs/video.md). The generated mp3s in public/narration ARE committed —

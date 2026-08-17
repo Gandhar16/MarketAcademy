@@ -17,6 +17,10 @@ export interface User {
   lastSeenAt: number;
   leaderboardOptIn: boolean;
   market: string;
+  /** Epoch ms the address was proven to be theirs, or null if it never was. */
+  emailVerifiedAt: number | null;
+  /** False for an account that has only ever signed in through a provider. */
+  hasPassword: boolean;
 }
 
 export interface CreateUserInput {
@@ -43,6 +47,8 @@ interface UserRow {
   last_seen_at: number;
   leaderboard_opt_in: number;
   market: string;
+  email_verified_at: number | null;
+  has_password: number;
   password_hash?: string;
 }
 
@@ -55,6 +61,8 @@ function toUser(row: UserRow): User {
     lastSeenAt: Number(row.last_seen_at),
     leaderboardOptIn: Number(row.leaderboard_opt_in) === 1,
     market: row.market,
+    emailVerifiedAt: row.email_verified_at == null ? null : Number(row.email_verified_at),
+    hasPassword: Number(row.has_password ?? 1) === 1,
   };
 }
 
@@ -168,9 +176,38 @@ export async function changePassword(db: Db, userId: string, current: string, ne
 
   const hash = await hashPassword(next);
   await db.tx(async (t) => {
-    await t.run('UPDATE users SET password_hash = ? WHERE id = ?', hash, userId);
+    await t.run('UPDATE users SET password_hash = ?, has_password = 1 WHERE id = ?', hash, userId);
     // Changing a password signs out every other device. That is the whole
     // reason people change passwords, so it happens in the same transaction.
+    await t.run('DELETE FROM sessions WHERE user_id = ?', userId);
+  });
+  return { ok: true, value: true };
+}
+
+/**
+ * Sets a password without knowing the old one.
+ *
+ * Only ever called after a single-use link sent to the account's own address
+ * has been redeemed — that redemption IS the proof of ownership, and there is
+ * no current password to offer in the case this exists for. It also covers an
+ * account created through Google choosing a password for the first time.
+ *
+ * Every other session dies with the change, exactly as in `changePassword`: if
+ * this reset happened because somebody else had got in, leaving their session
+ * alive would make the whole exercise pointless.
+ */
+export async function setPassword(db: Db, userId: string, next: string): Promise<Result<true>> {
+  const problem = passwordProblem(next);
+  if (problem) return { ok: false, error: 'invalid', message: problem };
+
+  const exists = await db.get<{ id: string }>('SELECT id FROM users WHERE id = ?', userId);
+  if (!exists) return { ok: false, error: 'not_found', message: 'No such account.' };
+
+  const hash = await hashPassword(next);
+  await db.tx(async (t) => {
+    // `has_password = 1` matters most for the case this exists for: an account
+    // created through Google choosing a password for the first time.
+    await t.run('UPDATE users SET password_hash = ?, has_password = 1 WHERE id = ?', hash, userId);
     await t.run('DELETE FROM sessions WHERE user_id = ?', userId);
   });
   return { ok: true, value: true };

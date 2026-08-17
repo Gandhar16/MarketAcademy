@@ -403,9 +403,44 @@ Verified live against a production build: rank 1 was down ₹7,200, rank 2 was u
 ₹4,50,000. A client posting `processScore: 100` for a reckless trade was scored
 0.3.
 
-Still open, and each is a real gap rather than an oversight: **no password
-reset** (needs a mail provider), no OAuth, no admin UI, no registration rate
-limit beyond the shared HTTP limiter.
+Still open, and each is a real gap rather than an oversight: no admin UI, no
+registration rate limit beyond the shared HTTP limiter.
+
+#### 3g-ii. Social sign-in and email — `[x]` COMPLETE
+
+Full write-up in `docs/accounts-signin-and-email.md`. This closes the two gaps
+listed above as open — password reset, and OAuth.
+
+| Thing | Status | Where |
+|---|---|---|
+| Authorization Code + PKCE against the existing session system, not instead of it | `[x]` | `src/lib/auth/oauth.ts` |
+| Google · GitHub · Microsoft · Facebook, each enabled purely by setting its two env vars | `[x]` | `PROVIDERS`, `enabledProviders()` |
+| Provider identity keyed on the provider's immutable subject id, never on the email | `[x]` | `oauth_accounts` table |
+| Auto-link to an existing account **only** on a provider-VERIFIED address | `[x]` | `signInWithIdentity`, 19 tests |
+| Unverified provider accounts do not claim the unique `email_key` | `[x]` | namespaced `oauth:{provider}:{id}` key |
+| Provider-only accounts get a well-formed but unusable password hash, so sign-in timing gives nothing away | `[x]` | `unusablePassword()` |
+| Confirm-your-address and reset-your-password links: hashed at rest, single use, one hour, retired by the next one, 3 per 15 min | `[x]` | `src/lib/db/emailTokens.ts` |
+| `/forgot-password` answers identically whether or not the account exists | `[x]` | `api/auth/password/forgot` |
+| A reset signs out every device, including the one that did it | `[x]` | `setPassword` |
+| Resend over its HTTP API — no SDK. Prints to the terminal locally, refuses in production rather than pretending | `[x]` | `src/lib/email/send.ts` |
+| Link / unlink from the account page, refusing to remove the last way in | `[x]` | `SignInMethodsPanel`, `unlinkProvider` |
+
+**The decision that shapes all of it:** an account is only ever joined to a
+provider identity when the provider explicitly states it verified the address.
+Google and GitHub do; Microsoft and Facebook do not, so those never auto-link.
+Matching on an unconfirmed address would let anyone who can type your address
+into a profile walk into your account. An unverified address is treated as no
+address, never as a weaker yes.
+
+Nothing is on until it is configured. A provider with no credentials does not
+appear; with no mail provider, the site still runs and every lesson and game
+works.
+
+Deliberately not done, with reasons in the doc: **Apple sign-in** (its client
+secret is a signed JWT on a rotating key and it replies `form_post` — a
+different shape, wanting its own piece of work rather than a special case), and
+**change-of-address** (the token table already carries the target address for
+it; the flow is not built).
 
 #### 3h. Plain language and the knowledge base — `[x]` COMPLETE
 
