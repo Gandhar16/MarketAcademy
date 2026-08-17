@@ -492,6 +492,8 @@ export function ChartReplay() {
             canUndo={draw.canUndo}
             hidden={draw.hidden}
             onHidden={draw.setHidden}
+            hasSelection={draw.selectedId != null}
+            onDeleteSelected={draw.deleteSelected}
           />
           <ChartToolbar
             active={indicators}

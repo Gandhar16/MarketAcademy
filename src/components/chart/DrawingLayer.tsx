@@ -35,9 +35,7 @@ import {
   type Point,
 } from '@/lib/chart/drawings';
 import type { Candle } from '@/lib/market/types';
-
-const HIT_RADIUS = 8;
-const HANDLE_RADIUS = 4.5;
+import { useTouchMetrics, type TouchMetrics } from './useCoarsePointer';
 
 export interface DrawingLayerProps {
   coords: ChartCoords;
@@ -66,6 +64,8 @@ export function DrawingLayer({
   colour,
 }: DrawingLayerProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  /** Grab radii and drag threshold, widened when the pointer is a fingertip. */
+  const metrics = useTouchMetrics();
   /** Anchors committed so far for the drawing currently being placed. */
   const [pending, setPending] = useState<Anchor[]>([]);
   /** Where the pointer is, in data space — the not-yet-clicked next anchor. */
@@ -73,6 +73,28 @@ export function DrawingLayer({
   const [drag, setDrag] = useState<{ id: string; anchorIndex: number | null; from: Anchor } | null>(null);
   /** True between press and release while a drag-drawn tool is being placed. */
   const [drawingNow, setDrawingNow] = useState(false);
+
+  /**
+   * Half-placed anchors belong to the tool that was armed when they were made,
+   * and must not survive a change of tool.
+   *
+   * Without this, arming Channel, placing its first anchor, then switching to
+   * Trend line left that orphan anchor in `pending` — so the next press on the
+   * chart completed a trend line from a point the person picked for something
+   * else, somewhere they were no longer looking. The same stale state is what
+   * an on-screen Cancel would otherwise leave behind, since Escape is the only
+   * thing that used to clear it and a phone has no Escape key.
+   *
+   * Adjusted during render rather than in an effect — React's own pattern for
+   * state that has to follow a prop, and the one already used in `useDrawings`.
+   */
+  const [armedTool, setArmedTool] = useState(tool);
+  if (armedTool !== tool) {
+    setArmedTool(tool);
+    setPending([]);
+    setDrawingNow(false);
+    setHover(null);
+  }
 
   const toScreen = useCallback(
     (a: Anchor): Point | null => {
@@ -179,24 +201,26 @@ export function DrawingLayer({
 
       const needed = ANCHORS_NEEDED[tool];
       const first = pending[0];
-      const svg = svgRef.current;
-      const rect = svg?.getBoundingClientRect();
+      const rect = svgRef.current?.getBoundingClientRect();
       const moved =
         rect != null &&
         Math.hypot(
           (coords.logicalToX(at.logical) ?? 0) - (coords.logicalToX(first.logical) ?? 0),
           (coords.priceToY(at.price) ?? 0) - (coords.priceToY(first.price) ?? 0),
-        ) > 4;
+        ) > metrics.slop;
 
-      // A click that never moved is someone selecting the tool and tapping —
+      // A press that never moved is someone selecting the tool and tapping —
       // treat it as the first of two clicks rather than a zero-length line.
+      // The threshold is wider on touch: a finger rolls several pixels on even
+      // a deliberate tap, and at the mouse threshold every tap became a tiny
+      // unwanted trendline.
       if (!moved) return;
 
       const next = [...pending, at];
       if (next.length >= needed) commit(next, tool);
       else setPending(next);
     },
-    [tool, drawingNow, toData, pending, coords, commit],
+    [tool, drawingNow, toData, pending, coords, commit, metrics.slop],
   );
 
   // ── selecting and dragging ────────────────────────────────────────────────
@@ -222,7 +246,7 @@ export function DrawingLayer({
       let anchorIndex: number | null = null;
       for (let i = 0; i < target.anchors.length; i++) {
         const sp = toScreen(target.anchors[i]);
-        if (sp && Math.hypot(sp.x - p.x, sp.y - p.y) <= HIT_RADIUS) {
+        if (sp && Math.hypot(sp.x - p.x, sp.y - p.y) <= metrics.hit) {
           anchorIndex = i;
           break;
         }
@@ -233,7 +257,7 @@ export function DrawingLayer({
       setDrag({ id, anchorIndex, from: at });
       svg.setPointerCapture(evt.pointerId);
     },
-    [tool, drawings, toScreen, toData, onSelect],
+    [tool, drawings, toScreen, toData, onSelect, metrics.hit],
   );
 
   const handlePointerDown = useCallback(
@@ -295,12 +319,12 @@ export function DrawingLayer({
           if (pass === 'handles') {
             for (const a of d.anchors) {
               const sp = toScreen(a);
-              if (sp && Math.hypot(sp.x - p.x, sp.y - p.y) <= HIT_RADIUS) {
+              if (sp && Math.hypot(sp.x - p.x, sp.y - p.y) <= metrics.hit) {
                 found = d.id;
                 break outer;
               }
             }
-          } else if (distanceToDrawing(d, p, toScreen, coords) <= HIT_RADIUS) {
+          } else if (distanceToDrawing(d, p, toScreen, coords) <= metrics.hit) {
             found = d.id;
             break outer;
           }
@@ -308,7 +332,7 @@ export function DrawingLayer({
       }
       onSelect(found);
     });
-  }, [coords, drawings, tool, toScreen, onSelect]);
+  }, [coords, drawings, tool, toScreen, onSelect, metrics.hit]);
 
   // ── keyboard ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -370,6 +394,19 @@ export function DrawingLayer({
         height: '100%',
         pointerEvents: interactive ? 'auto' : 'none',
         cursor: tool ? 'crosshair' : 'default',
+        /**
+         * Without this, drawing on a phone is impossible rather than merely
+         * awkward. A touch that starts on an element the browser believes it
+         * may scroll is claimed by the scroller as soon as it travels a few
+         * pixels: the pointermove stream stops dead, the browser fires
+         * pointercancel, and the page slides under the finger. Every attempt
+         * at a trendline scrolled the page and left nothing behind.
+         *
+         * Only while this layer is interactive. When it is transparent the
+         * chart underneath owns the gesture, and it wants ordinary touch
+         * panning and pinch-zoom.
+         */
+        touchAction: interactive ? 'none' : 'auto',
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -400,15 +437,21 @@ export function DrawingLayer({
               stroke` catches the outline regardless of paint, and leaves the
               interior of a box or an oval transparent to the chart. */}
           <g style={{ pointerEvents: 'stroke' }} aria-hidden>
-            <DrawingShape drawing={d} selected={false} toScreen={toScreen} coords={coords} hitArea />
+            <DrawingShape drawing={d} selected={false} toScreen={toScreen} coords={coords} metrics={metrics} hitArea />
           </g>
-          <DrawingShape drawing={d} selected={d.id === selectedId} toScreen={toScreen} coords={coords} />
+          <DrawingShape
+            drawing={d}
+            selected={d.id === selectedId}
+            toScreen={toScreen}
+            coords={coords}
+            metrics={metrics}
+          />
         </g>
       ))}
 
       {preview && (
         <g opacity={0.7}>
-          <DrawingShape drawing={preview} selected={false} toScreen={toScreen} coords={coords} />
+          <DrawingShape drawing={preview} selected={false} toScreen={toScreen} coords={coords} metrics={metrics} />
         </g>
       )}
     </svg>
@@ -470,12 +513,14 @@ function DrawingShape({
   selected,
   toScreen,
   coords,
+  metrics,
   hitArea = false,
 }: {
   drawing: Drawing;
   selected: boolean;
   toScreen: (a: Anchor) => Point | null;
   coords: ChartCoords;
+  metrics: TouchMetrics;
   /** Render the same geometry wide and invisible, as a pointer target. */
   hitArea?: boolean;
 }) {
@@ -483,7 +528,16 @@ function DrawingShape({
   if (pts.some((p) => p == null)) return null;
   const s = pts as Point[];
   const stroke = hitArea ? 'transparent' : drawing.colour;
-  const width = hitArea ? 14 : selected ? 2.5 : 1.5;
+  const width = hitArea ? metrics.stroke : selected ? 2.5 : 1.5;
+  /**
+   * A phone-width chart cannot carry the full Fibonacci captions. Spelling out
+   * "· projected, not yet traded · not a Fibonacci number" on every level runs
+   * the text off the right-hand edge and stacks the rows into an unreadable
+   * smear. On a narrow chart the caveats become the dash pattern and opacity
+   * they already have, plus a short marker, and the prose stays in the lesson
+   * where there is room to make the argument properly.
+   */
+  const terse = coords.width < 560;
 
   // Labels and badges are decoration on the grab layer, and would double-paint.
   if (hitArea && (drawing.kind === 'text' || drawing.kind === 'fib-retracement' || drawing.kind === 'fib-extension')) {
@@ -493,7 +547,15 @@ function DrawingShape({
   const handles = selected ? (
     <g>
       {s.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r={HANDLE_RADIUS} fill="var(--color-surface)" stroke={stroke} strokeWidth={1.5} />
+        <circle
+          key={i}
+          cx={p.x}
+          cy={p.y}
+          r={metrics.handle}
+          fill="var(--color-surface)"
+          stroke={stroke}
+          strokeWidth={1.5}
+        />
       ))}
     </g>
   ) : null;
@@ -609,7 +671,7 @@ function DrawingShape({
       }
 
       case 'fib-retracement':
-        return <FibLevels a={drawing.anchors[0]} b={drawing.anchors[1]} coords={coords} colour={stroke} />;
+        return <FibLevels a={drawing.anchors[0]} b={drawing.anchors[1]} coords={coords} colour={stroke} terse={terse} />;
 
       case 'fib-extension':
         return (
@@ -623,6 +685,7 @@ function DrawingShape({
             }}
             coords={coords}
             colour={stroke}
+            terse={terse}
             levels={FIB_EXTENSION_LEVELS}
           />
         );
@@ -721,12 +784,15 @@ function FibLevels({
   b,
   coords,
   colour,
+  terse,
   levels = FIB_LEVELS,
 }: {
   a: Anchor;
   b: Anchor;
   coords: ChartCoords;
   colour: string;
+  /** Narrow chart: drop the explanatory tails from each level's caption. */
+  terse: boolean;
   levels?: readonly number[];
 }) {
   const span = b.price - a.price;
@@ -762,10 +828,12 @@ function FibLevels({
               opacity={projected ? 0.65 : 0.9}
             >
               {(level * 100).toFixed(1)}% · {price.toFixed(2)}
-              {projected ? ' · projected, not yet traded' : ''}
+              {projected ? (terse ? ' · projected' : ' · projected, not yet traded') : ''}
               {/* Named on the chart, not just in the lesson: the levels
-                  everybody watches are not all Fibonacci numbers. */}
-              {notFib ? ' · not a Fibonacci number' : ''}
+                  everybody watches are not all Fibonacci numbers. Even the
+                  short form keeps saying so — it is the point of the label,
+                  not an aside, so it survives the narrow layout. */}
+              {notFib ? (terse ? ' · not Fibonacci' : ' · not a Fibonacci number') : ''}
             </text>
           </g>
         );

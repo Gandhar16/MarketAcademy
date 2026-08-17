@@ -418,6 +418,8 @@ export function MarginCall() {
             canUndo={draw.canUndo}
             hidden={draw.hidden}
             onHidden={draw.setHidden}
+            hasSelection={draw.selectedId != null}
+            onDeleteSelected={draw.deleteSelected}
           />
         </div>
       </div>

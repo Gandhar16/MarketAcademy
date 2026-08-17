@@ -131,6 +131,19 @@ export function useDrawings(scope: string) {
     });
   }, [scope]);
 
+  /**
+   * Remove whatever is selected.
+   *
+   * The keyboard already does this through Delete, which is unreachable on a
+   * phone — so the toolbar needs its own way in, and both routes have to end up
+   * in the same place rather than each filtering the list their own way.
+   */
+  const deleteSelected = useCallback(() => {
+    if (!selectedId) return;
+    change(drawings.filter((d) => d.id !== selectedId));
+    setSelectedId(null);
+  }, [selectedId, drawings, change]);
+
   const clear = useCallback(() => {
     setDrawings((current) => {
       if (current.length > 0) setHistory((h) => [...h.slice(-(UNDO_DEPTH - 1)), current]);
@@ -159,5 +172,6 @@ export function useDrawings(scope: string) {
     undo,
     canUndo: history.length > 0,
     clear,
+    deleteSelected,
   };
 }
