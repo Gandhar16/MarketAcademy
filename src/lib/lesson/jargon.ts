@@ -100,20 +100,67 @@ function isAcronym(phrase: string): boolean {
   return /^[A-Z][A-Z&+.0-9]*$/.test(phrase) || /^T\+\d/.test(phrase);
 }
 
+/**
+ * Compiled matchers, kept rather than rebuilt.
+ *
+ * This function is called once per glossary phrase per block, which across the
+ * whole curriculum is hundreds of thousands of calls — and it was compiling a
+ * fresh RegExp on every one of them. The pattern depends only on the phrase and
+ * its guard, so it is the same object every time and caching it is free.
+ *
+ * Note the missing `g` flag, which the old pattern carried. `.test()` on a
+ * global regex advances `lastIndex` and resumes from there on the next call, so
+ * a cached one would start answering "no" to matches it had already found. The
+ * flag never did anything useful here — the result is a boolean either way —
+ * and dropping it is what makes the cache correct rather than subtly broken.
+ */
+const MATCHERS = new Map<string, RegExp>();
+
 export function mentionsTerm(text: string, phrase: string, neverAfter?: string[]): boolean {
-  const flags = isAcronym(phrase) ? 'g' : 'gi';
+  // Case sensitivity is the only flag that changes the answer: an all-caps
+  // acronym must not match the ordinary word that shares its letters.
+  const flags = isAcronym(phrase) ? '' : 'i';
   // Kept deliberately in step with annotate.ts. If the scanner and the
   // annotator disagree, the validator either complains about a word the reader
   // was never shown a definition for, or stays silent about one they were.
   const guard = neverAfter?.length ? `(?<!\\b(?:${neverAfter.map(escapeRegExp).join('|')})\\s)` : '';
-  return new RegExp(`(^|[^\\w-])${guard}${escapeRegExp(phrase)}(?=$|[^\\w-])`, flags).test(text);
+
+  // JSON rather than a joined string: a `neverAfter` guard contains `|` and
+  // regex punctuation, so an ad-hoc separator could collide across entries.
+  const key = JSON.stringify([flags, guard, phrase]);
+  let matcher = MATCHERS.get(key);
+  if (!matcher) {
+    matcher = new RegExp(`(^|[^\\w-])${guard}${escapeRegExp(phrase)}(?=$|[^\\w-])`, flags);
+    MATCHERS.set(key, matcher);
+  }
+  return matcher.test(text);
 }
+
+/**
+ * Scans are memoised on the lesson object itself.
+ *
+ * `inheritedTerms` walks the whole prerequisite chain beneath a lesson and
+ * scans every ancestor it reaches. Run that for all 87 lessons and the deep
+ * ones near the end of the curriculum re-scan the same handful of foundational
+ * lessons over and over — the same answer, recomputed hundreds of times, at
+ * roughly a glossary-sized pass each. It is what made validating the curriculum
+ * take two and a half seconds.
+ *
+ * A `WeakMap` keyed on identity, so this is sound for the only shapes that
+ * exist: the registry's lessons are module constants that never change, and a
+ * test that builds a synthetic lesson gets a new object and therefore a new
+ * entry. Nothing is held alive that would otherwise be collected.
+ */
+const SCANS = new WeakMap<Lesson, JargonHit[]>();
 
 /**
  * Every glossary term a lesson uses, with the block it first appears in and
  * whether that first appearance was marked up as an introduction.
  */
 export function scanLesson(lesson: Lesson): JargonHit[] {
+  const cached = SCANS.get(lesson);
+  if (cached) return cached;
+
   const first = new Map<string, JargonHit>();
 
   lesson.blocks.forEach((block, blockIndex) => {
@@ -130,7 +177,9 @@ export function scanLesson(lesson: Lesson): JargonHit[] {
     }
   });
 
-  return [...first.values()].sort((a, b) => a.blockIndex - b.blockIndex);
+  const hits = [...first.values()].sort((a, b) => a.blockIndex - b.blockIndex);
+  SCANS.set(lesson, hits);
+  return hits;
 }
 
 /**
