@@ -23,7 +23,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
-import { runtimeOf, timeline, type Explainer } from '@/content/explainers';
+import type { Explainer, TimelineEntry } from '@/content/explainers';
 import { SceneView } from './Scenes';
 
 function mmss(seconds: number): string {
@@ -31,9 +31,25 @@ function mmss(seconds: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-export function ExplainerPlayer({ explainer }: { explainer: Explainer }) {
-  const scenes = useMemo(() => timeline(explainer), [explainer]);
-  const runtime = useMemo(() => runtimeOf(explainer), [explainer]);
+/**
+ * The timeline and runtime arrive as props rather than being computed here.
+ *
+ * They used to be derived in this component, which meant importing
+ * `explainers.ts` at runtime — and because this is a client component, that
+ * dragged all eleven explainers' captions into a shared browser chunk that
+ * loaded on EVERY page of the site, `/login` included. Measured, not guessed.
+ * Both values are pure functions of the explainer, so the server that already
+ * holds the content computes them once and sends the answer.
+ */
+export function ExplainerPlayer({
+  explainer,
+  scenes,
+  runtime,
+}: {
+  explainer: Explainer;
+  scenes: TimelineEntry[];
+  runtime: number;
+}) {
   const reduced = useReducedMotion();
 
   const [elapsed, setElapsed] = useState(0);

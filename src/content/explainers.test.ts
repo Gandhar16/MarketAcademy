@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   EXPLAINERS,
   EXPLAINER_BY_ID,
+  explainersForLesson,
   explainersForTerm,
   forMedium,
   READING_CHARS_PER_SECOND,
@@ -35,6 +36,27 @@ describe('explainers', () => {
         expect(explainersForTerm(t).map((x) => x.id)).toContain(e.id);
       }
     }
+  });
+
+  it('gives every lesson the explainer that shares the most of its words', () => {
+    // The lesson pages embed the first result and only the first, so the order
+    // is not cosmetic — it decides which explainer 81 lessons actually show.
+    const [best] = explainersForLesson(['stt', 'brokerage', 'gst']);
+    expect(best?.id).toBe('where-your-money-goes');
+  });
+
+  it('offers a lesson nothing when it shares no words with any explainer', () => {
+    expect(explainersForLesson([])).toEqual([]);
+    expect(explainersForLesson(['a-term-no-explainer-claims'])).toEqual([]);
+  });
+
+  it('ranks lesson matches deterministically, so a build cannot reshuffle them', () => {
+    // Ties break on id rather than on position in EXPLAINERS, so reordering
+    // that array cannot silently change which explainer a lesson embeds.
+    const terms = EXPLAINERS.flatMap((e) => e.terms);
+    const once = explainersForLesson(terms).map((e) => e.id);
+    const twice = explainersForLesson([...terms].reverse()).map((e) => e.id);
+    expect(once).toEqual(twice);
   });
 
   it('captions every single scene', () => {

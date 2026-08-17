@@ -26,6 +26,9 @@ import { fileTrade, type FiledTrade } from '@/lib/progress/fileTrade';
 import { BASE_STARTING_CASH } from '@/lib/account/balance';
 import { displayBalance, useAccountStore } from '@/lib/account/store';
 import { FiledSummary } from './FiledSummary';
+import { DrawingLayer } from '@/components/chart/DrawingLayer';
+import { DrawingToolbar } from '@/components/chart/DrawingToolbar';
+import { useDrawings } from '@/components/chart/useDrawings';
 import type { Candle } from '@/lib/market/types';
 
 /**
@@ -97,6 +100,14 @@ export function ChartReplay() {
   const [revealed, setRevealed] = useState<{ symbol: string; candles: Candle[] } | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [lastFill, setLastFill] = useState<string | null>(null);
+
+  /**
+   * Drawings are scoped to the replay session, so a fresh chart starts with a
+   * clean slate while a mid-session refresh keeps the levels you marked. The
+   * scope falls back to a constant before the session exists, which is only
+   * the brief window before the first bars arrive.
+   */
+  const draw = useDrawings(`chart-replay:${replay?.sessionId ?? 'pending'}`);
   /** True while an open/close-position round trip to the server is in flight. */
   const [committing, setCommitting] = useState(false);
 
@@ -446,9 +457,42 @@ export function ChartReplay() {
           </div>
         </div>
 
-        <CandleChart candles={shown} markers={markers} priceLines={priceLines} indicators={indicators} />
+        <CandleChart
+          candles={shown}
+          markers={markers}
+          priceLines={priceLines}
+          indicators={indicators}
+          overlay={(coords) => (
+            <DrawingLayer
+              coords={coords}
+              candles={shown}
+              drawings={draw.drawings}
+              onChange={draw.change}
+              tool={draw.tool}
+              onToolDone={() => draw.setTool(null)}
+              selectedId={draw.selectedId}
+              onSelect={draw.setSelectedId}
+              magnet={draw.magnet}
+              colour={draw.colour}
+            />
+          )}
+        />
 
-        <div className="mt-3">
+        <div className="mt-3 grid gap-3">
+          <DrawingToolbar
+            tool={draw.tool}
+            onTool={draw.setTool}
+            colour={draw.colour}
+            onColour={draw.setColour}
+            magnet={draw.magnet}
+            onMagnet={draw.setMagnet}
+            count={draw.allDrawings.length}
+            onClear={draw.clear}
+            onUndo={draw.undo}
+            canUndo={draw.canUndo}
+            hidden={draw.hidden}
+            onHidden={draw.setHidden}
+          />
           <ChartToolbar
             active={indicators}
             onToggle={toggleIndicator}

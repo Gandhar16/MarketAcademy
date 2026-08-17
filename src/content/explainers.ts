@@ -1999,6 +1999,28 @@ export function explainersForTerm(termId: string): Explainer[] {
 }
 
 /**
+ * The explainers that belong to a lesson, best match first.
+ *
+ * Same relation the term pages use — a lesson declares the terms it
+ * `introduces`, an explainer declares the terms it explains, and an overlap is
+ * a match. Nothing new is authored to wire these together, which is the point:
+ * a lesson that gains a term gains its explainer automatically, and one that
+ * drops a term stops claiming an explainer it no longer earns.
+ *
+ * Ranked by how many terms they share, so a lesson whose subject IS the
+ * explainer's subject outranks one that merely mentions a word in passing.
+ * Ties break on id, so the order is stable across builds rather than depending
+ * on array position.
+ */
+export function explainersForLesson(introduces: readonly string[]): Explainer[] {
+  const declared = new Set(introduces);
+  return EXPLAINERS.map((e) => ({ e, shared: e.terms.filter((t) => declared.has(t)).length }))
+    .filter((x) => x.shared > 0)
+    .sort((a, b) => b.shared - a.shared || a.e.id.localeCompare(b.e.id))
+    .map((x) => x.e);
+}
+
+/**
  * Comfortable reading speed, in characters per second.
  *
  * Deliberately slow. 15 c/s is roughly 180 words a minute, which is an

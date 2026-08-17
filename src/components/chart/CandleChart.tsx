@@ -14,7 +14,7 @@
  * Overlays draw on the price pane. RSI, MACD, ATR and volume each get their own
  * pane below, as they would in any charting package.
  */
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CandlestickSeries,
   HistogramSeries,
@@ -26,6 +26,8 @@ import {
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
   type LineData,
+  type Logical,
+  type MouseEventParams,
   type SeriesMarker,
   type Time,
   type UTCTimestamp,
@@ -64,21 +66,71 @@ const COLOURS = {
 /** Which extra pane each non-overlay indicator occupies, in display order. */
 const PANE_ORDER: IndicatorId[] = ['volume', 'rsi', 'macd', 'atr'];
 
+/**
+ * The chart's current coordinate system, handed to whatever draws on top.
+ *
+ * Functions rather than a matrix, because lightweight-charts owns the mapping
+ * and it changes on every pan, zoom and new bar. Anything that caches the
+ * numbers instead of asking each paint will drift.
+ *
+ * The horizontal axis is the chart's LOGICAL coordinate — a continuous bar
+ * position — not a timestamp. Timestamps can only name bars that exist, so
+ * they cannot express "halfway between these two candles" or "just past the
+ * last one", which is most of where people draw. Logical coordinates express
+ * both, and stay put when new bars are appended.
+ */
+export interface ChartCoords {
+  logicalToX: (logical: number) => number | null;
+  xToLogical: (x: number) => number | null;
+  priceToY: (price: number) => number | null;
+  yToPrice: (y: number) => number | null;
+  /**
+   * Clicks on the price pane, reported by the chart itself.
+   *
+   * The overlay cannot listen for these on its own. It has to stay transparent
+   * to the pointer so the chart keeps panning, and a transparent element never
+   * receives a click — so selecting a drawing has to come from the one element
+   * that IS receiving them. Returns its own unsubscribe.
+   */
+  subscribeClick: (handler: (point: { x: number; y: number }) => void) => () => void;
+  width: number;
+  height: number;
+}
+
 export function CandleChart({
   candles,
   markers = [],
   priceLines = [],
   indicators = [],
   height = 380,
+  overlay,
 }: {
   candles: Candle[];
   markers?: ChartMarker[];
   priceLines?: PriceLine[];
   indicators?: IndicatorId[];
   height?: number;
+  /**
+   * Rendered above the price pane, given a live view of the coordinate system.
+   * Re-invoked on every pan, zoom and data change.
+   */
+  overlay?: (coords: ChartCoords) => React.ReactNode;
 }) {
+  /**
+   * Whether an overlay exists, as a boolean rather than the function itself.
+   *
+   * Callers pass an inline arrow, so `overlay` is a different value on every
+   * render. Depending on it directly made the effect below re-run each render,
+   * set fresh coords, and trigger the next render — an infinite loop that
+   * pegged the CPU and left the drawing layer unusable.
+   */
+  const hasOverlay = overlay != null;
+  /** A stable identity for the active indicators, safe to use as a dependency. */
+  const indicatorKey = indicators.join(',');
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  /** Rebuilt whenever the chart's own scales move, to repaint the overlay. */
+  const [coords, setCoords] = useState<ChartCoords | null>(null);
   const priceSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   /** Every indicator series currently attached, keyed so we can tear them down. */
@@ -298,6 +350,133 @@ export function CandleChart({
     });
   }, [candles, indicators, computed, activePanes]);
 
+  // ── keep the overlay in step with the chart ───────────────────────────────
+  //
+  // The chart mutates its own scales imperatively, so React has no idea a pan
+  // or a zoom happened. Subscribing to the time scale and rebuilding the
+  // coordinate snapshot is what turns "the user dragged the chart" into
+  // "repaint the drawings on top of it".
+  //
+  // The snapshot is built HERE rather than during render because reading the
+  // chart refs is only legal outside render. The functions it hands out still
+  // query the live scales when called, so they stay correct within a frame.
+  //
+  // Only mounted when something is actually drawing on top, so a chart with no
+  // overlay pays nothing for any of this.
+  useEffect(() => {
+    const chart = chartRef.current;
+    const series = priceSeriesRef.current;
+    const el = containerRef.current;
+    if (!hasOverlay || !chart || !series || !el) return;
+
+    const timeScale = chart.timeScale();
+    const rebuild = () =>
+      setCoords({
+        /**
+         * Interpolated between whole bars, because the library's
+         * `logicalToCoordinate` only honours integers — hand it 411.27 and it
+         * returns 0 rather than a point a quarter of the way along the bar.
+         * That silently pinned every fractional anchor to the left edge of the
+         * chart, so drawings rendered as a vertical line at x=0 and could
+         * never be clicked.
+         *
+         * Bars are evenly spaced, so interpolating between a bar and its
+         * neighbour is exact rather than an approximation. Integers outside
+         * the loaded range still resolve, which is what lets a drawing extend
+         * into the empty space to the right of the newest bar.
+         */
+        logicalToX: (l) => {
+          const base = Math.floor(l);
+          const at = timeScale.logicalToCoordinate(base as Logical);
+          if (at == null) return null;
+          if (l === base) return at;
+          const next = timeScale.logicalToCoordinate((base + 1) as Logical);
+          return next == null ? at : at + (l - base) * (next - at);
+        },
+        /**
+         * A FRACTIONAL bar position, which the library's own
+         * `coordinateToLogical` will not give: it rounds to the nearest bar,
+         * so every drawing snapped to a candle column no matter what the
+         * magnet was set to.
+         *
+         * Recovering the fraction is straightforward — take the rounded bar,
+         * ask where it and its neighbour sit in pixels, and interpolate the
+         * leftover. The result is continuous and defined past the last bar,
+         * which is what drawing in the empty space to the right requires.
+         */
+        xToLogical: (x) => {
+          const nearest = timeScale.coordinateToLogical(x);
+          if (nearest == null) return null;
+          const at = timeScale.logicalToCoordinate(nearest);
+          const next = timeScale.logicalToCoordinate((nearest + 1) as Logical);
+          if (at == null || next == null || next === at) return nearest;
+          return nearest + (x - at) / (next - at);
+        },
+        priceToY: (p) => series.priceToCoordinate(p),
+        yToPrice: (y) => {
+          const p = series.coordinateToPrice(y);
+          return typeof p === 'number' ? p : null;
+        },
+        subscribeClick: (handler) => {
+          const wrapped = (param: MouseEventParams<Time>) => {
+            if (param.point) handler({ x: param.point.x, y: param.point.y });
+          };
+          chart.subscribeClick(wrapped);
+          return () => chart.unsubscribeClick(wrapped);
+        },
+        width: el.clientWidth,
+        height,
+      });
+
+    /**
+     * A cheap per-frame check that the mapping has not moved under us.
+     *
+     * Subscribing to the time scale alone is not enough, and the gap is
+     * visible: dragging the PRICE axis rescales the chart vertically and fires
+     * no time-scale event at all, so every drawing would hang at its old
+     * height while the candles moved beneath it. The same is true of the
+     * automatic rescale that happens when a newly revealed bar sets a new high.
+     *
+     * So instead of trying to enumerate every event the library might emit,
+     * this samples the mapping itself — where two reference prices and the
+     * visible bar range currently land — and rebuilds only when one of them
+     * actually changes. The comparison is four numbers per frame; a rebuild
+     * only happens on a real change, so a still chart re-renders nothing.
+     */
+    const signature = () => {
+      const range = timeScale.getVisibleLogicalRange();
+      const top = series.coordinateToPrice(0);
+      const bottom = series.coordinateToPrice(height);
+      return `${range?.from ?? ''}|${range?.to ?? ''}|${top ?? ''}|${bottom ?? ''}|${el.clientWidth}`;
+    };
+
+    let last = '';
+    let frame = 0;
+    const watch = () => {
+      const now = signature();
+      if (now !== last) {
+        last = now;
+        rebuild();
+      }
+      frame = requestAnimationFrame(watch);
+    };
+    frame = requestAnimationFrame(watch);
+
+    const observer = new ResizeObserver(rebuild);
+    observer.observe(el);
+    rebuild();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+    // `indicatorKey`, not `indicators`. A caller that omits the prop gets the
+    // default `[]` — a NEW array on every render — so depending on the array
+    // itself re-ran this effect each render, set fresh coords, and triggered
+    // the next render. `MarginCall` omits it, and died with "Maximum update
+    // depth exceeded" the moment the drawing layer was added.
+  }, [hasOverlay, candles, indicatorKey, height]);
+
   // ── markers ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const plugin = markersRef.current;
@@ -337,5 +516,24 @@ export function CandleChart({
     };
   }, [priceLines]);
 
-  return <div ref={containerRef} className="w-full" />;
+  return (
+    <div className="relative w-full">
+      <div ref={containerRef} className="w-full" />
+      {overlay && coords && (
+        // Pinned to the price pane only. The lower panes belong to the
+        // indicators, and a trendline drawn across an RSI panel would be
+        // measuring nothing.
+        //
+        // `z-10` is load-bearing, not cosmetic. lightweight-charts stacks its
+        // own canvases inside the chart container, and without an explicit
+        // z-index here they paint ABOVE this layer — `elementFromPoint` at the
+        // middle of the chart returned the canvas, so every press meant to
+        // start a drawing was swallowed by the chart and nothing could be
+        // drawn at all.
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10" style={{ height }}>
+          {overlay(coords)}
+        </div>
+      )}
+    </div>
+  );
 }

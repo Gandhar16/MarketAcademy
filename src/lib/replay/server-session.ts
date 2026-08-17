@@ -176,23 +176,33 @@ function shuffled<T>(items: readonly T[], seed: number): T[] {
 }
 
 /**
- * Roughly nine months of daily bars shown before the learner has to act —
- * enough to actually mark a trendline, a support zone or a chart pattern on
- * real history rather than guessing from a handful of candles. Raised from
- * 60 (three months), then again from 150, after feedback that there was not
- * enough history on screen to analyse before the replay portion began.
+ * Roughly two years of daily bars shown before the learner has to act — enough
+ * to actually mark a trendline, a support zone or a chart pattern on real
+ * history rather than guessing from a handful of candles. Raised from 60
+ * (three months), then 150, then 180, each time after feedback that there was
+ * not enough history on screen to analyse before the replay portion began.
+ *
+ * This last raise came with the drawing tools. A trendline wants two touches
+ * and a test, a channel wants four, and a swing structure worth naming often
+ * spans a year — nine months of bars made half the toolbar decorative because
+ * there was nothing far enough back to anchor to. The fetch already pulls 25
+ * years per symbol, so the cost of this is screen real estate and nothing else.
  */
-export const WARMUP_BARS = 180;
+export const WARMUP_BARS = 500;
 /**
- * Roughly six months of tradeable bars. Raised from 60 (three months) after
- * feedback that a stop or target set inside the game's own allowed range
+ * Roughly a year of tradeable bars. Raised from 60 (three months), then 120,
+ * after feedback that a stop or target set inside the game's own allowed range
  * (0.5–20% away — see MIN/MAX_STOP_PCT and MIN/MAX_TARGET_PCT below) could
  * still run out of bars before either was ever reached, forcing a
  * 'session-end' square-off that was neither a plan paying off nor a mistake
  * being caught — just the replay ending arbitrarily underneath the learner.
- * Twice the room makes that a rare edge case again rather than a routine one.
+ *
+ * At 20% away — the widest target the game allows — a position genuinely needs
+ * this many bars to have a fair chance of resolving on its own terms. None of
+ * these bars reach the client until they are stepped through one at a time:
+ * more room to be proved right or wrong is not more information up front.
  */
-export const SESSION_BARS = 120;
+export const SESSION_BARS = 250;
 
 function sweep(now = Date.now()): void {
   for (const [id, s] of SESSIONS) {

@@ -21,6 +21,9 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CandleChart, type ChartMarker, type PriceLine } from '@/components/chart/CandleChart';
+import { DrawingLayer } from '@/components/chart/DrawingLayer';
+import { DrawingToolbar } from '@/components/chart/DrawingToolbar';
+import { useDrawings } from '@/components/chart/useDrawings';
 import { RemoteReplay } from '@/lib/replay/client';
 import {
   LEVERAGE_OPTIONS,
@@ -92,6 +95,9 @@ export function MarginCall() {
   const [revealed, setRevealed] = useState<{ symbol: string; candles: Candle[] } | null>(null);
 
   const [entry, setEntry] = useState<Entry | null>(null);
+
+  /** Scoped to the session, so a new chart starts clean. */
+  const draw = useDrawings(`margin-call:${replay?.sessionId ?? 'pending'}`);
   const [closed, setClosed] = useState<ClosedTrade[]>([]);
   const [markers, setMarkers] = useState<ChartMarker[]>([]);
   const [lastEvent, setLastEvent] = useState<string | null>(null);
@@ -378,7 +384,42 @@ export function MarginCall() {
           </div>
         </div>
 
-        <CandleChart candles={shown} markers={markers} priceLines={priceLines} />
+        <CandleChart
+          candles={shown}
+          markers={markers}
+          priceLines={priceLines}
+          overlay={(coords) => (
+            <DrawingLayer
+              coords={coords}
+              candles={shown}
+              drawings={draw.drawings}
+              onChange={draw.change}
+              tool={draw.tool}
+              onToolDone={() => draw.setTool(null)}
+              selectedId={draw.selectedId}
+              onSelect={draw.setSelectedId}
+              magnet={draw.magnet}
+              colour={draw.colour}
+            />
+          )}
+        />
+
+        <div className="mt-3">
+          <DrawingToolbar
+            tool={draw.tool}
+            onTool={draw.setTool}
+            colour={draw.colour}
+            onColour={draw.setColour}
+            magnet={draw.magnet}
+            onMagnet={draw.setMagnet}
+            count={draw.allDrawings.length}
+            onClear={draw.clear}
+            onUndo={draw.undo}
+            canUndo={draw.canUndo}
+            hidden={draw.hidden}
+            onHidden={draw.setHidden}
+          />
+        </div>
       </div>
 
       {lastEvent && !finished && (

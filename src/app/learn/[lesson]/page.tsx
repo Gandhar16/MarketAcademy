@@ -7,6 +7,8 @@ import { stripAnswers } from '@/lib/lesson/sanitize';
 import { SEQUENCE_BY_ID, TOTAL_TOPICS, nextBuilt, previousBuilt } from '@/content/syllabus';
 import { isTierGated, paywallEnabled } from '@/lib/payments/access';
 import { currentUserHasProAccess } from '@/lib/payments/gate';
+import { explainersForLesson } from '@/content/explainers';
+import { LessonExplainer } from '@/components/explain/LessonExplainer';
 
 export function generateStaticParams() {
   return LESSONS.map((l) => ({ lesson: l.id }));
@@ -54,7 +56,15 @@ export default async function LessonPage({ params }: { params: Promise<{ lesson:
       {/* Answers are stripped before the lesson crosses into client code — they
           are fetched from /api/lesson/reveal only once the learner commits. */}
       {allowed ? (
-        <LessonPlayer lesson={stripAnswers(lesson)} isPro={isPro} />
+        <>
+          <LessonPlayer lesson={stripAnswers(lesson)} isPro={isPro} />
+          {/* Sits below the lesson, not above it: the explainer is for the
+              reader who has just been through the words and wants them drawn,
+              so it should not offer itself as a way to skip them. Gated with
+              the lesson rather than shown beside the paywall — /explain is
+              where an explainer is free to stand on its own. */}
+          <LessonExplainer explainers={explainersForLesson(lesson.introduces ?? [])} />
+        </>
       ) : (
         <ProPaywall
           title={`${here?.stage.courseTitle ?? 'This course'} is a Pro course`}

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { EXPLAINER_BY_ID, EXPLAINERS, forMedium } from '@/content/explainers';
+import { EXPLAINER_BY_ID, EXPLAINERS, forMedium, runtimeOf, timeline } from '@/content/explainers';
 import { GLOSSARY_BY_ID } from '@/content/glossary';
 import { ExplainerPlayer, ExplainerTranscript } from '@/components/explain/ExplainerPlayer';
 
@@ -37,7 +37,7 @@ export default async function ExplainerPage({ params }: { params: Promise<{ id: 
       <p className="mt-2 text-lg italic text-ink-faint">“{explainer.question}”</p>
 
       <div className="mt-8">
-        <ExplainerPlayer explainer={explainer} />
+        <ExplainerPlayer explainer={explainer} scenes={timeline(explainer)} runtime={runtimeOf(explainer)} />
       </div>
 
       {terms.length > 0 && (
