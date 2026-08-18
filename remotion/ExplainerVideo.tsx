@@ -189,7 +189,7 @@ export function ExplainerVideo({ explainerId }: ExplainerVideoProps) {
             className="w-[980px]"
             style={{ transform: `scale(${Math.min(1, STAGE_HEIGHT / stageHeightOf(current.scene))})` }}
           >
-            <SceneView scene={current.scene} elapsed={elapsed - current.startsAt} />
+            <SceneView scene={current.scene} elapsed={elapsed - current.startsAt} medium="video" />
           </div>
         </div>
 

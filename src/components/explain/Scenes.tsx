@@ -36,6 +36,7 @@ import type {
   CandleScene,
   ChainScene,
   CompareScene,
+  Medium,
   Glyph,
   LadderScene,
   Scene,
@@ -78,9 +79,21 @@ export interface SceneProps {
   scene: Scene;
   elapsed: number;
   reduced?: boolean;
+  /**
+   * Which cut is being drawn. Only the comparison scenes care, and only about
+   * one thing: the page carries BOTH everyday comparisons, the video carries
+   * one.
+   *
+   * A reader sets their own pace and can take two handholds for the same idea.
+   * A viewer has eight seconds and a narrator talking over them, and a second
+   * block of unread text competing with the voice is worse than no second
+   * block at all — the caption is the source of truth for a video, and it
+   * speaks one comparison.
+   */
+  medium?: Medium;
 }
 
-export function SceneView({ scene, elapsed, reduced = false }: SceneProps) {
+export function SceneView({ scene, elapsed, reduced = false, medium = 'page' }: SceneProps) {
   // One place to honour the preference: pretend the whole scene has finished.
   const t = reduced ? Number.POSITIVE_INFINITY : elapsed;
 
@@ -92,7 +105,7 @@ export function SceneView({ scene, elapsed, reduced = false }: SceneProps) {
     case 'ladder':
       return <LadderView scene={scene} elapsed={t} />;
     case 'compare':
-      return <CompareView scene={scene} elapsed={t} />;
+      return <CompareView scene={scene} elapsed={t} medium={medium} />;
     case 'band':
       return <BandView scene={scene} elapsed={t} />;
     case 'candle':
@@ -347,12 +360,13 @@ const GLYPHS: Record<Glyph, React.ReactNode> = {
   ),
 };
 
-function CompareView({ scene, elapsed }: { scene: CompareScene; elapsed: number }) {
+function CompareView({ scene, elapsed, medium }: { scene: CompareScene; elapsed: number; medium: Medium }) {
   // The everyday side lands first, alone, for most of a second. That ordering
   // is the entire teaching move: the viewer recognises something they already
   // understand before being shown the thing they do not.
   const left = easeOut(at(elapsed, 0, 0.5));
   const right = easeOut(at(elapsed, 0.8, 0.5));
+  const second = easeOut(at(elapsed, 1.4, 0.5));
   const caveat = at(elapsed, 1.9, 0.5);
 
   return (
@@ -378,6 +392,16 @@ function CompareView({ scene, elapsed }: { scene: CompareScene; elapsed: number 
             <span className="text-[10px] uppercase tracking-[0.18em]">Something you already know</span>
           </div>
           <p className="mt-2 text-sm leading-snug text-ink">{scene.everyday}</p>
+
+          {/* The same idea from a different walk of life. Fades in after the
+              first has been read, never alongside it, so the two are offered
+              as alternatives rather than as a wall. */}
+          {medium === 'page' && scene.everydaySecond && (
+            <div style={{ opacity: second }} className="mt-3 border-t border-line/70 pt-2.5">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-ink-faint">Or, if that is not your world</span>
+              <p className="mt-1 text-[13px] leading-snug text-ink-muted">{scene.everydaySecond}</p>
+            </div>
+          )}
         </div>
 
         <div

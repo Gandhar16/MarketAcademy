@@ -34,6 +34,7 @@
  */
 import narration from './narration.json';
 import { ANALOGIES } from './analogies';
+import { SECOND_ANALOGIES } from './analogies-second';
 import { computeCost, roundTripCost } from '@/lib/engine/costs';
 import type { CostLine } from '@/lib/engine/costs';
 import { blackScholesPrice, daysToYears, intrinsicValue } from '@/lib/engine/options';
@@ -155,6 +156,13 @@ export interface CompareScene {
   glyph: Glyph;
   /** The everyday comparison. Comes from `analogies.ts`, never retyped. */
   everyday: string;
+  /**
+   * A second everyday comparison from a different walk of life, so a viewer who
+   * has never sat through a property registration and one who has never paid
+   * for a refundable flight both get a handhold. From `analogies-second.ts`,
+   * also never retyped.
+   */
+  everydaySecond?: string;
   /** What it maps to, with the real engine-computed figure where there is one. */
   market: string;
   /** Where the comparison stops being true. */
@@ -538,6 +546,7 @@ const WHERE_YOUR_MONEY_GOES: Explainer = {
             kind: 'compare',
             glyph: 'house',
             everyday: ANALOGIES.stt,
+            everydaySecond: SECOND_ANALOGIES.stt,
             market: `${rupees(STT_TOTAL)} of the ${rupees(TRIP_TOTAL)} on this trade — the single largest line, charged on the sell leg.`,
             breaks:
               'A flat changes hands once in a decade. This is charged on every trade you ever place, so somebody trading weekly pays it fifty times a year on the same money.',
@@ -551,6 +560,7 @@ const WHERE_YOUR_MONEY_GOES: Explainer = {
             kind: 'compare',
             glyph: 'receipt',
             everyday: ANALOGIES.brokerage,
+            everydaySecond: SECOND_ANALOGIES.brokerage,
             market: `Brokerage on this delivery trade: ${rupees(BROKERAGE_TOTAL)}. Total cost: ${rupees(TRIP_TOTAL)}. Every rupee of it went to somebody who was never going to negotiate.`,
             breaks:
               'An agent who charges nothing has no reason to sell your flat. A broker charging nothing is still paid — usually for where they send your order, which appears on no bill you will ever be shown.',
@@ -599,6 +609,7 @@ const WHERE_YOUR_MONEY_GOES: Explainer = {
             kind: 'compare',
             glyph: 'taxi',
             everyday: ANALOGIES.breakeven,
+            everydaySecond: SECOND_ANALOGIES.breakeven,
             market: `${rupees(DEMO_TRIP.breakevenMove)} per share, or ${DEMO_TRIP.breakevenPercent.toFixed(2)}%, before the trade has made you anything.`,
             breaks:
               'The taxi fee is flat, so a longer ride dilutes it. These are mostly percentages, so a bigger trade does not — the only thing that genuinely dilutes them is trading less often.',
@@ -709,6 +720,7 @@ const WHAT_HAPPENS_WHEN_YOU_PRESS_BUY: Explainer = {
             kind: 'compare',
             glyph: 'exchange',
             everyday: ANALOGIES.spread,
+            everydaySecond: SECOND_ANALOGIES.spread,
             market:
               'Best buyer ₹999.80, best seller ₹1,000.00. Buy and instantly sell 100 shares and you are ₹20 down before the market has moved at all.',
             breaks:
@@ -747,6 +759,7 @@ const WHAT_HAPPENS_WHEN_YOU_PRESS_BUY: Explainer = {
             kind: 'compare',
             glyph: 'vault',
             everyday: ANALOGIES['clearing-corporation'],
+            everydaySecond: SECOND_ANALOGIES['clearing-corporation'],
             market:
               'The clearing corporation stands between you and the seller. Neither of you ever finds out who the other was, and neither of you has to care.',
             breaks:
@@ -815,6 +828,7 @@ const WHY_YOUR_OPTION_EXPIRED_WORTHLESS: Explainer = {
             kind: 'compare',
             glyph: 'token',
             everyday: ANALOGIES.option,
+            everydaySecond: SECOND_ANALOGIES.option,
             market: `${rupees(OPT_PAID)} buys the right — not the obligation — to pay ${rupees(OPT.strike, 0)} for a share currently worth ${rupees(OPT.spot, 0)}, any time in the next four weeks.`,
             breaks:
               'The builder holds your flat off the market for that month. Nobody is holding a share for you — you can be right about the direction and still be handed nothing, which is what the rest of this explains.',
@@ -859,6 +873,7 @@ const WHY_YOUR_OPTION_EXPIRED_WORTHLESS: Explainer = {
             kind: 'compare',
             glyph: 'clock',
             everyday: ANALOGIES['time-value'],
+            everydaySecond: SECOND_ANALOGIES['time-value'],
             market: `${rupees(OPT_TIME_VALUE)} of the ${rupees(OPT_PAID)} you paid is time value. Held four weeks with the share completely still, all of it goes.`,
             breaks:
               'Milk spoils at a steady rate. Time value does not — it barely moves in the first week and falls off a cliff in the last, which is why the calendar hurts far more at the end than the beginning.',
@@ -974,6 +989,7 @@ const WHY_YOU_COULD_NOT_SELL: Explainer = {
             kind: 'compare',
             glyph: 'queue',
             everyday: ANALOGIES['circuit-limit'],
+            everydaySecond: SECOND_ANALOGIES['circuit-limit'],
             market: `Locked at ${rupees(BAND.lower)}: sell orders stacked up, no buy orders at all. Your order joins a queue that is not moving.`,
             breaks:
               'A referee restarts the same match. The exchange restarts tomorrow, with a new fence drawn around a much lower close — so the fall you could not escape today has already happened by the time you can act.',
@@ -1009,6 +1025,7 @@ const WHY_YOU_COULD_NOT_SELL: Explainer = {
             kind: 'compare',
             glyph: 'clock',
             everyday: ANALOGIES.gap,
+            everydaySecond: SECOND_ANALOGIES.gap,
             market: `Locked at ${rupees(BAND.lower)} or gapped open beneath your stop — the same failure. Your order needed a price that never existed.`,
             breaks:
               'A shop reopens at a price it chose. A market reopens at whatever the first matched order agrees, which can be well below where anyone expected to be able to sell.',
@@ -1066,6 +1083,7 @@ const HOW_MUCH_SHOULD_YOU_BUY: Explainer = {
             kind: 'compare',
             glyph: 'receipt',
             everyday: ANALOGIES['position-size'],
+            everydaySecond: SECOND_ANALOGIES['position-size'],
             market: `${rupees(ACCOUNT, 0)} account, ${(RISK_FRACTION * 100).toFixed(0)}% risk budget: ${rupees(TIGHT.riskAmount, 0)} is what a wrong answer costs you.`,
             breaks:
               'A bet settles when the match ends. A position can gap past your stop overnight and take more than you agreed to lose, which is why the risk budget is a plan rather than a guarantee.',
@@ -1152,6 +1170,7 @@ const HOW_MUCH_SHOULD_YOU_BUY: Explainer = {
             kind: 'compare',
             glyph: 'vault',
             everyday: ANALOGIES['risk-per-trade'],
+            everydaySecond: SECOND_ANALOGIES['risk-per-trade'],
             market: `${(RISK_FRACTION * 100).toFixed(0)}% of ${rupees(ACCOUNT, 0)} is ${rupees(TIGHT.riskAmount, 0)} per trade, whatever the trade is and however good it looks.`,
             breaks:
               'At a table you can stand up and walk away. A position held overnight can gap, so the amount you agreed to lose is the floor of what you might lose, not the ceiling.',
@@ -1199,6 +1218,7 @@ const WHY_THE_BACKTEST_LIED: Explainer = {
             kind: 'compare',
             glyph: 'receipt',
             everyday: ANALOGIES['base-rate'],
+            everydaySecond: SECOND_ANALOGIES['base-rate'],
             market: `A pattern that fires ${(PATTERN_HIT * 100).toFixed(0)}% right, against a ${(BASE_RATE * 100).toFixed(0)}% base rate, has to earn its costs out of ${((PATTERN_HIT - BASE_RATE) * 100).toFixed(0)} points.`,
             breaks:
               'A trial fixes its question before collecting data. A chart lets you look first and decide what you were testing afterwards, which is the next problem.',
@@ -1248,6 +1268,7 @@ const WHY_THE_BACKTEST_LIED: Explainer = {
             kind: 'compare',
             glyph: 'receipt',
             everyday: ANALOGIES.overfitting,
+            everydaySecond: SECOND_ANALOGIES.overfitting,
             market:
               'Every parameter you tune is another measurement. The fit to the past improves; the fit to next year does not.',
             breaks:
@@ -1284,6 +1305,7 @@ const WHY_THE_BACKTEST_LIED: Explainer = {
             kind: 'compare',
             glyph: 'queue',
             everyday: ANALOGIES['survivorship-bias'],
+            everydaySecond: SECOND_ANALOGIES['survivorship-bias'],
             market:
               'Today\'s index members are the ones that did well enough to still be there. The delisted and demoted are not in the file you downloaded.',
             breaks:
@@ -1384,6 +1406,7 @@ const WHAT_ONE_CANDLE_HIDES: Explainer = {
             kind: 'compare',
             glyph: 'clock',
             everyday: ANALOGIES.candle,
+            everydaySecond: SECOND_ANALOGIES.candle,
             market: `Open ${CANDLE.open.toFixed(2)}, high ${CANDLE.high.toFixed(2)}, low ${CANDLE.low.toFixed(2)}, close ${CANDLE.close.toFixed(2)} — and no ordering at all.`,
             breaks:
               'A weather summary is nobody\'s trading signal. Named candle patterns are, and a great many of them are claims about a sequence the data does not contain.',
@@ -1403,6 +1426,7 @@ const WHAT_ONE_CANDLE_HIDES: Explainer = {
             kind: 'compare',
             glyph: 'queue',
             everyday: ANALOGIES.volume,
+            everydaySecond: SECOND_ANALOGIES.volume,
             market: 'Every trade has a buyer and a seller. Volume is the count of agreements, not a balance of opinion.',
             breaks:
               'Footfall through a shop at least tells you people walked in. Volume does not even tell you that much about direction — the same figure appears on the day something is dumped and the day it is snapped up.',
@@ -1443,6 +1467,7 @@ const WHAT_YOU_ACTUALLY_OWN: Explainer = {
             kind: 'compare',
             glyph: 'receipt',
             everyday: ANALOGIES.share,
+            everydaySecond: SECOND_ANALOGIES.share,
             market:
               'One share of a company with a million shares outstanding is one millionth of the business — its profits, its debts and its future.',
             breaks:
@@ -1496,6 +1521,7 @@ const WHAT_YOU_ACTUALLY_OWN: Explainer = {
             kind: 'compare',
             glyph: 'house',
             everyday: ANALOGIES['secondary-market'],
+            everydaySecond: SECOND_ANALOGIES['secondary-market'],
             market:
               'First sale — an IPO — funds the company. Every trade afterwards moves ownership between investors and funds nobody but the seller.',
             breaks:
@@ -1516,6 +1542,7 @@ const WHAT_YOU_ACTUALLY_OWN: Explainer = {
             kind: 'compare',
             glyph: 'receipt',
             everyday: ANALOGIES.dividend,
+            everydaySecond: SECOND_ANALOGIES.dividend,
             market:
               'A dividend is cash paid out of profit. It is not interest, it is not owed to you, and a company having paid one for twenty years does not oblige it to pay a twenty-first.',
             breaks:
@@ -1586,6 +1613,7 @@ const PROFIT_IS_AN_OPINION: Explainer = {
             kind: 'compare',
             glyph: 'receipt',
             everyday: ANALOGIES['quality-of-earnings'],
+            everydaySecond: SECOND_ANALOGIES['quality-of-earnings'],
             market: `A ${accrualGap(PAPER_PROFIT).toFixed(0)}% gap between profit and cash, one year, means little. The same gap for four years running is the thing to go and understand.`,
             breaks:
               'A shopkeeper knows exactly who owes them. A public company tells you the total and not the names, so you are judging the trend rather than the debtors.',
@@ -1631,6 +1659,7 @@ const PROFIT_IS_AN_OPINION: Explainer = {
             kind: 'compare',
             glyph: 'vault',
             everyday: ANALOGIES.roce,
+            everydaySecond: SECOND_ANALOGIES.roce,
             market: `${returnOnEquity(LEVERED).toFixed(1)}% return on equity against ${returnOnCapitalEmployed(LEVERED).toFixed(1)}% on capital. The difference is entirely the ${rupees(LEVERED.debt, 0)} of debt.`,
             breaks:
               'A shopkeeper can choose to stop borrowing next month. A company\'s debts have fixed dates, and refusing to roll them over is the lender\'s decision rather than the company\'s.',
@@ -1665,6 +1694,7 @@ const PROFIT_IS_AN_OPINION: Explainer = {
             kind: 'compare',
             glyph: 'house',
             everyday: ANALOGIES['pledged-shares'],
+            everydaySecond: SECOND_ANALOGIES['pledged-shares'],
             market:
               'Pledged promoter holding is disclosed every quarter. A high and rising figure is not proof of anything — it is a reason to find out why they needed the money.',
             breaks:
@@ -1680,6 +1710,7 @@ const PROFIT_IS_AN_OPINION: Explainer = {
             kind: 'compare',
             glyph: 'queue',
             everyday: ANALOGIES.moat,
+            everydaySecond: SECOND_ANALOGIES.moat,
             market:
               'Ratios describe the last twelve months. Whether they will still hold is a judgement about competition, and no screener has a column for it.',
             breaks:
@@ -1728,6 +1759,7 @@ const EVERY_LEVEL_LOOKS_LIKE_IT_WORKED: Explainer = {
             kind: 'compare',
             glyph: 'house',
             everyday: ANALOGIES.trendline,
+            everydaySecond: SECOND_ANALOGIES.trendline,
             market:
               'You picked which two points to join after seeing all of them. A line that fits the past is the one thing you were guaranteed to be able to draw.',
             breaks:
@@ -1757,6 +1789,7 @@ const EVERY_LEVEL_LOOKS_LIKE_IT_WORKED: Explainer = {
             kind: 'compare',
             glyph: 'clock',
             everyday: ANALOGIES['swing-point'],
+            everydaySecond: SECOND_ANALOGIES['swing-point'],
             market:
               'The most recent turning point on any chart is provisional. It is a turning point only if the move does not continue, and you find out afterwards.',
             breaks:
@@ -1805,6 +1838,7 @@ const EVERY_LEVEL_LOOKS_LIKE_IT_WORKED: Explainer = {
             kind: 'compare',
             glyph: 'queue',
             everyday: ANALOGIES.confluence,
+            everydaySecond: SECOND_ANALOGIES.confluence,
             market:
               'Fibonacci levels, pivots and a moving average are three different arrangements of the same recent prices. They agree partly because they were always going to.',
             breaks:
@@ -1825,6 +1859,7 @@ const EVERY_LEVEL_LOOKS_LIKE_IT_WORKED: Explainer = {
             kind: 'compare',
             glyph: 'clock',
             everyday: ANALOGIES['head-and-shoulders'],
+            everydaySecond: SECOND_ANALOGIES['head-and-shoulders'],
             market:
               'Shapes are identified after they complete. Ask how many that looked identical halfway through went on to do nothing, and almost nobody has counted.',
             breaks:
@@ -1840,6 +1875,7 @@ const EVERY_LEVEL_LOOKS_LIKE_IT_WORKED: Explainer = {
             kind: 'compare',
             glyph: 'token',
             everyday: ANALOGIES['elliott-wave'],
+            everydaySecond: SECOND_ANALOGIES['elliott-wave'],
             market:
               'If two careful people applying the same rules to the same chart reach opposite conclusions, the rules are not doing the work — the person is.',
             breaks:
@@ -1898,6 +1934,7 @@ const THE_OPTION_THAT_OWES_A_LORRY: Explainer = {
             kind: 'compare',
             glyph: 'receipt',
             everyday: ANALOGIES['lot-size'],
+            everydaySecond: SECOND_ANALOGIES['lot-size'],
             market: `One lot is ${LOT_SIZE} shares. There is no smaller unit, so ${rupees(CONTRACT_VALUE, 0)} of exposure is the minimum this contract comes in.`,
             breaks:
               'A crate of mangoes costs what a crate costs, and you know the price at the till. Here the obligation only becomes payable if the contract finishes in the money, so most of the time it never appears at all.',
@@ -1917,6 +1954,7 @@ const THE_OPTION_THAT_OWES_A_LORRY: Explainer = {
             kind: 'compare',
             glyph: 'vault',
             everyday: ANALOGIES['physical-settlement'],
+            everydaySecond: SECOND_ANALOGIES['physical-settlement'],
             market: `In the money at expiry means buying ${LOT_SIZE} shares for ${rupees(CONTRACT_VALUE, 0)}, in cash, on settlement day.`,
             breaks:
               'A market stall hands you the goods there and then. Here the obligation lands after the market has closed, on a contract you may well have stopped watching.',
