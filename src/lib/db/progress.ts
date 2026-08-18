@@ -373,6 +373,35 @@ interface TotalsRow {
   process_score: number;
 }
 
+/**
+ * The learner's own filed runs, newest first.
+ *
+ * Exists for Edge or Luck, which asks the same statistical question of the
+ * learner's record that it asks of the invented ones. Deliberately returns only
+ * what that needs — when it happened, which game, and the P&L — rather than the
+ * whole row: the process JSON is large, and nothing here should tempt a caller
+ * into ranking anybody by profit (PLAN.md §7 rule 4).
+ */
+export interface FiledRun {
+  game: string;
+  playedAt: number;
+  pnl: number;
+}
+
+export async function recentRunsForUser(db: Db, userId: string, limit = 200): Promise<FiledRun[]> {
+  const rows = await db.all<{ game: string; played_at: number; pnl: number | null }>(
+    `SELECT game, played_at, pnl FROM game_runs
+      WHERE user_id = ? AND pnl IS NOT NULL
+      ORDER BY played_at DESC
+      LIMIT ?`,
+    userId,
+    // A cap rather than the lot: the statistics stop moving long before this,
+    // and an unbounded query is a slow page waiting for a heavy user.
+    Math.max(1, Math.min(limit, 500)),
+  );
+  return rows.map((r) => ({ game: r.game, playedAt: Number(r.played_at), pnl: Number(r.pnl) }));
+}
+
 export async function loadTotals(db: Db, userId: string): Promise<RunTotals> {
   const r = await db.get<TotalsRow>(
     `SELECT xp, lesson_xp, game_xp, net_pnl, runs, wins, losses, best_process, process_score

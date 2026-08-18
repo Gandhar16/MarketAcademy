@@ -37,8 +37,10 @@ describe('game catalogue', () => {
     }
   });
 
-  it('delivers the twelve games the plan promised', () => {
-    expect(GAME_CATALOGUE).toHaveLength(12);
+  // Pinned on purpose: a game silently disappearing from the index is a defect
+  // nothing else here would catch. Bump it deliberately when one is added.
+  it('delivers the thirteen games the plan promised', () => {
+    expect(GAME_CATALOGUE).toHaveLength(13);
   });
 });
 
